@@ -3,10 +3,10 @@ global: {}
 replicaCount: 1
 
 image:
-  repository: docker.ops.premiscale.com
+  repository: docker.ops.premiscale.com/pass-operator
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: ""
+  tag: 0.0.1
 
 imagePullSecrets: []
 nameOverride: ""

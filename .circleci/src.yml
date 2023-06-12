@@ -51,7 +51,7 @@ jobs:
       modules_path:
         type: string
         description: Path to modules directory in package.
-        default: premiscale
+        default: src
       configuration_file:
         type: string
         description: Path to pylint configuration file
@@ -60,24 +60,13 @@ jobs:
       - checkout
       - install-poetry
       - run:
-          name: Install dependencies with Poetry
-          command: |
-            # Install libvirt-python. Requires libvirt-dev package installed.
-            if ! pkg-config --print-errors --atleast-version=0.9.11 libvirt 2>/dev/null; then
-                sudo apt update && sudo apt install -y libvirt-dev
-            fi
-
-            poetry install -v --no-interaction --ansi --no-cache || true
-
-            pip install pylint
-      - run:
           name: Pylint
           command: |
             pylint --rcfile="$(pwd)"/<< parameters.configuration_file >> "$(pwd)"/<< parameters.modules_path >>
 
   release-twine-setup-py:
     description: twine upload
-    executor: python-3-10
+    executor: << parameters.executor >>
     resource_class: << parameters.resource-class >>
     environment:
       TWINE_NON_INTERACTIVE: true
@@ -92,6 +81,9 @@ jobs:
           - 2xlarge
         default: small
         description: Resource class to run as.
+      executor:
+        type: executor
+        default: python-3-10
       user:
         description: PyPi username.
         type: string
