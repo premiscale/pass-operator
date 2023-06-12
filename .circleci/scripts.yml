@@ -1,0 +1,21 @@
+version: 2.1
+
+
+orbs:
+  shellcheck: circleci/shellcheck@3.1.1
+
+
+workflows:
+  scripts:
+    jobs:
+      - shellcheck/check:
+          name: shellcheck [<< matrix.dir >>]
+          matrix:
+            parameters:
+              dir:
+                - scripts/
+            alias: shellcheck
+          exclude: SC2148
+          filters:
+            branches:
+              ignore: master

@@ -1,0 +1,252 @@
+version: 2.1
+
+
+orbs:
+  general: bjd2385/general@0.6.1
+
+
+executors:
+  python-3-10:
+    docker:
+      - image: cimg/python:3.10.6
+
+
+commands:
+  install-poetry:
+    description: Install poetry
+    parameters:
+      poetry-version:
+        type: string
+        description: Poetry version to install.
+        default: 1.3.1
+    steps:
+      - run:
+          name: Install poetry
+          command: |
+            pip install --upgrade pip
+
+            # Remove poetry from venv, install via pip.
+            sudo rm /home/circleci/.local/bin/poetry
+            pip install poetry==<< parameters.poetry-version >>
+            sudo ln -s /home/circleci/.pyenv/shims/poetry /home/circleci/.local/bin/poetry
+            poetry --version
+
+
+jobs:
+  pylint:
+    description: PyLint
+    docker:
+      - image: docker.ops.premiscale.com/executors/python-3-10:v1.0.1
+        auth:
+          username: $DOCKER_USERNAME
+          password: $DOCKER_PASSWORD
+    resource_class: << parameters.resource-class >>
+    parameters:
+      resource-class:
+        type: enum
+        enum:
+          - small
+          - medium
+          - large
+          - xlarge
+          - 2xlarge
+        default: small
+        description: Resource class to run as.
+      modules_path:
+        type: string
+        description: Path to modules directory in package.
+        default: premiscale
+      configuration_file:
+        type: string
+        description: Path to pylint configuration file
+        default: .pylintrc
+    steps:
+      - checkout
+      - install-poetry
+      - run:
+          name: Install dependencies with Poetry
+          command: |
+            # Install libvirt-python. Requires libvirt-dev package installed.
+            if ! pkg-config --print-errors --atleast-version=0.9.11 libvirt 2>/dev/null; then
+                sudo apt update && sudo apt install -y libvirt-dev
+            fi
+
+            poetry install -v --no-interaction --ansi --no-cache || true
+
+            pip install pylint
+      - run:
+          name: Pylint
+          command: |
+            pylint --rcfile="$(pwd)"/<< parameters.configuration_file >> "$(pwd)"/<< parameters.modules_path >>
+
+  release-twine-setup-py:
+    description: twine upload
+    docker:
+      - image: docker.ops.premiscale.com/executors/python-3-10:v1.0.1
+        auth:
+          username: $DOCKER_USERNAME
+          password: $DOCKER_PASSWORD
+    resource_class: << parameters.resource-class >>
+    environment:
+      TWINE_NON_INTERACTIVE: true
+    parameters:
+      resource-class:
+        type: enum
+        enum:
+          - small
+          - medium
+          - large
+          - xlarge
+          - 2xlarge
+        default: small
+        description: Resource class to run as.
+      user:
+        description: PyPi username.
+        type: string
+        default: $TWINE_USERNAME
+      password:
+        description: PyPi API token.
+        type: string
+        default: $TWINE_PASSWORD
+      repository:
+        description: Repository name to upload to. Must have a URL set in .pypirc.
+        type: string
+        default: python
+      config:
+        description: Location of the .pypirc-file to use.
+        type: string
+        default: .pypirc
+      version:
+        description: Override the version of the uploaded artifact in pyproject.toml. Mainly for development pipelines.
+        type: integer
+        default: -1
+    steps:
+      - checkout
+      - install-poetry
+      - unless:
+          condition:
+            equal: [<< parameters.version >>, -1]
+          steps:
+            - run:
+                name: Update pyproject.toml version
+                command: |
+                  _VERSION="$(grep -oiP "(?<=version = \").*(?=\")" pyproject.toml)"
+
+                  if [[ "$_VERSION" =~ ^[0-9]+.[0-9]+.[0-9]+$ ]]; then
+                      sed "s@version = \"${_VERSION}\"@version = \"0.0.<< parameters.version >>\"@" pyproject.toml > pyproject.toml.tmp
+                  elif [[ "$_VERSION" =~ ^[0-9]+.[0-9]+.[0-9]+a[0-9]+$ ]]; then
+                      _VERSION_A="${_VERSION%%a*}"
+                      sed "s@version = \"${_VERSION}\"@version = \"0.0.<< parameters.version >>\"@" pyproject.toml > pyproject.toml.tmp
+                  fi
+
+                  mv pyproject.toml.tmp pyproject.toml
+            # - run:
+            #     name: Update setup.py version
+            #     command: |
+            #       _VERSION="$(grep -oiP "(?<=version=\').*(?=\',)" setup.py)"
+
+            #       if [[ "$_VERSION" =~ ^[0-9]+.[0-9]+.[0-9]+$ ]]; then
+            #           sed "s@version=\'${_VERSION}\'@version=\'0.0.<< parameters.version >>\'@" setup.py > setup.py.tmp
+            #       elif [[ "$_VERSION" =~ ^[0-9]+.[0-9]+.[0-9]+a[0-9]+$ ]]; then
+            #           _VERSION_A="${_VERSION%%a*}"
+            #           sed "s@version=\'${_VERSION}\'@version=\'0.0.<< parameters.version >>\'@" setup.py > setup.py.tmp
+            #       fi
+
+            #       mv setup.py.tmp setup.py
+      - run:
+          name: Build package
+          command: |
+            poetry build
+      - run:
+          name: Publish package to PyPI
+          command: |
+            pip install twine
+            twine upload dist/* -u << parameters.user >> -p << parameters.password >> --repository << parameters.repository >> --non-interactive --config-file << parameters.config >>
+
+
+workflows:
+  base_python:
+    jobs:
+      # develop
+
+      - pylint:
+          name: pylint [python-develop]
+          modules_path: base_python/
+          context: nexus
+          filters:
+            branches:
+              ignore:
+                - master
+
+      - release-twine-setup-py:
+          name: twine upload [python-develop]
+          context: nexus
+          repository: python-develop
+          version: << pipeline.number >>
+          requires:
+            - pylint [python-develop]
+          filters:
+            branches:
+              ignore:
+                - master
+
+      - general/docker-nexus:
+          name: docker [base-python] [develop]
+          image-name: base_python
+          context: nexus
+          path: .
+          nexus-domain: $DOCKER_DEVELOP_DOMAIN
+          args: >-
+            --build-arg=PYTHON_PACKAGE_VERSION=0.0.<< pipeline.number >>
+            --build-arg=PYTHON_USERNAME=$NEXUS_USERNAME
+            --build-arg=PYTHON_PASSWORD=$NEXUS_PASSWORD
+            --build-arg=PYTHON_REPOSITORY=python-develop
+          tag: 0.0.<< pipeline.number >>
+          requires:
+            - twine upload [python-develop]
+          filters:
+            branches:
+              ignore:
+                - master
+
+      # master
+
+      - pylint:
+          name: pylint [python-master]
+          context: nexus
+          modules_path: base_python/
+          filters:
+            branches:
+              only:
+                - master
+
+      - release-twine-setup-py:
+          name: twine upload [python-master]
+          context: nexus
+          repository: python-master
+          version: << pipeline.number >>
+          requires:
+            - pylint [python-master]
+          filters:
+            branches:
+              only:
+                - master
+
+      - general/docker-nexus:
+          name: docker [base-python] [master]
+          image-name: base_python
+          context: nexus
+          path: .
+          nexus-domain: $DOCKER_MASTER_DOMAIN
+          args: >-
+            --build-arg=PYTHON_PACKAGE_VERSION=0.0.<< pipeline.number >>
+            --build-arg=PYTHON_USERNAME=$NEXUS_USERNAME
+            --build-arg=PYTHON_PASSWORD=$NEXUS_PASSWORD
+            --build-arg=PYTHON_REPOSITORY=python-master
+          tag: 0.0.<< pipeline.number >>
+          requires:
+            - twine upload [python-master]
+          filters:
+            branches:
+              only:
+                - master

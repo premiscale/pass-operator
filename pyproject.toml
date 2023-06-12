@@ -1,0 +1,30 @@
+[tool.poetry]
+name = "base_python"
+version = "0.0.1"
+description = "Example base Python template project"
+authors = ["Emma Doyle <emma@premiscale.com>"]
+maintainers = ["Emma Doyle <emma@premiscale.com>"]
+license = "GPL-3.0-or-later"
+readme = "README.md"
+packages = [{include = "base_python"}]
+include = [
+  "LICENSE"
+]
+keywords = [
+    "template"
+]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+
+[tool.poetry.group.dev.dependencies]
+pre-commit = "^3.0.4"
+mypy = "^1.0.1"
+pylint = "^2.16.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+base_python = "base_python.base_python.test:cli"

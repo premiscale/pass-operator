@@ -1,0 +1,10 @@
+_extends: .github
+
+repository:
+  name: base
+  description: Base repository with default settings and configs
+  homepage: https://github.com/premiscale/base-python
+
+  # A comma-separated list of topics to set on the repository
+  topics: python, pypi
+  private: true
