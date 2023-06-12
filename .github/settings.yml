@@ -1,10 +1,10 @@
-_extends: .github
+_extends: .github-private
 
 repository:
-  name: base
-  description: Base repository with default settings and configs
-  homepage: https://github.com/premiscale/base-python
+  name: password-store-operator
+  description: A kubernetes operator that syncs and decrypts secrets from pass git repositories
+  homepage: https://github.com/premiscale/pass-operator
 
   # A comma-separated list of topics to set on the repository
-  topics: python, pypi
+  topics: python,kubernetes,secrets,operator,pass
   private: true

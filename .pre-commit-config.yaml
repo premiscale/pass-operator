@@ -1,3 +1,4 @@
+fail_fast: true
 repos:
   # Requires hadolint binary on local machine.
   - repo: https://github.com/hadolint/hadolint
@@ -18,24 +19,15 @@ repos:
       - id: check-executables-have-shebangs
       - id: check-shebang-scripts-are-executable
       - id: mixed-line-ending
-      - id: trailing-whitespace
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.0.1
+    rev: v1.3.0
     hooks:
       - id: mypy
         args:
           - --install-types
           - --non-interactive
-          - --config-file=.mypy.ini
-
-  # - repo: https://github.com/mgedmin/check-manifest
-  #   rev: "0.48"
-  #   hooks:
-  #     - id: check-manifest
-  #       args:
-  #        - --ignore
-  #        - "*.json,*.txt,*.yaml,.mypy.ini,config/*.md,docker/*.sh,,examples/*,helm/*,package/*,scripts/*,service/*,tests/*,.circleci/*,.pylintrc,.tool-versions,docker/**/*,helm/**/*,examples/**/*"
+          - --config-file=pyproject.toml
 
   - repo: https://github.com/jumanjihouse/pre-commit-hooks
     rev: 3.0.0
@@ -44,25 +36,18 @@ repos:
         args:
           - -x
 
-  - repo: https://github.com/bjd2385/circleci-config-pre-commit-hook
-    rev: v1.1.2
+  - repo: https://github.com/bjd2385/dynamic-continuation-orb
+    rev: v3.6.10
     hooks:
       - id: circleci-config-validate
 
-  # - repo: https://github.com/k-ogawa-1988/yamale-pre-commit
-  #   rev: v0.0.2
-  #   hooks:
-  #     - id: yamale-validate
-  #       args:
-  #         - conf/schema.yaml
-
-  # - repo: https://github.com/gruntwork-io/pre-commit
-  #   rev: v0.1.18
-  #   hooks:
-  #     - id: helmlint
+  - repo: https://github.com/gruntwork-io/pre-commit
+    rev: v0.1.22
+    hooks:
+      - id: helmlint
 
   - repo: https://github.com/python-poetry/poetry
-    rev: 1.3.0
+    rev: 1.5.0
     hooks:
       - id: poetry-check
       - id: poetry-lock
@@ -70,26 +55,19 @@ repos:
         args: ["-f", "requirements.txt", "-o", "requirements.txt"]
 
   - repo: https://github.com/PyCQA/pylint
-    rev: v2.16.2
+    rev: v3.0.0a6
     hooks:
       - id: pylint
         args:
           - --rcfile=.pylintrc
-          - base_python/
+          - src/
 
   - repo: https://github.com/abravalheri/validate-pyproject
-    rev: v0.12.1
+    rev: v0.13
     hooks:
       - id: validate-pyproject
 
-  # - repo: https://github.com/charliermarsh/ruff-pre-commit
-  #   rev: v0.0.237
-  #   hooks:
-  #     - id: ruff
-  #       args: [--fix]
-  #       exclude: ^resources
-
   - repo: https://github.com/premiscale/pre-commit-hooks
-    rev: v0.0.1
+    rev: v0.0.9
     hooks:
     -   id: msg-issue-prefix

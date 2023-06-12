@@ -1,3 +1,3 @@
-# base-python
+# Pass kubernetes operator
 
-Base Python repo for getting started with a new Python package with default configuration files for PremiScale, Inc.
+This Kubernetes operator can be used to sync and decrypt secrets from a [password store (pass)](https://www.passwordstore.org/) Git repository.
