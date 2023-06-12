@@ -1,0 +1,91 @@
+version: 2.1
+
+setup: true
+
+
+orbs:
+  dynamic: bjd2385/dynamic-continuation@3.6.10
+  general: bjd2385/general@0.7.1
+  slack: circleci/slack@4.12.5
+
+
+workflows:
+  pass-operator:
+    jobs:
+      - dynamic/continue:
+          context: circleci
+
+      - slack/on-hold:
+          context: slack
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/
+
+      - request-approval:
+          requires:
+            - slack/on-hold
+          type: approval
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/
+
+      - general/github-release:
+          name: Create GitHub release from tag
+          context: github
+          requires:
+            - request-approval
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/
+
+      - general/helm-release-nexus:
+          name: helm build and push [helm/operator]
+          context: nexus
+          path: helm/operator
+          repo-name: premiscale
+          requires:
+            - request-approval
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/
+
+      - general/python-release-poetry:
+          name: pypi pass-operator upload [python]
+          context: nexus
+          repository: python
+          requires:
+            - request-approval
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/
+
+      - general/docker-nexus:
+          name: docker [pass-operator] [tag]
+          image-name: pass-operator
+          context: nexus
+          path: Dockerfile
+          nexus-domain: $DOCKER_DOMAIN
+          args: >-
+            --build-arg=PYTHON_PACKAGE_VERSION=$CIRCLE_TAG
+            --build-arg=PYTHON_USERNAME=$NEXUS_USERNAME
+            --build-arg=PYTHON_PASSWORD=$NEXUS_PASSWORD
+            --build-arg=PYTHON_REPOSITORY=python
+          tag: 0.0.<< pipeline.number >>
+          requires:
+            - pypi pass-operator upload [python]
+            - request-approval
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/
