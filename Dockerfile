@@ -3,8 +3,6 @@ ARG TAG=3.10.8
 
 FROM ${IMAGE}:${TAG}
 
-ENV DOPPLER_TOKEN="notset"
-
 # https://github.com/opencontainers/image-spec/blob/main/annotations.md#pre-defined-annotation-keys
 LABEL org.opencontainers.image.description "© PremiScale, Inc. 2023"
 LABEL org.opencontainers.image.licenses "GPLv3"
@@ -18,11 +16,8 @@ ARG TINI_VERSION=v0.19.0
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
 RUN chmod +x /tini
 
-# Install the Doppler CLI via apt for secrets retrieval.
-RUN curl -Ls --tlsv1.2 --proto "=https" --retry 3 https://cli.doppler.com/install.sh | sh
-
-RUN apt update && \
-    rm -rf /var/apt/lists/*
+# RUN apt update && \
+#     rm -rf /var/apt/lists/*
 
 RUN useradd -rm -d /opt/premiscale -s /bin/bash -g root -G sudo -u 1001 premiscale
 
@@ -42,7 +37,7 @@ ENV PATH=${PATH}:/opt/premiscale/.local/bin
 # Install and initialize PremiScale.
 RUN mkdir -p "$HOME"/.local/bin && \
     pip install --upgrade pip && \
-    pip install --no-cache-dir --no-input --extra-index-url="${PYTHON_INDEX}" base_python=="${PYTHON_PACKAGE_VERSION}"
+    pip install --no-cache-dir --no-input --extra-index-url="${PYTHON_INDEX}" pass-operator=="${PYTHON_PACKAGE_VERSION}"
 
 ENTRYPOINT [ "/tini", "--" ]
 CMD [ "passop" ]

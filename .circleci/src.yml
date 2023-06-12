@@ -2,7 +2,7 @@ version: 2.1
 
 
 orbs:
-  general: bjd2385/general@0.6.1
+  general: bjd2385/general@0.7.1
 
 
 executors:
@@ -165,18 +165,13 @@ jobs:
 
 
 workflows:
-  base_python:
+  src:
     jobs:
-      # develop
-
       - pylint:
-          name: pylint [python-develop]
-          modules_path: base_python/
+          modules_path: src/
           context: nexus
-          filters:
-            branches:
-              ignore:
-                - master
+
+      # develop
 
       - release-twine-setup-py:
           name: twine upload [python-develop]
@@ -184,7 +179,7 @@ workflows:
           repository: python-develop
           version: << pipeline.number >>
           requires:
-            - pylint [python-develop]
+            - pylint
           filters:
             branches:
               ignore:
@@ -211,22 +206,13 @@ workflows:
 
       # master
 
-      - pylint:
-          name: pylint [python-master]
-          context: nexus
-          modules_path: base_python/
-          filters:
-            branches:
-              only:
-                - master
-
       - release-twine-setup-py:
           name: twine upload [python-master]
           context: nexus
           repository: python-master
           version: << pipeline.number >>
           requires:
-            - pylint [python-master]
+            - pylint
           filters:
             branches:
               only:

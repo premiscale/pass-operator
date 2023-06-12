@@ -8,6 +8,8 @@ repos:
         args:
           - --config
           - .hadolint.yaml
+          - -t
+          - error
           - Dockerfile
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
