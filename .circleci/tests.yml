@@ -18,7 +18,7 @@ jobs:
       - run:
           name: Run tests
           command: |
-            pass
+            echo
 
 
 workflows:

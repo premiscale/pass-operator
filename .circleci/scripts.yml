@@ -9,12 +9,6 @@ workflows:
   scripts:
     jobs:
       - shellcheck/check:
-          name: shellcheck [<< matrix.dir >>]
-          matrix:
-            parameters:
-              dir:
-                - scripts/
-            alias: shellcheck
           exclude: SC2148
           filters:
             branches:

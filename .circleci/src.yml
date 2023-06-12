@@ -186,8 +186,8 @@ workflows:
                 - master
 
       - general/docker-nexus:
-          name: docker [base-python] [develop]
-          image-name: base_python
+          name: docker [pass-operator-python] [develop]
+          image-name: pass-operator
           context: nexus
           path: .
           nexus-domain: $DOCKER_DEVELOP_DOMAIN
@@ -219,8 +219,8 @@ workflows:
                 - master
 
       - general/docker-nexus:
-          name: docker [base-python] [master]
-          image-name: base_python
+          name: docker [pass-operator-python] [master]
+          image-name: pass-operator
           context: nexus
           path: .
           nexus-domain: $DOCKER_MASTER_DOMAIN
