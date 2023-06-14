@@ -6,6 +6,7 @@ This Kubernetes operator can be used to sync and decrypt secrets from a [pass](h
 
 ```shell
 pip install pass-operator
+```
 
 ## Upgrading
 

@@ -114,3 +114,4 @@ def main() -> None:
             level=args.log_level,
             filemode='a'
         )
+
