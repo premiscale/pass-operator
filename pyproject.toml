@@ -20,6 +20,7 @@ keywords = [
 
 [tool.poetry.dependencies]
 python = "^3.10"
+kubernetes = "^26.1.0"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.3.2"
@@ -35,6 +36,6 @@ build-backend = "poetry.core.masonry.api"
 passop = "src.operator.cli:main"
 
 [tool.mypy]
-python-version = "3.10"
-strict-optional = true
-ignore-missing-imports = true
+python_version = "3.10"
+strict_optional = "true"
+ignore_missing_imports = "true"

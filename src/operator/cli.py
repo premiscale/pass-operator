@@ -13,5 +13,5 @@ __version__ = meta.version('pass-operator')
 
 def main() -> None:
     """
-
+    Set up operator.
     """
