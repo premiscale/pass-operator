@@ -1,10 +1,17 @@
 # Pass kubernetes operator
 
-This Kubernetes operator can be used to sync and decrypt secrets from a [password store (pass)](https://www.passwordstore.org/) Git repository.
+This Kubernetes operator can be used to sync and decrypt secrets from a [pass](https://www.passwordstore.org/) Git repository.
 
 ## Installation
 
+```shell
+pip install pass-operator
+
 ## Upgrading
+
+```shell
+pip install --upgrade pass-operator
+```
 
 ## Plan
 
