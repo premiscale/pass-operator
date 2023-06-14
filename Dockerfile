@@ -1,5 +1,5 @@
 ARG IMAGE=python
-ARG TAG=3.10.8
+ARG TAG=3.10.11
 
 FROM ${IMAGE}:${TAG}
 
@@ -16,15 +16,15 @@ ARG TINI_VERSION=v0.19.0
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
 RUN chmod +x /tini
 
-# RUN apt update && \
-#     rm -rf /var/apt/lists/*
+RUN apt update && apt install -y pass \
+    rm -rf /var/apt/lists/*
 
-RUN useradd -rm -d /opt/premiscale -s /bin/bash -g root -G sudo -u 1001 premiscale
+RUN useradd -rm -d /opt/pass-operator -s /bin/bash -g root -G sudo -u 1001 operator
 
-WORKDIR /opt/premiscale
+WORKDIR /opt/pass-operator
 
-RUN chown -R premiscale:root .
-USER premiscale
+RUN chown -R operator:root .
+USER operator
 
 ARG PYTHON_USERNAME
 ARG PYTHON_PASSWORD
@@ -32,12 +32,12 @@ ARG PYTHON_REPOSITORY
 ARG PYTHON_INDEX=https://${PYTHON_USERNAME}:${PYTHON_PASSWORD}@repo.ops.premiscale.com/repository/${PYTHON_REPOSITORY}/simple
 ARG PYTHON_PACKAGE_VERSION=0.0.1
 
-ENV PATH=${PATH}:/opt/premiscale/.local/bin
+ENV PATH=${PATH}:/opt/pass-operator/.local/bin
 
 # Install and initialize PremiScale.
 RUN mkdir -p "$HOME"/.local/bin && \
     pip install --upgrade pip && \
     pip install --no-cache-dir --no-input --extra-index-url="${PYTHON_INDEX}" pass-operator=="${PYTHON_PACKAGE_VERSION}"
 
-ENTRYPOINT [ "/tini", "--" ]
-CMD [ "passop" ]
+ENTRYPOINT [ "/tini", "--". "passop" ]
+CMD [ "--log-stdout", "" ]
