@@ -4,7 +4,7 @@ version: 2.1
 executors:
   python-3-10:
     docker:
-      - image: cimg/python:3.10.6
+      - image: cimg/python:3.10.11
 
 
 orbs: {}

@@ -4,7 +4,6 @@ A kubernetes operator that syncs and decrypts secrets from pass git repositories
 
 import logging
 import sys
-import os
 
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from importlib import metadata as meta
@@ -27,6 +26,15 @@ class LogLevel(Enum):
 
     @classmethod
     def from_string(cls, s: str) -> 'LogLevel':
+        """
+        Convert a string to the enum value.
+
+        Args:
+            s (str): key to convert to the enum value.
+
+        Returns:
+            LogLevel: Log level object.
+        """
         try:
             return cls[s.lower()]
         except KeyError:

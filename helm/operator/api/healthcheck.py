@@ -1,3 +1,0 @@
-"""
-Simple Flask healthcheck API.
-"""

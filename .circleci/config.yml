@@ -5,7 +5,7 @@ setup: true
 
 orbs:
   dynamic: bjd2385/dynamic-continuation@3.6.10
-  general: bjd2385/general@0.7.1
+  general: bjd2385/general@0.7.5
   slack: circleci/slack@4.12.5
 
 
@@ -48,7 +48,6 @@ workflows:
           name: helm build and push [helm/operator]
           context: nexus
           path: helm/operator
-          repo-name: premiscale
           requires:
             - request-approval
           filters:
