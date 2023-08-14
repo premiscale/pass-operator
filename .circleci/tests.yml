@@ -1,0 +1,27 @@
+version: 2.1
+
+
+executors:
+  python-3-10:
+    docker:
+      - image: cimg/python:3.10.11
+
+
+orbs: {}
+
+
+jobs:
+  run-tests:
+    executor: python-3-10
+    resource_class: small
+    steps:
+      - run:
+          name: Run tests
+          command: |
+            echo
+
+
+workflows:
+  tests:
+    jobs:
+      - run-tests

@@ -2,13 +2,13 @@ version: 2.1
 
 
 orbs:
-  general: bjd2385/general@0.6.1
+  general: bjd2385/general@0.7.5
 
 
 executors:
   python-3-10:
     docker:
-      - image: cimg/python:3.10.6
+      - image: cimg/python:3.10.11
 
 
 commands:
@@ -35,11 +35,7 @@ commands:
 jobs:
   pylint:
     description: PyLint
-    docker:
-      - image: docker.ops.premiscale.com/executors/python-3-10:v1.0.1
-        auth:
-          username: $DOCKER_USERNAME
-          password: $DOCKER_PASSWORD
+    executor: python-3-10
     resource_class: << parameters.resource-class >>
     parameters:
       resource-class:
@@ -55,7 +51,7 @@ jobs:
       modules_path:
         type: string
         description: Path to modules directory in package.
-        default: premiscale
+        default: src
       configuration_file:
         type: string
         description: Path to pylint configuration file
@@ -64,28 +60,13 @@ jobs:
       - checkout
       - install-poetry
       - run:
-          name: Install dependencies with Poetry
-          command: |
-            # Install libvirt-python. Requires libvirt-dev package installed.
-            if ! pkg-config --print-errors --atleast-version=0.9.11 libvirt 2>/dev/null; then
-                sudo apt update && sudo apt install -y libvirt-dev
-            fi
-
-            poetry install -v --no-interaction --ansi --no-cache || true
-
-            pip install pylint
-      - run:
           name: Pylint
           command: |
             pylint --rcfile="$(pwd)"/<< parameters.configuration_file >> "$(pwd)"/<< parameters.modules_path >>
 
   release-twine-setup-py:
     description: twine upload
-    docker:
-      - image: docker.ops.premiscale.com/executors/python-3-10:v1.0.1
-        auth:
-          username: $DOCKER_USERNAME
-          password: $DOCKER_PASSWORD
+    executor: << parameters.executor >>
     resource_class: << parameters.resource-class >>
     environment:
       TWINE_NON_INTERACTIVE: true
@@ -100,6 +81,9 @@ jobs:
           - 2xlarge
         default: small
         description: Resource class to run as.
+      executor:
+        type: executor
+        default: python-3-10
       user:
         description: PyPi username.
         type: string
@@ -165,18 +149,13 @@ jobs:
 
 
 workflows:
-  base_python:
+  src:
     jobs:
-      # develop
-
       - pylint:
-          name: pylint [python-develop]
-          modules_path: base_python/
+          modules_path: src/
           context: nexus
-          filters:
-            branches:
-              ignore:
-                - master
+
+      # develop
 
       - release-twine-setup-py:
           name: twine upload [python-develop]
@@ -184,15 +163,15 @@ workflows:
           repository: python-develop
           version: << pipeline.number >>
           requires:
-            - pylint [python-develop]
+            - pylint
           filters:
             branches:
               ignore:
                 - master
 
       - general/docker-nexus:
-          name: docker [base-python] [develop]
-          image-name: base_python
+          name: docker [pass-operator-python] [develop]
+          image-name: pass-operator
           context: nexus
           path: .
           nexus-domain: $DOCKER_DEVELOP_DOMAIN
@@ -211,30 +190,21 @@ workflows:
 
       # master
 
-      - pylint:
-          name: pylint [python-master]
-          context: nexus
-          modules_path: base_python/
-          filters:
-            branches:
-              only:
-                - master
-
       - release-twine-setup-py:
           name: twine upload [python-master]
           context: nexus
           repository: python-master
           version: << pipeline.number >>
           requires:
-            - pylint [python-master]
+            - pylint
           filters:
             branches:
               only:
                 - master
 
       - general/docker-nexus:
-          name: docker [base-python] [master]
-          image-name: base_python
+          name: docker [pass-operator-python] [master]
+          image-name: pass-operator
           context: nexus
           path: .
           nexus-domain: $DOCKER_MASTER_DOMAIN
