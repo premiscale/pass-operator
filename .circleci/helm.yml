@@ -1,10 +1,6 @@
 version: 2.1
 
 
-orbs:
-  shellcheck: circleci/shellcheck@3.1.1
-
-
 jobs:
   kubeconform:
     description: KubeConform validates CRDs
@@ -19,7 +15,7 @@ jobs:
       path:
         description: Path to CRDs to validate.
         type: string
-        default: helm/crds
+        default: crds/
       output:
         description: output format - json, junit, pretty, tap, text (default "text")
         type: string
@@ -36,7 +32,7 @@ jobs:
     steps:
       - checkout
       - run:
-          description: Install KubeConform
+          name: Install KubeConform
           command: |+
             wget https://github.com/yannh/kubeconform/releases/download/v<< parameters.version >>/kubeconform-linux-amd64.tar.gz -O kubeconform-linux.tar.gz
             mkdir kubeconform
@@ -44,10 +40,9 @@ jobs:
             sudo install kubeconform/kubeconform /usr/bin/kubeconform
             rm -rf kubeconform/
       - run:
-          description: KubeConform CRDs
+          name: KubeConform CRDs
           command: |+
             kubeconform -exit-on-error -n 4 -output << parameters.output >> -strict -summary << parameters.path >>
-
 
 
 workflows:
