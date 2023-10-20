@@ -4,7 +4,7 @@ setup: true
 
 
 orbs:
-  dynamic: bjd2385/dynamic-continuation@3.6.12
+  dynamic: bjd2385/dynamic-continuation@3.7.0
   general: bjd2385/general@0.7.5
   slack: circleci/slack@4.12.5
 
@@ -13,6 +13,7 @@ workflows:
   pass-operator:
     jobs:
       - dynamic/continue:
+          default-branch: master
           context: circleci
 
       - slack/on-hold:
