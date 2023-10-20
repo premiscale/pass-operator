@@ -25,6 +25,7 @@ workflows:
           context: nexus
           repository: python-develop
           version: 0.0.<< pipeline.number >>
+          pypirc-config: .pypirc
           requires:
             - pylint
           filters:
@@ -58,6 +59,7 @@ workflows:
           context: nexus
           repository: python-master
           version: 0.0.<< pipeline.number >>
+          pypirc-config: .pypirc
           requires:
             - pylint
           filters:
