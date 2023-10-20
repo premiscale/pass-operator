@@ -73,3 +73,11 @@ repos:
     rev: v0.0.9
     hooks:
     -   id: msg-issue-prefix
+
+  # - repo: local
+  #   hooks:
+  #     - id: kubeconform
+  #       name: kubeconform
+  #       language: system
+  #       entry: kubeconform -exit-on-error -n 4 -output text -strict -summary -schema-location default -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' helm/operator/crds/
+  #       files: '.*.ya?ml'

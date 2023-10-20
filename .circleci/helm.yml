@@ -46,7 +46,7 @@ jobs:
 
 
 workflows:
-  scripts:
+  helm:
     jobs:
       - kubeconform:
           path: helm/operator/crds/

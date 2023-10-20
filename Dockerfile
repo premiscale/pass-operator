@@ -18,6 +18,7 @@ RUN chmod +x /tini
 
 ARG PASS_VERSION=1.7.4-5
 RUN apt update \
+    && apt list -a pass \
     && apt install -y pass="$PASS_VERSION" \
     && rm -rf /var/apt/lists/*
 
