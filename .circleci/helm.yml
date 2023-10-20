@@ -41,7 +41,7 @@ jobs:
             wget https://github.com/yannh/kubeconform/releases/download/v<< parameters.version >>/kubeconform-linux-amd64.tar.gz -O kubeconform-linux.tar.gz
             mkdir kubeconform
             tar -zxvf kubeconform-linux.tar.gz -C kubeconform
-            install kubeconform/kubeconform /usr/bin/kubeconform
+            sudo install kubeconform/kubeconform /usr/bin/kubeconform
             rm -rf kubeconform/
       - run:
           description: KubeConform CRDs
