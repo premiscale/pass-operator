@@ -16,8 +16,10 @@ ARG TINI_VERSION=v0.19.0
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
 RUN chmod +x /tini
 
-RUN apt update && apt install -y pass \
-    rm -rf /var/apt/lists/*
+ARG PASS_VERSION=1.7.4-5
+RUN apt update \
+    && apt install -y pass="$PASS_VERSION" \
+    && rm -rf /var/apt/lists/*
 
 RUN useradd -rm -d /opt/pass-operator -s /bin/bash -g root -G sudo -u 1001 operator
 
@@ -35,8 +37,8 @@ ARG PYTHON_PACKAGE_VERSION=0.0.1
 ENV PATH=${PATH}:/opt/pass-operator/.local/bin
 
 # Install and initialize PremiScale.
-RUN mkdir -p "$HOME"/.local/bin && \
-    pip install --upgrade pip && \
-    pip install --no-cache-dir --no-input --extra-index-url="${PYTHON_INDEX}" pass-operator=="${PYTHON_PACKAGE_VERSION}"
+RUN mkdir -p "$HOME"/.local/bin \
+    && pip install --upgrade pip \
+    && pip install --no-cache-dir --no-input --extra-index-url="${PYTHON_INDEX}" pass-operator=="${PYTHON_PACKAGE_VERSION}"
 
-ENTRYPOINT [ "/tini", "--". "/bin/bash", "-c", "passop" ]
+ENTRYPOINT [ "/tini", "--". "/bin/bash", "-c", "passoperator" ]

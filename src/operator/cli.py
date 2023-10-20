@@ -8,6 +8,7 @@ import sys
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from importlib import metadata as meta
 from enum import Enum
+from src.operator.daemon import start
 
 
 __version__ = meta.version('pass-operator')
@@ -99,7 +100,7 @@ def main() -> None:
 
     parser.add_argument(
         '--git-branch', type=str, default='main',
-        help='Git branch to clone from the repository.'
+        help='Git branch to pull secrets from in repository.'
     )
 
     args = parser.parse_args()
@@ -123,3 +124,4 @@ def main() -> None:
             filemode='a'
         )
 
+    start(__version__)
