@@ -1,0 +1,56 @@
+version: 2.1
+
+
+orbs:
+  shellcheck: circleci/shellcheck@3.1.1
+
+
+jobs:
+  kubeconform:
+    description: KubeConform validates CRDs
+    docker:
+      - image: cimg/base:2023.09
+    resource_class: << parameters.resource_class >>
+    parameters:
+      version:
+        description: Version of KubeConform to install.
+        type: string
+        default: 0.6.3
+      path:
+        description: Path to CRDs to validate.
+        type: string
+        default: helm/crds
+      output:
+        description: output format - json, junit, pretty, tap, text (default "text")
+        type: string
+        default: text
+      resource_class:
+        description: Resource class.
+        type: enum
+        enum:
+          - small
+          - medium
+          - large
+          - xlarge
+        default: small
+    steps:
+      - checkout
+      - run:
+          description: Install KubeConform
+          command: |+
+            wget https://github.com/yannh/kubeconform/releases/download/v<< parameters.version >>/kubeconform-linux-amd64.tar.gz -O kubeconform-linux.tar.gz
+            mkdir kubeconform
+            tar -zxvf kubeconform-linux.tar.gz -C kubeconform
+            install kubeconform/kubeconform /usr/bin/kubeconform
+            rm -rf kubeconform/
+      - run:
+          description: KubeConform CRDs
+          command: |+
+            kubeconform -exit-on-error -n 4 -output << parameters.output >> -strict -summary << parameters.path >>
+
+
+
+workflows:
+  scripts:
+    jobs:
+      - kubeconform
