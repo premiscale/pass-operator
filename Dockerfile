@@ -16,7 +16,7 @@ ARG TINI_VERSION=v0.19.0
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
 RUN chmod +x /tini
 
-ARG PASS_VERSION=1.7.4-5
+ARG PASS_VERSION=1.7.3-2
 RUN apt update \
     && apt list -a pass \
     && apt install -y pass="$PASS_VERSION" \
