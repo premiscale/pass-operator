@@ -2,7 +2,7 @@ version: 2.1
 
 
 orbs:
-  general: premiscale/general@1.0.1
+  general: premiscale/general@dev:alpha
 
 
 executors:
