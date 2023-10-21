@@ -42,4 +42,4 @@ RUN mkdir -p "$HOME"/.local/bin \
     && pip install --upgrade pip \
     && pip install --no-cache-dir --no-input --extra-index-url="${PYTHON_INDEX}" pass-operator=="${PYTHON_PACKAGE_VERSION}"
 
-ENTRYPOINT [ "/tini", "--". "/bin/bash", "-c", "passoperator" ]
+ENTRYPOINT [ "/tini", "--". "/bin/bash", "-c", "passoperator " ]

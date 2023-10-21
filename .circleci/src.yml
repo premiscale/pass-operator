@@ -2,7 +2,7 @@ version: 2.1
 
 
 orbs:
-  general: premiscale/general@1.0.0
+  general: premiscale/general@dev:alpha
 
 
 executors:
@@ -34,11 +34,29 @@ workflows:
                 - master
 
       - general/docker-nexus:
-          name: docker [pass-operator-python] [develop]
+          name: docker nexus [pass-operator-python] [develop]
           image-name: pass-operator
           context: nexus
           path: .
           nexus-domain: $DOCKER_DEVELOP_DOMAIN
+          args: >-
+            --build-arg=PYTHON_PACKAGE_VERSION=0.0.<< pipeline.number >>
+            --build-arg=PYTHON_USERNAME=$NEXUS_USERNAME
+            --build-arg=PYTHON_PASSWORD=$NEXUS_PASSWORD
+            --build-arg=PYTHON_REPOSITORY=python-develop
+          tag: 0.0.<< pipeline.number >>
+          requires:
+            - twine upload [python-develop]
+          filters:
+            branches:
+              ignore:
+                - master
+
+      - general/docker-hub:
+          name: dockerhub [pass-operator-python] [develop]
+          image-name: pass-operator
+          context: dockerhub
+          path: .
           args: >-
             --build-arg=PYTHON_PACKAGE_VERSION=0.0.<< pipeline.number >>
             --build-arg=PYTHON_USERNAME=$NEXUS_USERNAME
