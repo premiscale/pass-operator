@@ -22,8 +22,7 @@ RUN apt update \
     && apt install -y pass="$PASS_VERSION" \
     && rm -rf /var/apt/lists/*
 
-RUN groupadd -g 1001 operator \
-    && useradd -rm -d /opt/pass-operator -s /bin/bash -g operator -u 1001 operator
+RUN useradd -rm -d /opt/pass-operator -s /bin/bash -g operator -u 1001 operator
 
 WORKDIR /opt/pass-operator
 
