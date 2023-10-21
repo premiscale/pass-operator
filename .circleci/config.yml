@@ -5,7 +5,7 @@ setup: true
 
 orbs:
   dynamic: bjd2385/dynamic-continuation@3.7.1
-  general: premiscale/general@1.0.1
+  general: premiscale/general@1.0.2
   slack: circleci/slack@4.12.5
 
 
@@ -58,7 +58,7 @@ workflows:
               only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/
 
       - general/python-release-poetry:
-          name: pypi pass-operator upload [python]
+          name: nexus password-store-operator upload [python]
           context: nexus
           repository: python
           requires:
@@ -69,9 +69,21 @@ workflows:
             tags:
               only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/
 
+      - general/python-release-poetry:
+          name: pypi password-store-operator upload [python]
+          context: pypi
+          repository: python
+          requires:
+            - request-approval
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/
+
       - general/docker-nexus:
-          name: docker [pass-operator] [tag]
-          image-name: pass-operator
+          name: docker [password-store-operator] [tag]
+          image-name: password-store-operator
           context: nexus
           nexus-domain: $DOCKER_DOMAIN
           args: >-
@@ -79,9 +91,29 @@ workflows:
             --build-arg=PYTHON_USERNAME=$NEXUS_USERNAME
             --build-arg=PYTHON_PASSWORD=$NEXUS_PASSWORD
             --build-arg=PYTHON_REPOSITORY=python
-          tag: 0.0.<< pipeline.number >>
           requires:
-            - pypi pass-operator upload [python]
+            - nexus password-store-operator upload [python]
+            - request-approval
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/
+
+      - general/docker-hub:
+          name: dockerhub [password-store-operator] [tag]
+          image-name: password-store-operator
+          context:
+            - nexus
+            - dockerhub
+          # This installs the artifact from my private registry instead of the public one.
+          args: >-
+            --build-arg=PYTHON_PACKAGE_VERSION=0.0.<< pipeline.number >>
+            --build-arg=PYTHON_USERNAME=$NEXUS_USERNAME
+            --build-arg=PYTHON_PASSWORD=$NEXUS_PASSWORD
+            --build-arg=PYTHON_REPOSITORY=python-develop
+          requires:
+            - nexus password-store-operator upload [python]
             - request-approval
           filters:
             branches:
