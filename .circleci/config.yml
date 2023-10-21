@@ -73,7 +73,6 @@ workflows:
           name: docker [pass-operator] [tag]
           image-name: pass-operator
           context: nexus
-          path: Dockerfile
           nexus-domain: $DOCKER_DOMAIN
           args: >-
             --build-arg=PYTHON_PACKAGE_VERSION=$CIRCLE_TAG

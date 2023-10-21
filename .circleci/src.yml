@@ -37,7 +37,6 @@ workflows:
           name: docker nexus [pass-operator-python] [develop]
           image-name: pass-operator
           context: nexus
-          path: .
           nexus-domain: $DOCKER_DEVELOP_DOMAIN
           args: >-
             --build-arg=PYTHON_PACKAGE_VERSION=0.0.<< pipeline.number >>
@@ -58,7 +57,6 @@ workflows:
           context:
             - nexus
             - dockerhub
-          path: .
           args: >-
             --build-arg=PYTHON_PACKAGE_VERSION=0.0.<< pipeline.number >>
             --build-arg=PYTHON_USERNAME=$NEXUS_USERNAME
@@ -91,7 +89,6 @@ workflows:
           name: docker [pass-operator-python] [master]
           image-name: pass-operator
           context: nexus
-          path: .
           nexus-domain: $DOCKER_MASTER_DOMAIN
           args: >-
             --build-arg=PYTHON_PACKAGE_VERSION=0.0.<< pipeline.number >>
