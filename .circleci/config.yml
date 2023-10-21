@@ -10,7 +10,7 @@ orbs:
 
 
 workflows:
-  pass-operator:
+  password-store-operator:
     jobs:
       - dynamic/continue:
           default-branch: master

@@ -56,8 +56,8 @@ workflows:
           name: dockerhub [pass-operator-python] [develop]
           image-name: pass-operator
           context:
-            - dockerhub
             - nexus
+            - dockerhub
           path: .
           args: >-
             --build-arg=PYTHON_PACKAGE_VERSION=0.0.<< pipeline.number >>
