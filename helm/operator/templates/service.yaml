@@ -1,0 +1,46 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.service.name | default .Chart.Name }}
+  namespace: {{ .Values.global.namespace | default .Release.Namespace }}
+  {{- with .Values.service.labels }}
+  labels:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.service.type }}
+  {{- with .Values.service.externalIPs }}
+  externalIPs:
+    {{- toYaml . }}
+  {{- end }}
+  ports:
+    {{- with .Values.service.ports }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  selector:
+    {{- with .Values.service.selectorLabels }}
+      {{- range $k, $v := . }}
+    {{ $k }}: {{ tpl $v $ }}
+      {{- end }}
+    {{- end }}
+  {{- with .Values.service.healthCheckNodePort }}
+  healthCheckNodePort: {{ . }}
+  {{- end }}
+  {{- if ne .Values.service.internalTrafficPolicy "Cluster" }}
+  internalTrafficPolicy: {{ .Values.service.internalTrafficPolicy }}
+  {{- end }}
+  {{- with .Values.service.ipFamilyPolicy }}
+  ipFamilyPolicy: {{ . }}
+  {{- end }}
+  {{- if ne .Values.service.sessionAffinity "None" }}
+  sessionAffinity: {{ .Values.service.sessionAffinity }}
+  {{- end }}
+  {{- if (((.Values.service.sessionAffinityConfig).clientIP).timeoutSeconds) }}
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: {{ .Values.service.sessionAffinityConfig.clientIP.timeoutSeconds }}
+  {{- end }}

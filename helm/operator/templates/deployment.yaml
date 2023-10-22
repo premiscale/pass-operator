@@ -1,0 +1,192 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ default .Values.deployment.name .Chart.Name }}
+  namespace: {{ .Values.global.namespace | default .Release.Namespace }}
+  {{- with .Values.deployment.labels }}
+  labels:
+    {{- range $k, $v := . }}
+    {{ $k }}: {{ tpl $v $ }}
+    {{- end }}
+  {{- end }}
+  {{- with .Values.deployment.annotations }}
+  annotations:
+    {{- range $k, $v := . }}
+    {{ $k }}: {{ tpl $v $ }}
+    {{- end }}
+  {{- end }}
+spec:
+  ## DeploymentSpec v1 core
+  minReadySeconds: {{ .Values.deployment.minReadySeconds }}
+  progressDeadlineSeconds: {{ .Values.deployment.progressDeadlineSeconds }}
+  replicas: {{ .Values.deployment.replicas }}
+  {{- with .Values.deployment.strategy }}
+  strategy:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- if ne (int64 .Values.deployment.revisionHistoryLimit) 10 }}
+  revisionHistoryLimit: {{ .Values.deployment.revisionHistoryLimit }}
+  {{- end }}
+  # Select which pods (by label) this Deployment spec is targeting.
+  selector:
+    matchLabels:
+      {{- with .Values.deployment.podLabels }}
+        {{- range $k, $v := . }}
+      {{ $k }}: {{ tpl $v $ }}
+        {{- end }}
+      {{- end }}
+  template:
+    ## PodTemplateSpec v1 core
+    metadata:
+      {{- with .Values.deployment.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- with .Values.deployment.podLabels }}
+          {{- range $k, $v := . }}
+        {{ $k }}: {{ tpl $v $ }}
+          {{- end }}
+        {{- end }}
+    spec:
+      ## PodSpec v1core
+      {{- with .Values.deployment.activeDeadlineSeconds }}
+      activeDeadlineSeconds: {{ . }}
+      {{- end }}
+      {{- with .Values.deployment.hostAliases }}
+      hostAliases:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.deployment.hostIPC }}
+      hostIPC: {{ . }}
+      {{- end }}
+      {{- with .Values.deployment.hostNetwork }}
+      hostNetwork: {{ . }}
+      {{- end }}
+      {{- if gt (len ((((.Values).deployment).pullSecrets) | default "")) 0 }}
+      imagePullSecrets:
+        {{- range $secret := .Values.deployment.pullSecrets }}
+        - name: {{ $secret }}
+        {{- end }}
+      {{- end }}
+      {{- if ne (default .Values.deployment.serviceAccountName "default") "default" }}
+      serviceAccountName: {{ .Values.deployment.serviceAccountName }}
+      {{- end }}
+      {{- with .Values.deployment.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.deployment.initContainers }}
+      initContainers:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.deployment.nodeName }}
+      nodeName: {{ . | quote }}
+      {{- end }}
+      {{- with .Values.deployment.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.deployment.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.deployment.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        ## Container v1 core (array)
+        - name: {{ tpl (default .Values.deployment.name .Chart.Name) $ }}
+          {{- with .Values.deployment.args }}
+          args:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.deployment.command }}
+          command:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.deployment.stdin }}
+          stdin: {{ . }}
+          {{- end }}
+          {{- with .Values.deployment.stdinOnce }}
+          stdinOnce: {{ . }}
+          {{- end }}
+          {{- if (((.Values).deployment).terminationMessagePath) }}
+          terminationMessagePath: {{ .Values.deployment.terminationMessagePath | quote }}
+          {{- end }}
+          {{- with .Values.deployment.env }}
+          env:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.deployment.envFrom }}
+          envFrom:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.deployment.tty }}
+          tty: {{ . }}
+          {{- end }}
+          {{- with .Values.deployment.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if (((.Values.global).image).registry) }}
+          image: {{ .Values.global.image.registry }}/{{ .Values.deployment.image.name }}:{{ .Values.deployment.image.tag }}
+          {{- else }}
+          image: {{ .Values.deployment.image.registry }}/{{ .Values.deployment.image.name }}:{{ .Values.deployment.image.tag }}
+          {{- end }}
+          imagePullPolicy: {{ default .Values.deployment.image.pullPolicy "Always" }}
+          {{- if or ((.Values.deployment.lifecycle).preStop) ((.Values.deployment.lifecycle).postStart) }}
+          lifecycle:
+            {{- with .Values.deployment.lifecycle.preStop }}
+            preStop:
+              {{- toYaml . | nindent 14 }}
+            {{- end }}
+            {{- with .Values.deployment.lifecycle.postStart }}
+            postStart:
+              {{- toYaml . | nindent 14 }}
+            {{- end }}
+          {{- end }}
+          {{- with .Values.deployment.startupProbe }}
+            {{- if .enabled }}
+          startupProbe:
+            httpGet:
+              path: {{ .path }}
+              port: {{ .port }}
+            {{- toYaml .config | nindent 12 }}
+            {{- end }}
+          {{- end }}
+          {{- with .Values.deployment.livenessProbe }}
+            {{- if .enabled }}
+          livenessProbe:
+            httpGet:
+              path: {{ .path }}
+              port: {{ .port }}
+            {{- toYaml .config | nindent 12 }}
+            {{- end }}
+          {{- end }}
+          {{- with .Values.deployment.readinessProbe }}
+            {{- if .enabled }}
+          readinessProbe:
+            httpGet:
+              path: {{ .path }}
+              port: {{ .port }}
+            {{- toYaml .config | nindent 12 }}
+            {{- end }}
+          {{- end }}
+          {{- with .Values.deployment.ports }}
+          ports:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.deployment.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.deployment.volumeDevices }}
+          volumeDevices:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.deployment.volumeMounts }}
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}

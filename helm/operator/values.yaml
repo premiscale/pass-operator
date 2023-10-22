@@ -1,0 +1,13 @@
+global:
+  image:
+    registry: docker.io
+
+
+deployment:
+  image:
+    name: password-store-operator
+    tag: latest
+    pullPolicy: IfNotPresent
+
+
+service: {}
