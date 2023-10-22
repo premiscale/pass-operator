@@ -2,7 +2,7 @@ version: 2.1
 
 
 orbs:
-  general: premiscale/general@1.0.2
+  general: premiscale/general@1.0.3
 
 
 executors:
@@ -17,6 +17,10 @@ workflows:
           name: pylint
           modules_path: src/
           context: nexus
+
+      - general/helm-lint:
+          name: helm lint [helm/operator]
+          chart-path: helm/operator
 
       # develop
 
@@ -51,6 +55,38 @@ workflows:
               ignore:
                 - master
 
+      - general/helm-release-nexus:
+          name: helm build and push [helm/operator] [develop]
+          context: nexus
+          repo: $HELM_DEVELOP_REPOSITORY_URL
+          version: 0.0.<< pipeline.number >>
+          image-tag: 0.0.<< pipeline.number >>
+          image-tag-path: .deployment.image.tag
+          requires:
+            - docker nexus [password-store-operator] [develop]
+          filters:
+            branches:
+              ignore:
+                - master
+
+      - general/helm-upgrade:
+          name: helm upgrade install [helm/operator] [develop]
+          cluster: $CHELSEA_CLUSTER
+          namespace: password-store-operator-develop
+          repo: $HELM_DEVELOP_REPOSITORY_URL
+          version: 0.0.<< pipeline.number >>
+          additional-values: |
+            --set global.registry="$DOCKER_DEVELOP_DOMAIN"
+          requires:
+            - helm build and push [helm/operator] [develop]
+          context:
+            - kubeconfig
+            - nexus
+          filters:
+            branches:
+              ignore:
+                - master
+
       # master
 
       - general/python-release-poetry:
@@ -67,7 +103,7 @@ workflows:
                 - master
 
       - general/docker-nexus:
-          name: docker [password-operator-python] [master]
+          name: docker nexus [password-store-operator] [master]
           image-name: password-store-operator
           context: nexus
           nexus-domain: $DOCKER_MASTER_DOMAIN
@@ -79,6 +115,38 @@ workflows:
           tag: 0.0.<< pipeline.number >>
           requires:
             - twine upload [python-master]
+          filters:
+            branches:
+              only:
+                - master
+
+      - general/helm-release-nexus:
+          name: helm build and push [helm/operator] [master]
+          context: nexus
+          repo: $HELM_MASTER_REPOSITORY_URL
+          version: 0.0.<< pipeline.number >>
+          image-tag: 0.0.<< pipeline.number >>
+          image-tag-path: .deployment.image.tag
+          requires:
+            - docker nexus [password-store-operator] [master]
+          filters:
+            branches:
+              only:
+                - master
+
+      - general/helm-upgrade:
+          name: helm upgrade install [helm/operator] [master]
+          cluster: $CHELSEA_CLUSTER
+          namespace: password-store-operator-master
+          repo: $HELM_MASTER_REPOSITORY_URL
+          version: 0.0.<< pipeline.number >>
+          additional-values: |
+            --set global.registry="$DOCKER_MASTER_DOMAIN"
+          requires:
+            - helm build and push [helm/operator] [master]
+          context:
+            - kubeconfig
+            - nexus
           filters:
             branches:
               only:
