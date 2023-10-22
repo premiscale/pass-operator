@@ -20,10 +20,18 @@ pip install --upgrade pass-operator
 
 ### Helm
 
+See the [README](helm/operator/README.md) for more in-depth installation instructions.
+
+#### Registry
+
+```shell
+helm repo add password-store-operator
+```
+
 #### Install
 
 ```shell
-helm install
+helm install password-store-operator
 ```
 
 #### Upgrade
