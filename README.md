@@ -1,4 +1,4 @@
-# Pass kubernetes operator
+# Pasword Store Operator
 
 This Kubernetes operator can be used to sync and decrypt secrets from a [pass](https://www.passwordstore.org/) Git repository.
 
