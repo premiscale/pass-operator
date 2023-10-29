@@ -1,0 +1,5 @@
+!Dockerfile
+!poetry.lock
+!pyproject.toml
+!helm/
+helm/operator/templates/tests/
