@@ -70,9 +70,9 @@ workflows:
               only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/
 
       - general/python-release-poetry:
-          name: pypi password-store-operator upload [python]
+          name: pypi password-store-operator upload [pypi]
           context: pypi
-          repository: python
+          repository: pypi
           requires:
             - request-approval
           filters:
