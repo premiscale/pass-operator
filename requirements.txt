@@ -493,9 +493,9 @@ urllib3==2.0.4 ; python_version >= "3.10" and python_version < "4.0" \
 websocket-client==1.6.2 ; python_version >= "3.10" and python_version < "4.0" \
     --hash=sha256:53e95c826bf800c4c465f50093a8c4ff091c7327023b10bfaff40cf1ef170eaa \
     --hash=sha256:ce54f419dfae71f4bdba69ebe65bf7f0a93fe71bc009ad3a010aacc3eebad537
-werkzeug==2.3.7 ; python_version >= "3.10" and python_version < "4.0" \
-    --hash=sha256:2b8c0e447b4b9dbcc85dd97b6eeb4dcbaf6c8b6c3be0bd654e25553e0a2157d8 \
-    --hash=sha256:effc12dba7f3bd72e605ce49807bbe692bd729c3bb122a3b91747a6ae77df528
+Werkzeug==2.3.8; python_version >= "3.10" and python_version < "4.0" \
+    --hash=sha256:554b257c74bbeb7a0d254160a4f8ffe185243f52a52035060b761ca62d977f03 \
+    --hash=sha256:bba1f19f8ec89d4d607a3bd62f1904bd2e609472d93cd85e9d4e178f472c3748
 yarl==1.9.2 ; python_version >= "3.10" and python_version < "4.0" \
     --hash=sha256:04ab9d4b9f587c06d801c2abfe9317b77cdf996c65a90d5e84ecc45010823571 \
     --hash=sha256:066c163aec9d3d073dc9ffe5dd3ad05069bcb03fcaab8d221290ba99f9f69ee3 \
