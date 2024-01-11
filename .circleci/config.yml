@@ -4,8 +4,8 @@ setup: true
 
 
 orbs:
-  dynamic: bjd2385/dynamic-continuation@3.7.1
-  general: premiscale/general@1.0.3
+  dynamic: bjd2385/dynamic-continuation@3.8.1
+  general: premiscale/general@1.0.12
   slack: circleci/slack@4.12.5
 
 
@@ -13,7 +13,7 @@ workflows:
   password-store-operator:
     jobs:
       - dynamic/continue:
-          default-branch: master
+          base-revision: master
           context: circleci
 
       - slack/on-hold:
