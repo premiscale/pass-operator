@@ -6,6 +6,7 @@ from typing import Any
 
 import kopf
 import logging
+import kubernetes
 
 
 log = logging.getLogger(__name__)
