@@ -31,7 +31,7 @@ kopf = "^1.36.2"
 pre-commit = "^3.3.2"
 poetry = "^1.5.1"
 mypy = "^1.0.1"
-pylint = "^2.16.2"
+pylint = "^3.0.0"
 
 [build-system]
 requires = ["poetry-core"]
