@@ -59,6 +59,7 @@ workflows:
           name: helm build and push [helm/operator] [develop]
           context: nexus
           repo: $HELM_DEVELOP_REPOSITORY_URL
+          path: helm/operator
           version: 0.0.<< pipeline.number >>
           image-tag: 0.0.<< pipeline.number >>
           image-tag-path: .deployment.image.tag
@@ -124,6 +125,7 @@ workflows:
           name: helm build and push [helm/operator] [master]
           context: nexus
           repo: $HELM_MASTER_REPOSITORY_URL
+          path: helm/operator
           version: 0.0.<< pipeline.number >>
           image-tag: 0.0.<< pipeline.number >>
           image-tag-path: .deployment.image.tag
