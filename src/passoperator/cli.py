@@ -40,7 +40,7 @@ class LogLevel(Enum):
         try:
             return cls[s.lower()]
         except KeyError:
-            log.error('Must specify an accepted log level.')
+            log.error(f'ERROR: Must specify an accepted log level, received {s}')
             sys.exit(1)
 
 

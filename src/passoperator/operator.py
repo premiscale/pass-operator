@@ -17,8 +17,6 @@ from src.passoperator.git import GitRepo
 
 
 log = logging.getLogger(__name__)
-managed_secrets: Dict[str, str] = dict()
-api = kubernetes.client.CoreV1Api()
 
 
 class PassOperator:
@@ -35,6 +33,9 @@ class PassOperator:
             branch=git_repo_branch,
             clone_location=git_repo_clone_location
         )
+
+        self.managed_secrets: Dict[str, str] = dict()
+        self._api = kubernetes.client.CoreV1Api()
 
     @property
     def interval(self) -> int:
@@ -72,7 +73,7 @@ class PassOperator:
             namespace_path (str): Namespace path in the local filesystem. Defaults to '/var/run/secrets/kubernetes.io/serviceaccount/namespace'.
 
         Returns:
-            str: _description_
+            str: the namespace this process is running within on K8s.
         """
         if os.path.exists(namespace_path):
             with open(namespace_path) as f:
@@ -87,12 +88,13 @@ class PassOperator:
         """
         Start the kopf daemon.
 
+        Args:
+            kopf_config (dict): kopf config dictionary.
+
         Returns:
             int: exit code.
         """
-        return kopf.run(
-
-        )
+        return kopf.run(**kopf_config)
 
     @kopf.on.cleanup()
     def cleanup(self, **kwargs) -> None:
