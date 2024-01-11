@@ -140,8 +140,9 @@ workflows:
           cluster: $CHELSEA_CLUSTER
           namespace: password-store-operator
           repo: $HELM_REPOSITORY_URL
-          additional-values: |
+          additional-values: >-
             --set global.registry="$DOCKER_DOMAIN"
+            --set deployment.image.pullSecrets[0]=nexus-docker-registry
           requires:
             - helm [helm/operator] [tag]
           context:

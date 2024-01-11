@@ -76,8 +76,9 @@ workflows:
           namespace: password-store-operator-develop
           repo: $HELM_DEVELOP_REPOSITORY_URL
           version: 0.0.<< pipeline.number >>
-          additional-values: |
+          additional-values: >-
             --set global.image.registry="$DOCKER_DEVELOP_DOMAIN"
+            --set deployment.image.pullSecrets[0]=nexus-docker-registry
           requires:
             - helm build and push [helm/operator] [develop]
           context:
@@ -142,8 +143,9 @@ workflows:
           namespace: password-store-operator-master
           repo: $HELM_MASTER_REPOSITORY_URL
           version: 0.0.<< pipeline.number >>
-          additional-values: |
+          additional-values: >-
             --set global.image.registry="$DOCKER_MASTER_DOMAIN"
+            --set deployment.image.pullSecrets[0]=nexus-docker-registry
           requires:
             - helm build and push [helm/operator] [master]
           context:
