@@ -7,7 +7,17 @@ deployment:
   image:
     name: password-store-operator
     tag: latest
-    pullPolicy: IfNotPresent
+    pullPolicy: Always
 
 
-service: {}
+service:
+  create: true
+  type: ClusterIP
+  ports:
+    - appProtocol: http
+      name: http
+      port: 443
+      targetPort: 443
+
+serviceAccount:
+  create: true

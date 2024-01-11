@@ -17,24 +17,23 @@ metadata:
   {{- end }}
 spec:
   ## DeploymentSpec v1 core
-  minReadySeconds: {{ .Values.deployment.minReadySeconds }}
-  progressDeadlineSeconds: {{ .Values.deployment.progressDeadlineSeconds }}
-  replicas: {{ .Values.deployment.replicas }}
+  {{- with .Values.deployment.minReadySeconds }}
+  minReadySeconds: {{ . }}
+  {{- end }}
+  {{- with .Values.deployment.progressDeadlineSeconds }}
+  progressDeadlineSeconds: {{ . }}
+  {{- end }}
+  replicas: {{ .Values.deployment.replicas | default 1 }}
   {{- with .Values.deployment.strategy }}
   strategy:
     {{- toYaml . | nindent 4 }}
   {{- end }}
   {{- if ne (int64 .Values.deployment.revisionHistoryLimit) 10 }}
-  revisionHistoryLimit: {{ .Values.deployment.revisionHistoryLimit }}
+  revisionHistoryLimit: {{ .Values.deployment.revisionHistoryLimit | default 10 }}
   {{- end }}
   # Select which pods (by label) this Deployment spec is targeting.
   selector:
-    matchLabels:
-      {{- with .Values.deployment.podLabels }}
-        {{- range $k, $v := . }}
-      {{ $k }}: {{ tpl $v $ }}
-        {{- end }}
-      {{- end }}
+    matchLabels: {{ include "password-store-operator.selectorLabels" . | nindent 6 }}
   template:
     ## PodTemplateSpec v1 core
     metadata:
@@ -42,12 +41,7 @@ spec:
       annotations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      labels:
-        {{- with .Values.deployment.podLabels }}
-          {{- range $k, $v := . }}
-        {{ $k }}: {{ tpl $v $ }}
-          {{- end }}
-        {{- end }}
+      labels: {{ include "password-store-operator.selectorLabels" . | nindent 8 }}
     spec:
       ## PodSpec v1core
       {{- with .Values.deployment.activeDeadlineSeconds }}
