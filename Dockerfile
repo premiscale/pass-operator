@@ -20,9 +20,9 @@ ARG PASS_VERSION=1.7.3-2
 RUN apt update \
     && apt list -a pass \
     && apt install -y pass="$PASS_VERSION" \
-    && rm -rf /var/apt/lists/* \
-    && groupadd operator
+    && rm -rf /var/apt/lists/*
 
+# Add 'operator' user and group.
 RUN useradd -rm -d /opt/pass-operator -s /bin/bash -g operator -u 1001 operator
 
 WORKDIR /opt/pass-operator
