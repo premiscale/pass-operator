@@ -142,7 +142,7 @@ workflows:
           repo: $HELM_REPOSITORY_URL
           additional-values: >-
             --set global.registry="$DOCKER_DOMAIN"
-            --set deployment.image.pullSecrets[0]=nexus-docker-registry
+            --set deployment.pullSecrets[0]=nexus-docker-registry
           requires:
             - helm [helm/operator] [tag]
           context:

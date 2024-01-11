@@ -78,7 +78,7 @@ workflows:
           version: 0.0.<< pipeline.number >>
           additional-values: >-
             --set global.image.registry="$DOCKER_DEVELOP_DOMAIN"
-            --set deployment.image.pullSecrets[0]=nexus-docker-registry
+            --set deployment.pullSecrets[0]=nexus-docker-registry
           requires:
             - helm build and push [helm/operator] [develop]
           context:
@@ -145,7 +145,7 @@ workflows:
           version: 0.0.<< pipeline.number >>
           additional-values: >-
             --set global.image.registry="$DOCKER_MASTER_DOMAIN"
-            --set deployment.image.pullSecrets[0]=nexus-docker-registry
+            --set deployment.pullSecrets[0]=nexus-docker-registry
           requires:
             - helm build and push [helm/operator] [master]
           context:
