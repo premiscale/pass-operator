@@ -1,21 +1,33 @@
-# Pass kubernetes operator
+# Pasword Store Operator
 
 This Kubernetes operator can be used to sync and decrypt secrets from a [pass](https://www.passwordstore.org/) Git repository.
 
-## Installation
+## Use
+
+### PyPi (Pip)
+
+#### Install
 
 ```shell
-pip install pass-operator
+pip install password-store-operator
 ```
-
-## Upgrading
 
 ```shell
-pip install --upgrade pass-operator
+poetry add password-store-operator
 ```
 
-## Plan
+### Helm
 
-1. Get a 1c 1GiB version 1.0.0 out there.
-2. Cut version 2.0.0 with multiprocessing / queuing in the event there's a lot of namespaces to handle.
-3. cut version 3.0.0 with a frontend / ingress.
+See the [README](helm/operator/README.md) for more in-depth installation instructions.
+
+#### Registry
+
+```shell
+helm repo add password-store-operator
+```
+
+#### Install
+
+```shell
+helm install password-store-operator
+```

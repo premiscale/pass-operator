@@ -4,16 +4,16 @@ setup: true
 
 
 orbs:
-  dynamic: bjd2385/dynamic-continuation@3.7.0
-  general: bjd2385/general@0.7.5
+  dynamic: bjd2385/dynamic-continuation@3.8.1
+  general: premiscale/general@1.0.12
   slack: circleci/slack@4.12.5
 
 
 workflows:
-  pass-operator:
+  password-store-operator:
     jobs:
       - dynamic/continue:
-          default-branch: master
+          base-revision: master
           context: circleci
 
       - slack/on-hold:
@@ -58,7 +58,7 @@ workflows:
               only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/
 
       - general/python-release-poetry:
-          name: pypi pass-operator upload [python]
+          name: nexus password-store-operator upload [python]
           context: nexus
           repository: python
           requires:
@@ -69,21 +69,84 @@ workflows:
             tags:
               only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/
 
+      - general/python-release-poetry:
+          name: pypi password-store-operator upload [pypi]
+          context: pypi
+          repository: pypi
+          requires:
+            - request-approval
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/
+
       - general/docker-nexus:
-          name: docker [pass-operator] [tag]
-          image-name: pass-operator
+          name: docker [password-store-operator] [tag]
+          image-name: password-store-operator
           context: nexus
-          path: Dockerfile
           nexus-domain: $DOCKER_DOMAIN
           args: >-
             --build-arg=PYTHON_PACKAGE_VERSION=$CIRCLE_TAG
             --build-arg=PYTHON_USERNAME=$NEXUS_USERNAME
             --build-arg=PYTHON_PASSWORD=$NEXUS_PASSWORD
             --build-arg=PYTHON_REPOSITORY=python
-          tag: 0.0.<< pipeline.number >>
           requires:
-            - pypi pass-operator upload [python]
+            - nexus password-store-operator upload [python]
             - request-approval
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/
+
+      - general/docker-hub:
+          name: dockerhub [password-store-operator] [tag]
+          image-name: password-store-operator
+          context:
+            - nexus
+            - dockerhub
+          # This installs the artifact from my private registry instead of the public one.
+          args: >-
+            --build-arg=PYTHON_PACKAGE_VERSION=0.0.<< pipeline.number >>
+            --build-arg=PYTHON_USERNAME=$NEXUS_USERNAME
+            --build-arg=PYTHON_PASSWORD=$NEXUS_PASSWORD
+            --build-arg=PYTHON_REPOSITORY=python-develop
+          requires:
+            - nexus password-store-operator upload [python]
+            - request-approval
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/
+
+      - general/helm-release-nexus:
+          name: helm [helm/operator] [tag]
+          context: nexus
+          repo: $HELM_REPOSITORY_URL
+          # Uses https://mikefarah.gitbook.io/yq/operators/env-variable-operators#dynamically-update-a-path-from-an-environment-variable
+          image-tag-path: .deployment.image.tag
+          requires:
+            - dockerhub [password-store-operator] [tag]
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/
+
+      - general/helm-upgrade:
+          name: helm upgrade install [helm/operator] [tag]
+          cluster: $CHELSEA_CLUSTER
+          namespace: password-store-operator
+          repo: $HELM_REPOSITORY_URL
+          additional-values: |
+            --set global.registry="$DOCKER_DOMAIN"
+          requires:
+            - helm [helm/operator] [tag]
+          context:
+            - kubeconfig
+            - nexus
           filters:
             branches:
               ignore: /.*/

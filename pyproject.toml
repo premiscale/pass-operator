@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "pass-operator"
+name = "password-store-operator"
 version = "0.0.1"
 description = "A kubernetes operator that syncs and decrypts secrets from pass git repositories"
 authors = ["Emma Doyle <emma@premiscale.com>"]
@@ -38,7 +38,7 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-passop = "src.operator.cli:main"
+passoperator = "src.operator.cli:main"
 
 [tool.mypy]
 python_version = "3.10"
