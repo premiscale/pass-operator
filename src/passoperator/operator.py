@@ -109,13 +109,10 @@ class PassOperator:
         log.info(f'Setting operator priority to {priority}')
         settings.peering.priority = priority
 
-
     @kopf.on.update('PassSecret')
     def update(self, **kwargs: Any) -> None:
         """
-
-        Returns:
-            _type_: _description_
+        An update was received on the PassSecret object, so attempt to update the corresponding Secret.
         """
 
 
