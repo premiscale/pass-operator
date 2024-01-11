@@ -53,5 +53,5 @@ ENV PASSWORD_STORE_OPERATOR_LOG_LEVEL=info \
     GIT_BRANCH=main
 
 
-ENTRYPOINT [ "/tini", "--". "/bin/bash", "-c" ]
+ENTRYPOINT [ "/tini", "--", "/bin/bash", "-c" ]
 CMD [ "passoperator --log-stdout --interval \"$PASSWORD_STORE_OPERATOR_INTERVAL\" --log-level \"$PASSWORD_STORE_LOG_LEVEL\" --ssh-key \"$PRIVATE_SSH_KEY\" --pass-binary \"$PASS_BINARY\" --pass-dir \"$PASS_DIRECTORY\" --gpg-key-id \"$GPG_KEY_ID\" --git-ssh-url \"$GIT_SSH_URL\" --git-branch \"$GIT_BRANCH\"" ]
