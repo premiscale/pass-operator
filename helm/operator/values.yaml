@@ -9,6 +9,14 @@ deployment:
     tag: latest
     pullPolicy: Always
 
+  resources:
+    requests:
+      cpu: 0.25
+      memory: 500Mi
+    limits:
+      cpu: 0.25
+      memory: 500Mi
+
 
 service:
   create: true
