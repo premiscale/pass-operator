@@ -77,7 +77,7 @@ workflows:
           repo: $HELM_DEVELOP_REPOSITORY_URL
           version: 0.0.<< pipeline.number >>
           additional-values: |
-            --set global.registry="$DOCKER_DEVELOP_DOMAIN"
+            --set global.image.registry="$DOCKER_DEVELOP_DOMAIN"
           requires:
             - helm build and push [helm/operator] [develop]
           context:
@@ -143,7 +143,7 @@ workflows:
           repo: $HELM_MASTER_REPOSITORY_URL
           version: 0.0.<< pipeline.number >>
           additional-values: |
-            --set global.registry="$DOCKER_MASTER_DOMAIN"
+            --set global.image.registry="$DOCKER_MASTER_DOMAIN"
           requires:
             - helm build and push [helm/operator] [master]
           context:
