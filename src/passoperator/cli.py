@@ -1,5 +1,5 @@
 """
-A kubernetes operator that syncs and decrypts secrets from pass git repositories
+A kubernetes operator that syncs and decrypts secrets from Linux password store (https://www.passwordstore.org/) git repositories
 """
 
 import logging
@@ -9,7 +9,7 @@ from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from importlib import metadata as meta
 from enum import Enum
 
-from src.operator.operator import PassOperator
+from src.passoperator.operator import PassOperator
 
 
 __version__ = meta.version('password-store-operator')
