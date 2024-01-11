@@ -85,7 +85,7 @@ def main() -> None:
     )
 
     parser.add_argument(
-        '--pass-dir', type=str, default='~/.password-store/',
+        '--pass-dir', type=str, default='/opt/pass-operator/repo',
         help='Pass directory to clone into.'
     )
 
@@ -131,7 +131,10 @@ def main() -> None:
         )
 
     PassOperator(
-        interval=args.interval
+        interval=args.interval,
+        git_repo_url=args.git_ssh_url,
+        git_repo_branch=args.git_branch,
+        git_repo_clone_location=args.pass_dir
     ).daemon_start(
         dict()
     )

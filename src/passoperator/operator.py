@@ -13,6 +13,8 @@ from typing import Any, Dict
 from functools import cache
 from importlib import resources
 
+from src.passoperator.git import GitRepo
+
 
 log = logging.getLogger(__name__)
 managed_secrets: Dict[str, str] = dict()
@@ -24,8 +26,15 @@ class PassOperator:
     Encapsulate operator state.
     """
 
-    def __init__(self, interval: int) -> None:
+    def __init__(self, interval: int, git_repo_url: str, git_repo_branch: str, git_repo_clone_location: str ='/opt/pass-operator/repo') -> None:
         self.interval = interval
+
+        # Clone the pass git repository into the pod.
+        self.pass_git_repo = GitRepo(
+            repo_url=git_repo_url,
+            branch=git_repo_branch,
+            clone_location=git_repo_clone_location
+        )
 
     @property
     def interval(self) -> int:
@@ -86,7 +95,7 @@ class PassOperator:
         )
 
     @kopf.on.cleanup()
-    async def cleanup_fn(logger, **kwargs):
+    def cleanup(self, **kwargs) -> None:
         pass
 
     @kopf.on.startup()

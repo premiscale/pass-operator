@@ -54,7 +54,7 @@ class GitRepo:
 
     def pass_git_pull(self) -> None:
         """
-        Run 'git pull' in the cloned repository.
+        Run 'git pull' in the cloned repository. This method will be called repeatedly, on an interval.
         """
         if not self.cloned:
             self.git_clone()
