@@ -8,10 +8,11 @@ import sys
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from importlib import metadata as meta
 from enum import Enum
-from src.operator.daemon import start
+
+from src.operator.operator import PassOperator
 
 
-__version__ = meta.version('pass-operator')
+__version__ = meta.version('password-store-operator')
 
 log = logging.getLogger(__name__)
 
@@ -103,6 +104,11 @@ def main() -> None:
         help='Git branch to pull secrets from in repository.'
     )
 
+    parser.add_argument(
+        '--interval', type=int, default=60,
+        help='PassSecret reconciliation interval. Defines how often the operator ensures secrets are in alignment with desired state of the git repository.'
+    )
+
     args = parser.parse_args()
 
     if args.version:
@@ -121,7 +127,11 @@ def main() -> None:
             filename=args.log_file,
             format='%(asctime)s | %(levelname)s | %(message)s',
             level=args.log_level,
-            filemode='a'
+            filemode='w'
         )
 
-    start(__version__)
+    PassOperator(
+        interval=args.interval
+    ).daemon_start(
+        dict()
+    )

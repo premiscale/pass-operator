@@ -1,5 +1,5 @@
 """
-Define some high-level methods for interacting with git from pass.
+Define some high-level methods for interacting with a git repository from pass.
 """
 
 
