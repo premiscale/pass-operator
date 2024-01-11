@@ -2,9 +2,9 @@
 
 This Kubernetes operator can be used to sync and decrypt secrets from a [pass](https://www.passwordstore.org/) Git repository.
 
-## Usage
+## Use
 
-### Pip
+### PyPi (Pip)
 
 #### Install
 
@@ -12,10 +12,8 @@ This Kubernetes operator can be used to sync and decrypt secrets from a [pass](h
 pip install password-store-operator
 ```
 
-#### Upgrade
-
 ```shell
-pip install --upgrade pass-operator
+poetry add password-store-operator
 ```
 
 ### Helm
@@ -32,10 +30,4 @@ helm repo add password-store-operator
 
 ```shell
 helm install password-store-operator
-```
-
-#### Upgrade
-
-```shell
-helm upgrade --install
 ```
