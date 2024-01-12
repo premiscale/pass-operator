@@ -1,7 +1,7 @@
 _extends: .github-private
 
 repository:
-  name: password-store-operator
+  name: pass-operator
   description: A kubernetes operator that syncs and decrypts secrets from pass git repositories
   homepage: https://github.com/premiscale/pass-operator
 
