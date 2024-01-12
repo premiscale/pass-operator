@@ -10,8 +10,6 @@ that's often discouraged and typically forbidden at most organizations.
 
 ## How it works
 
-### Introduction
-
 From a high level, this operator continually runs `git pull` on a specified interval to grab updates from a git repository populated with encrypted
 secrets by `pass`. It maps secrets' paths to key values through the application of a [`PassSecret`](helm/operator/crds/PassSecret.yaml) Kubernetes [CRD](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/),
 such as the following.
@@ -32,9 +30,7 @@ spec:
     type: Opaque
 ```
 
-### Advanced introduction
-
-This operator requires the following to work successfully.
+This operator requires the following items to start successfully.
 
 - a private GPG key to decrypt the encrypted `pass` secrets
 - a local password store
@@ -43,9 +39,9 @@ This operator requires the following to work successfully.
 
 I will go more in-depth and explain these requirements in the following sections.
 
-#### Private GPG key
+### Private GPG key
 
-##### Generating GPG keys
+#### Generating GPG keys
 
 Run the following command to generate a GPG key.
 
@@ -53,15 +49,15 @@ Run the following command to generate a GPG key.
 gpg --generate-key
 ```
 
-##### Converting GPG keys from binary to asc
+#### Converting GPG keys from binary to asc
 
 ```shell
 gpg --enarmor /path/to/key.gpg
 ```
 
-#### Password store
+### Password store
 
-#### `pass` git repository
+### `pass` git repository
 
 From the `pass` help text,
 
