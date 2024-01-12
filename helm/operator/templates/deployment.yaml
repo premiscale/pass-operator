@@ -92,22 +92,16 @@ spec:
       containers:
         ## Container v1 core (array)
         - name: {{ tpl (default .Values.deployment.name .Chart.Name) $ }}
-          args: >-
-            --log-stdout
-            --interval "$PASSWORD_STORE_OPERATOR_INTERVAL"
-            --log-level "$PASSWORD_STORE_LOG_LEVEL"
-            --pass-binary "$PASS_BINARY"
-            --pass-dir "$PASS_DIRECTORY"
-            --gpg-key-id "$GPG_KEY_ID"
-            --git-ssh-url "$GIT_SSH_URL"
-            --git-branch "$GIT_BRANCH"
-          {{- with .Values.deployment.extraArgs }}
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-          {{- with .Values.deployment.command }}
-          command:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
+          args: [
+            "--log-stdout",
+            "--interval", "$PASSWORD_STORE_OPERATOR_INTERVAL",
+            "--log-level", "$PASSWORD_STORE_LOG_LEVEL",
+            "--pass-binary", "$PASS_BINARY",
+            "--pass-dir", "$PASS_DIRECTORY",
+            "--gpg-key-id", "$GPG_KEY_ID",
+            "--git-ssh-url", "$GIT_SSH_URL",
+            "--git-branch", "$GIT_BRANCH"
+          ]
           {{- with .Values.deployment.stdin }}
           stdin: {{ . }}
           {{- end }}
