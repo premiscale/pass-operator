@@ -113,6 +113,9 @@ spec:
           env:
             {{- toYaml . | nindent 12 }}
           {{- end }}
+          {{- with .Values.deployment.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           {{- with .Values.deployment.envFrom }}
           envFrom:
             {{- toYaml . | nindent 12 }}

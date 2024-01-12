@@ -17,6 +17,12 @@ deployment:
       cpu: 0.25
       memory: 500Mi
 
+  env:
+    - name: PASSWORD_STORE_OPERATOR_LOG_LEVEL
+      value: info
+    - name: PASSWORD_STORE_OPERATOR_INTERVAL
+      value: 60
+
 
 service:
   create: true
