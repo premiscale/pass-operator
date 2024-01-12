@@ -5,6 +5,7 @@ A kubernetes operator that syncs and decrypts secrets from Linux password store 
 import logging
 import sys
 
+from pathlib import Path
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from importlib import metadata as meta
 from enum import Enum
@@ -71,7 +72,8 @@ def main() -> None:
     )
 
     parser.add_argument(
-        '--log-file', default='/opt/pass-operator/runtime.log'
+        '--log-file', default='/opt/pass-operator/runtime.log', type=str,
+        help='Log file location (if log-stdout is not provided).'
     )
 
     parser.add_argument(
@@ -119,22 +121,31 @@ def main() -> None:
     if args.log_stdout:
         logging.basicConfig(
             stream=sys.stdout,
-            format='%(asctime)s | %(levelname)s | %(message)s',
-            level=args.log_level
+            format='%(asctime)s | %(name)s | %(levelname)s | %(message)s',
+            level=args.log_level.value
         )
     else:
-        logging.basicConfig(
-            filename=args.log_file,
-            format='%(asctime)s | %(levelname)s | %(message)s',
-            level=args.log_level,
-            filemode='w'
-        )
+        try:
+            # Instantiate log path (when logging locally).
+            if not Path.exists(Path(args.log_file)):
+                Path(args.log_file).parent.mkdir(parents=True, exist_ok=True)
 
-    PassOperator(
-        interval=args.interval,
-        git_repo_url=args.git_ssh_url,
-        git_repo_branch=args.git_branch,
-        git_repo_clone_location=args.pass_dir
-    ).daemon_start(
-        dict()
-    )
+            logging.basicConfig(
+                filename=args.log_file,
+                format='%(asctime)s | %(name)s | %(levelname)s | %(message)s',
+                level=args.log_level.value,
+                filemode='a'
+            )
+        except (FileNotFoundError, PermissionError) as msg:
+            log.error(f'Failed to configure logging, received: {msg}')
+            sys.exit(1)
+
+    if args.daemon:
+        PassOperator(
+            interval=args.interval,
+            git_repo_url=args.git_ssh_url,
+            git_repo_branch=args.git_branch,
+            git_repo_clone_location=args.pass_dir
+        ).daemon_start(
+            dict()
+        )
