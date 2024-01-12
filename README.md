@@ -18,7 +18,7 @@ apiVersion: secrets.premiscale.com/v1alpha1
 kind: PassSecret
 metadata:
   name: mysecret
-  namespace: password-store-operator-tests
+  namespace: pass-operator-test
 spec:
   data:
     - key: mykey
