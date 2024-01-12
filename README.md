@@ -32,8 +32,8 @@ spec:
 
 This operator requires the following items to start successfully.
 
-- a private GPG key to decrypt the encrypted `pass` secrets
-- a local password store
+- a private GPG key to decrypt the secrets
+- a local password store (on your local machine)
 - a git repository populated by the local password store
 - a private SSH key to clone the Git repository
 
@@ -41,19 +41,7 @@ I will go more in-depth and explain these requirements in the following sections
 
 ### Private GPG key
 
-#### Generating GPG keys
-
-Run the following command to generate a GPG key.
-
-```shell
-gpg --generate-key
-```
-
-#### Converting GPG keys from binary to asc
-
-```shell
-gpg --enarmor /path/to/key.gpg
-```
+The private GPG key is used by `pass` to encrypt your secrets on your local machine, and decrypt the secrets after cloning your repository within the operator.
 
 ### Password store
 
