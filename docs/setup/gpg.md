@@ -2,7 +2,7 @@
 
 You can find a lot of explanation about how to generate keys with GPG online, but I'll write down my process below for generating keys for use by this operator.
 
-```console
+```shell
 $ gpg --generate-key
 gpg (GnuPG) 2.2.27; Copyright (C) 2021 Free Software Foundation, Inc.
 This is free software: you are free to change and redistribute it.
@@ -41,7 +41,7 @@ sub   rsa3072 2024-01-12 [E] [expires: 2026-01-11]
 
 You'll now see your key on your keyring.
 
-```console
+```shell
 gpg --list-keys 51924ADAFC92656FAFEB672D4B90DE5D5BF143B8
 pub   rsa3072 2024-01-12 [SC] [expires: 2026-01-11]
       51924ADAFC92656FAFEB672D4B90DE5D5BF143B8
@@ -51,7 +51,7 @@ sub   rsa3072 2024-01-12 [E] [expires: 2026-01-11]
 
 Now export your public key.
 
-```console
+```shell
 gpg --armor --export 51924ADAFC92656FAFEB672D4B90DE5D5BF143B8
 ...
 ```
