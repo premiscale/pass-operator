@@ -76,13 +76,20 @@ workflows:
           namespace: password-store-operator-develop
           repo: $HELM_DEVELOP_REPOSITORY_URL
           version: 0.0.<< pipeline.number >>
-          additional-values: |
-            --set global.registry="$DOCKER_DEVELOP_DOMAIN"
+          additional-values: >-
+            --set global.image.registry="$DOCKER_DEVELOP_DOMAIN"
+            --set deployment.pullSecrets[0]=nexus-docker-registry
+            --set deployment.pass_store.ssh_key.secret.create=true
+            --set deployment.pass_store.ssh_key.secret.value="$SSH_PRIVATE_KEY"
+            --set deployment.pass_store.git.url="$PASSSTORE_GIT_SSH_URL"
+            --set deployment.pass_store.git.branch="$BRANCH"
           requires:
             - helm build and push [helm/operator] [develop]
           context:
             - kubeconfig
             - nexus
+            - github
+            - password-store-operator
           filters:
             branches:
               ignore:
@@ -142,8 +149,13 @@ workflows:
           namespace: password-store-operator-master
           repo: $HELM_MASTER_REPOSITORY_URL
           version: 0.0.<< pipeline.number >>
-          additional-values: |
-            --set global.registry="$DOCKER_MASTER_DOMAIN"
+          additional-values: >-
+            --set global.image.registry="$DOCKER_MASTER_DOMAIN"
+            --set deployment.pullSecrets[0]=nexus-docker-registry
+            --set deployment.pass_store.ssh_key.secret.create=true
+            --set deployment.pass_store.ssh_key.secret.value="$SSH_PRIVATE_KEY"
+            --set deployment.pass_store.git.url="$PASSSTORE_GIT_SSH_URL"
+            --set deployment.pass_store.git.branch="$BRANCH"
           requires:
             - helm build and push [helm/operator] [master]
           context:

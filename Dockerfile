@@ -22,6 +22,7 @@ RUN apt update \
     && apt install -y pass="$PASS_VERSION" \
     && rm -rf /var/apt/lists/*
 
+# Add 'operator' user and group.
 RUN useradd -rm -d /opt/pass-operator -s /bin/bash -g operator -u 1001 operator
 
 WORKDIR /opt/pass-operator
@@ -43,13 +44,15 @@ RUN mkdir -p "$HOME"/.local/bin \
     && pip install --no-cache-dir --no-input --extra-index-url="${PYTHON_INDEX}" password-store-operator=="${PYTHON_PACKAGE_VERSION}"
 
 ENV PASSWORD_STORE_OPERATOR_LOG_LEVEL=info \
-    PRIVATE_SSH_KEY="" \
+    PASSWORD_STORE_OPERATOR_INTERVAL=60 \
+    SSH_PRIVATE_KEY="" \
     PASS_BINARY=/usr/bin/pass \
-    PASS_DIRECTORY=$HOME/.password-store \
+    PASS_DIRECTORY=$HOME/repo \
     GPG_KEY_ID="" \
     GIT_SSH_URL="" \
     GIT_BRANCH=main
 
+COPY bin/entrypoint.sh /entrypoint.sh
 
-ENTRYPOINT [ "/tini", "--". "/bin/bash", "-c" ]
-CMD [ "passoperator --log-stdout --log-level \"$PASSWORD_STORE_LOG_LEVEL\" --ssh-key \"$PRIVATE_SSH_KEY\" --pass-binary \"$PASS_BINARY\" --pass-dir \"$PASS_DIRECTORY\" --gpg-key-id \"$GPG_KEY_ID\" --git-ssh-url \"$GIT_SSH_URL\" --git-branch \"$GIT_BRANCH\"" ]
+ENTRYPOINT [ "/tini -- ./entrypoint.sh" ]
+CMD [ "passoperator" ]

@@ -140,8 +140,13 @@ workflows:
           cluster: $CHELSEA_CLUSTER
           namespace: password-store-operator
           repo: $HELM_REPOSITORY_URL
-          additional-values: |
+          additional-values: >-
             --set global.registry="$DOCKER_DOMAIN"
+            --set deployment.pullSecrets[0]=nexus-docker-registry
+            --set deployment.pass_store.ssh_key.secret.create=true
+            --set deployment.pass_store.ssh_key.secret.value="$SSH_PRIVATE_KEY"
+            --set deployment.pass_store.git.url="$PASSSTORE_GIT_SSH_URL"
+            --set deployment.pass_store.git.branch="$BRANCH"
           requires:
             - helm [helm/operator] [tag]
           context:

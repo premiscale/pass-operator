@@ -9,6 +9,36 @@ deployment:
     tag: latest
     pullPolicy: Always
 
+  resources:
+    requests:
+      cpu: 0.25
+      memory: 500Mi
+    limits:
+      cpu: 0.25
+      memory: 500Mi
+
+  pass_store:
+    interval: 60
+    log_level: info
+
+    pass_binary: /usr/bin/pass
+    pass_directory: /opt/password-store/repo
+
+    ssh_key:
+      # If create is true, then nameRef is not used.
+      secret:
+        create: false
+        name: private-ssh-key
+        key: ssh-private-key
+
+        # raw string of the secret key. Do not b64enc it.
+        value: ""
+    gpg_key_id: ""
+
+    git:
+      branch: main
+      url: ""
+
 
 service:
   create: true
@@ -18,6 +48,7 @@ service:
       name: http
       port: 443
       targetPort: 443
+
 
 serviceAccount:
   create: true
