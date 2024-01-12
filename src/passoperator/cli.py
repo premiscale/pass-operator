@@ -77,11 +77,6 @@ def main() -> None:
     )
 
     parser.add_argument(
-        '--ssh-key', type=str,
-        help='Specify the SSH key to use with git. Must be a valid path to key file or private SSH key contents.'
-    )
-
-    parser.add_argument(
         '--pass-binary', type=str, default='/usr/bin/pass',
         help='Path to an alternate pass binary.'
     )

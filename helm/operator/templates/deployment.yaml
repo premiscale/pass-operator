@@ -92,8 +92,16 @@ spec:
       containers:
         ## Container v1 core (array)
         - name: {{ tpl (default .Values.deployment.name .Chart.Name) $ }}
-          {{- with .Values.deployment.args }}
-          args:
+          args: >-
+            --log-stdout
+            --interval "$PASSWORD_STORE_OPERATOR_INTERVAL"
+            --log-level "$PASSWORD_STORE_LOG_LEVEL"
+            --pass-binary "$PASS_BINARY"
+            --pass-dir "$PASS_DIRECTORY"
+            --gpg-key-id "$GPG_KEY_ID"
+            --git-ssh-url "$GIT_SSH_URL"
+            --git-branch "$GIT_BRANCH"
+          {{- with .Values.deployment.extraArgs }}
             {{- toYaml . | nindent 12 }}
           {{- end }}
           {{- with .Values.deployment.command }}
@@ -109,8 +117,33 @@ spec:
           {{- if (((.Values).deployment).terminationMessagePath) }}
           terminationMessagePath: {{ .Values.deployment.terminationMessagePath | quote }}
           {{- end }}
-          {{- with .Values.deployment.env }}
           env:
+            - name: PASSWORD_STORE_OPERATOR_LOG_LEVEL
+              value: {{ .Values.deployment.pass_store.log_level }}
+            - name: PASSWORD_STORE_OPERATOR_INTERVAL
+              value: {{ .Values.deployment.pass_store.interval }}
+            - name: PASS_BINARY
+              value: {{ .Values.deployment.pass_store.pass_binary }}
+            - name: PASS_DIRECTORY
+              value: {{ .Values.deployment.pass_store.pass_directory }}
+            - name: GIT_SSH_URL
+              value: {{ .Values.deployment.pass_store.git.url }}
+            - name: GIT_BRANCH
+              value: {{ .Values.deployment.pass_store.git.branch }}
+            - name: GPG_KEY_ID
+              value: {{ .Values.deployment.pass_store.gpg_key_id }}
+            - name: SSH_PRIVATE_KEY
+              {{- with .Values.deployment.pass_store.ssh_key }}
+              {{- if .secret.create }}
+              valueFrom:
+                secretKeyRef:
+                  key: {{ .secret.key }}
+                  name: {{ .secret.name }}
+              {{- else }}
+              value: {{ .secret.value }}
+              {{- end }}
+              {{- end }}
+          {{- with .Values.deployment.env }}
             {{- toYaml . | nindent 12 }}
           {{- end }}
           {{- with .Values.deployment.extraEnv }}

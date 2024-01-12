@@ -17,11 +17,27 @@ deployment:
       cpu: 0.25
       memory: 500Mi
 
-  env:
-    - name: PASSWORD_STORE_OPERATOR_LOG_LEVEL
-      value: info
-    - name: PASSWORD_STORE_OPERATOR_INTERVAL
-      value: 60
+  pass_store:
+    interval: 60
+    log_level: info
+
+    pass_binary: /usr/bin/pass
+    pass_directory: /opt/password-store/repo
+
+    ssh_key:
+      # If create is true, then nameRef is not used.
+      secret:
+        create: false
+        name: private-ssh-key
+        key: ssh-private-key
+
+        # raw string of the secret key. Do not b64enc it.
+        value: ""
+    gpg_key_id: ""
+
+    git:
+      branch: main
+      url: ""
 
 
 service:
