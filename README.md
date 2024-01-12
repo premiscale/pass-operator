@@ -5,8 +5,8 @@ This Kubernetes operator is proposed as a proof-of-concept. It can be used to sy
 While this approach to secrets management on Kubernetes is more technically challenging, the advantage is that we don't have to rely on a 3rd party SaaS platform like Vault, Doppler,
 or Infisical, et al. to hold our secrets. The benefits these platforms do provide, however, is better user and access management.
 
-That said, I will acknowledge that this approach swims against the DevSecOps tide in that it requires you to store your secrets in Git, a practice
-that's typically forbidden.
+That said, I acknowledge that this approach swims against the DevSecOps tide in that it requires you to store your secrets (albeit encrypted) in Git, a practice
+that's often discouraged and typically forbidden at most organizations.
 
 ## How it works
 
