@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "password-store-operator"
+name = "pass-operator"
 version = "0.0.1"
 description = "A kubernetes operator that syncs and decrypts secrets from pass git repositories"
 authors = ["Emma Doyle <emma@premiscale.com>"]

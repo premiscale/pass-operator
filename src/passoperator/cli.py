@@ -13,7 +13,7 @@ from enum import Enum
 from src.passoperator.operator import PassOperator
 
 
-__version__ = meta.version('password-store-operator')
+__version__ = meta.version('pass-operator')
 
 log = logging.getLogger(__name__)
 

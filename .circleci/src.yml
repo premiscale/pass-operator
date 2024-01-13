@@ -38,8 +38,8 @@ workflows:
                 - master
 
       - general/docker-nexus:
-          name: docker nexus [password-store-operator] [develop]
-          image-name: password-store-operator
+          name: docker nexus [pass-operator] [develop]
+          image-name: pass-operator
           context: nexus
           nexus-domain: $DOCKER_DEVELOP_DOMAIN
           args: >-
@@ -64,7 +64,7 @@ workflows:
           image-tag: 0.0.<< pipeline.number >>
           image-tag-path: .deployment.image.tag
           requires:
-            - docker nexus [password-store-operator] [develop]
+            - docker nexus [pass-operator] [develop]
           filters:
             branches:
               ignore:
@@ -73,7 +73,7 @@ workflows:
       - general/helm-upgrade:
           name: helm upgrade install [helm/operator] [develop]
           cluster: $CHELSEA_CLUSTER
-          namespace: password-store-operator-develop
+          namespace: pass-operator-develop
           repo: $HELM_DEVELOP_REPOSITORY_URL
           version: 0.0.<< pipeline.number >>
           additional-values: >-
@@ -89,7 +89,7 @@ workflows:
             - kubeconfig
             - nexus
             - github
-            - password-store-operator
+            - pass-operator
           filters:
             branches:
               ignore:
@@ -111,8 +111,8 @@ workflows:
                 - master
 
       - general/docker-nexus:
-          name: docker nexus [password-store-operator] [master]
-          image-name: password-store-operator
+          name: docker nexus [pass-operator] [master]
+          image-name: pass-operator
           context: nexus
           nexus-domain: $DOCKER_MASTER_DOMAIN
           args: >-
@@ -137,7 +137,7 @@ workflows:
           image-tag: 0.0.<< pipeline.number >>
           image-tag-path: .deployment.image.tag
           requires:
-            - docker nexus [password-store-operator] [master]
+            - docker nexus [pass-operator] [master]
           filters:
             branches:
               only:
@@ -146,7 +146,7 @@ workflows:
       - general/helm-upgrade:
           name: helm upgrade install [helm/operator] [master]
           cluster: $CHELSEA_CLUSTER
-          namespace: password-store-operator-master
+          namespace: pass-operator-master
           repo: $HELM_MASTER_REPOSITORY_URL
           version: 0.0.<< pipeline.number >>
           additional-values: >-

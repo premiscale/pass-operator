@@ -33,7 +33,7 @@ spec:
   {{- end }}
   # Select which pods (by label) this Deployment spec is targeting.
   selector:
-    matchLabels: {{ include "password-store-operator.selectorLabels" . | nindent 6 }}
+    matchLabels: {{ include "pass-operator.selectorLabels" . | nindent 6 }}
   template:
     ## PodTemplateSpec v1 core
     metadata:
@@ -41,7 +41,7 @@ spec:
       annotations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      labels: {{ include "password-store-operator.selectorLabels" . | nindent 8 }}
+      labels: {{ include "pass-operator.selectorLabels" . | nindent 8 }}
     spec:
       ## PodSpec v1core
       {{- with .Values.deployment.activeDeadlineSeconds }}

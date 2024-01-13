@@ -22,7 +22,7 @@ spec:
     {{- with .Values.service.ports }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
-  selector: {{ include "password-store-operator.selectorLabels" . | nindent 4 }}
+  selector: {{ include "pass-operator.selectorLabels" . | nindent 4 }}
   {{- with .Values.service.healthCheckNodePort }}
   healthCheckNodePort: {{ . }}
   {{- end }}

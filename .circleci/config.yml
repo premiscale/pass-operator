@@ -10,7 +10,7 @@ orbs:
 
 
 workflows:
-  password-store-operator:
+  pass-operator:
     jobs:
       - dynamic/continue:
           base-revision: master
@@ -58,7 +58,7 @@ workflows:
               only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/
 
       - general/python-release-poetry:
-          name: nexus password-store-operator upload [python]
+          name: nexus pass-operator upload [python]
           context: nexus
           repository: python
           requires:
@@ -70,7 +70,7 @@ workflows:
               only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/
 
       - general/python-release-poetry:
-          name: pypi password-store-operator upload [pypi]
+          name: pypi pass-operator upload [pypi]
           context: pypi
           repository: pypi
           requires:
@@ -82,8 +82,8 @@ workflows:
               only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/
 
       - general/docker-nexus:
-          name: docker [password-store-operator] [tag]
-          image-name: password-store-operator
+          name: docker [pass-operator] [tag]
+          image-name: pass-operator
           context: nexus
           nexus-domain: $DOCKER_DOMAIN
           args: >-
@@ -92,7 +92,7 @@ workflows:
             --build-arg=PYTHON_PASSWORD=$NEXUS_PASSWORD
             --build-arg=PYTHON_REPOSITORY=python
           requires:
-            - nexus password-store-operator upload [python]
+            - nexus pass-operator upload [python]
             - request-approval
           filters:
             branches:
@@ -101,8 +101,8 @@ workflows:
               only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/
 
       - general/docker-hub:
-          name: dockerhub [password-store-operator] [tag]
-          image-name: password-store-operator
+          name: dockerhub [pass-operator] [tag]
+          image-name: pass-operator
           context:
             - nexus
             - dockerhub
@@ -113,7 +113,7 @@ workflows:
             --build-arg=PYTHON_PASSWORD=$NEXUS_PASSWORD
             --build-arg=PYTHON_REPOSITORY=python-develop
           requires:
-            - nexus password-store-operator upload [python]
+            - nexus pass-operator upload [python]
             - request-approval
           filters:
             branches:
@@ -128,7 +128,7 @@ workflows:
           # Uses https://mikefarah.gitbook.io/yq/operators/env-variable-operators#dynamically-update-a-path-from-an-environment-variable
           image-tag-path: .deployment.image.tag
           requires:
-            - dockerhub [password-store-operator] [tag]
+            - dockerhub [pass-operator] [tag]
           filters:
             branches:
               ignore: /.*/
@@ -138,7 +138,7 @@ workflows:
       - general/helm-upgrade:
           name: helm upgrade install [helm/operator] [tag]
           cluster: $CHELSEA_CLUSTER
-          namespace: password-store-operator
+          namespace: pass-operator
           repo: $HELM_REPOSITORY_URL
           additional-values: >-
             --set global.registry="$DOCKER_DOMAIN"

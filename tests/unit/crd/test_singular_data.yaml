@@ -2,12 +2,12 @@ apiVersion: secrets.premiscale.com/v1alpha1
 kind: PassSecret
 metadata:
   name: singular_data
-  namespace: password-store-operator-tests
+  namespace: pass-operator-tests
 spec:
   data:
     - key: singular_data.1
       path: premiscale/tests/singular_data.1
   managedSecret:
     name: singular_data
-    namespace: password-store-operator-tests
+    namespace: pass-operator-tests
     type: Opaque

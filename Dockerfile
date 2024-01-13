@@ -41,7 +41,7 @@ ENV PATH=${PATH}:/opt/pass-operator/.local/bin
 # Install and initialize PremiScale.
 RUN mkdir -p "$HOME"/.local/bin \
     && pip install --upgrade pip \
-    && pip install --no-cache-dir --no-input --extra-index-url="${PYTHON_INDEX}" password-store-operator=="${PYTHON_PACKAGE_VERSION}"
+    && pip install --no-cache-dir --no-input --extra-index-url="${PYTHON_INDEX}" pass-operator=="${PYTHON_PACKAGE_VERSION}"
 
 ENV PASSWORD_STORE_OPERATOR_LOG_LEVEL=info \
     PASSWORD_STORE_OPERATOR_INTERVAL=60 \

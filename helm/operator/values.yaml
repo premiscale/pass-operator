@@ -5,7 +5,7 @@ global:
 
 deployment:
   image:
-    name: password-store-operator
+    name: pass-operator
     tag: latest
     pullPolicy: Always
 
