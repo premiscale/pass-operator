@@ -9,12 +9,9 @@
     "install:dependencies": "./scripts/dependencies.sh",
     "install:deps": "yarn install:dependencies",
     "pylint": "./scripts/pylint.sh",
-    "develop": "./scripts/develop.sh",
-    "clean": "./scripts/clean.sh",
-    "freeze": "pip freeze | grep -v \"file:///\" | grep -v \"ssh://\" > \"$(git rev-parse --show-toplevel)\"/requirements.txt",
-    "docker:build": "./scripts/docker/build.sh",
-    "docker:run": "./scripts/docker/run.sh",
-    "docker:build-run": "./scripts/docker/build.sh && ./scripts/docker/run.sh",
-    "poetry:lock": "poetry lock"
+    "develop": "poetry install",
+    "poetry:lock": "poetry lock",
+    "ps": "./scripts/pstree.sh",
+    "pst": "./scripts/psthread.sh"
   }
 }
