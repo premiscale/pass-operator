@@ -25,7 +25,7 @@ operator:
 
   pass:
     binary: /usr/bin/pass
-    directory: /opt/password-store/repo
+    subdirectory: repo
 
   log:
     level: info

@@ -33,7 +33,7 @@ OPERATOR_NAMESPACE = os.getenv('OPERATOR_NAMESPACE') or 'default'
 
 # Environment variables to configure pass.
 PASS_BINARY = os.getenv('PASS_BINARY') or '/usr/bin/pass'
-PASS_DIRECTORY = os.getenv('PASS_DIRECTORY') or '/opt/pass-operator/repo'
+PASS_DIRECTORY = os.getenv('PASS_DIRECTORY') or 'repo'
 PASS_GPG_KEY = os.getenv('PASS_GPG_KEY')
 PASS_GPG_KEY_ID = os.getenv('PASS_GPG_KEY_ID')
 PASS_GIT_URL = os.getenv('PASS_GIT_URL')

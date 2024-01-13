@@ -5,6 +5,7 @@ Methods to interact minimally with a Git repository.
 
 import sys
 import logging
+import os
 
 from pathlib import Path
 from typing import Union
@@ -19,7 +20,7 @@ class GitRepo:
     Abstract gitpython with some higher-level methods for cloning and pulling updates from a git project.
     """
 
-    def __init__(self, repo_url: str, branch: str, clone_location: Union[Path, str] ='/opt/pass-operator/repo') -> None:
+    def __init__(self, repo_url: str, branch: str, clone_location: Union[Path, str] ='repo') -> None:
         self.repo_url = repo_url
         self.branch = branch
         self.clone_location = clone_location
@@ -41,7 +42,7 @@ class GitRepo:
 
         repo = Repo.clone_from(
             url=self.repo_url,
-            to_path=self.clone_location
+            to_path=(os.getenv('HOME') or '') + '/.password-store/' + str(self.clone_location)
         )
 
         if self.branch not in repo.branches:

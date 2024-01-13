@@ -67,7 +67,7 @@ spec:
             - name: PASS_BINARY
               value: {{ .Values.operator.pass.binary }}
             - name: PASS_DIRECTORY
-              value: {{ .Values.operator.pass.directory }}
+              value: {{ .Values.operator.pass.subdirectory }}
             - name: PASS_GPG_KEY
               {{- with .Values.operator.gpg }}
                 {{- if .createSecret }}
