@@ -56,11 +56,11 @@ spec:
           env:
             # Operator
             - name: OPERATOR_INTERVAL
-              value: {{ .Values.operator.interval }}
+              value: {{ .Values.operator.interval | quote }}
             - name: OPERATOR_INITIAL_DELAY
-              value: {{ .Values.operator.initial_delay }}
+              value: {{ .Values.operator.initial_delay | quote }}
             - name: OPERATOR_PRIORITY
-              value: {{ .Values.operator.priority }}
+              value: {{ .Values.operator.priority | quote }}
             - name: OPERATOR_NAMESPACE
               value: {{ .Values.global.namespace | default .Release.Namespace }}
             # Pass
