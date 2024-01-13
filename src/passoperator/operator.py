@@ -193,9 +193,9 @@ def main() -> None:
 
     global pass_git_repo
     pass_git_repo = GitRepo(
-        repo_url=args.git_ssh_url,
-        branch=args.git_branch,
-        clone_location=args.pass_dir
+        repo_url=PASS_GIT_URL,
+        branch=PASS_GIT_BRANCH,
+        clone_location=PASS_DIRECTORY
     )
 
     kopf.run(
