@@ -79,7 +79,7 @@ workflows:
           additional-values: >-
             --set global.image.registry="$DOCKER_DEVELOP_DOMAIN"
             --set deployment.pullSecrets[0]=nexus-docker-registry
-            --set deployment.pass_store.ssh_key_secret.create=true
+            --set deployment.pass_store.ssh_key_secret.create="true"
             --set deployment.pass_store.ssh_key_secret.value="$SSH_PRIVATE_KEY"
             --set deployment.pass_store.git.url="$PASSSTORE_GIT_SSH_URL"
             --set deployment.pass_store.git.branch="$BRANCH"
@@ -152,7 +152,7 @@ workflows:
           additional-values: >-
             --set global.image.registry="$DOCKER_MASTER_DOMAIN"
             --set deployment.pullSecrets[0]=nexus-docker-registry
-            --set deployment.pass_store.ssh_key_secret.create=true
+            --set deployment.pass_store.ssh_key_secret.create="true"
             --set deployment.pass_store.ssh_key_secret.value="$SSH_PRIVATE_KEY"
             --set deployment.pass_store.git.url="$PASSSTORE_GIT_SSH_URL"
             --set deployment.pass_store.git.branch="$BRANCH"
