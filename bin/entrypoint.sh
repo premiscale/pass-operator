@@ -29,7 +29,7 @@ ssh-add ~/.ssh/private-key
 
 # Import private gpg key for secrets' decryption.
 mkdir ~/.gnupg
-chmod 600 -R ~/.gnupg
+chmod 700 -R ~/.gnupg
 printf "%s" "$PASS_GPG_KEY"
 gpg --dearmor <(printf "%s" "$PASS_GPG_KEY") > ~/.gnupg/private-key
 cat ~/.gnupg/private-key
