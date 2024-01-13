@@ -34,6 +34,7 @@ OPERATOR_NAMESPACE = os.getenv('OPERATOR_NAMESPACE') or 'default'
 # Environment variables to configure pass.
 PASS_BINARY = os.getenv('PASS_BINARY') or '/usr/bin/pass'
 PASS_DIRECTORY = os.getenv('PASS_DIRECTORY') or '/opt/pass-operator/repo'
+PASS_GPG_KEY = os.getenv('PASS_GPG_KEY')
 PASS_GPG_KEY_ID = os.getenv('PASS_GPG_KEY_ID')
 PASS_GIT_URL = os.getenv('PASS_GIT_URL')
 PASS_GIT_BRANCH = os.getenv('PASS_GIT_BRANCH') or 'main'
@@ -150,6 +151,10 @@ def main() -> None:
     if args.version:
         print(f'passoperator v{__version__}')
         sys.exit(0)
+
+    if not PASS_GPG_KEY:
+        log.error(f'Must provide a valid GPG key (PASS_GPG_KEY).')
+        sys.exit(1)
 
     if not PASS_GPG_KEY_ID:
         log.error(f'Must provide a valid GPG key ID (PASS_GPG_KEY_ID).')

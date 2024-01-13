@@ -68,6 +68,8 @@ spec:
               value: {{ .Values.operator.pass.binary }}
             - name: PASS_DIRECTORY
               value: {{ .Values.operator.pass.directory }}
+            - name: PASS_GPG_KEY
+              value: {{ .Values.operator.gpg.value }}
             - name: PASS_GPG_KEY_ID
               value: {{ .Values.operator.gpg.key_id }}
             - name: PASS_GIT_URL
