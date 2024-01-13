@@ -69,7 +69,16 @@ spec:
             - name: PASS_DIRECTORY
               value: {{ .Values.operator.pass.directory }}
             - name: PASS_GPG_KEY
-              value: {{ .Values.operator.gpg.value }}
+              {{- with .Values.operator.gpg }}
+                {{- if .createSecret }}
+              valueFrom:
+                secretKeyRef:
+                  key: ssh-privatekey
+                  name: {{ .name }}
+                {{- else }}
+              value: {{ .value }}
+                {{- end }}
+              {{- end }}
             - name: PASS_GPG_KEY_ID
               value: {{ .Values.operator.gpg.key_id }}
             - name: PASS_GIT_URL
@@ -81,7 +90,7 @@ spec:
                 {{- if .createSecret }}
               valueFrom:
                 secretKeyRef:
-                  key: {{ .key }}
+                  key: ssh-privatekey
                   name: {{ .name }}
                 {{- else }}
               value: {{ .value }}
