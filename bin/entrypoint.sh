@@ -27,6 +27,8 @@ printf "%s" "$PASS_SSH_PRIVATE_KEY" > ~/.ssh/private-key
 chmod 600 ~/.ssh/private-key
 ssh-add ~/.ssh/private-key
 
+sleep inf
+
 # Import private gpg key for secrets' decryption.
 mkdir ~/.gnupg
 chmod 700 -R ~/.gnupg
