@@ -82,6 +82,11 @@ def main() -> None:
     )
 
     parser.add_argument(
+        '--priority', type=int, default=100,
+        help='Operator priority.'
+    )
+
+    parser.add_argument(
         '--pass-dir', type=str, default='/opt/pass-operator/repo',
         help='Pass directory to clone into.'
     )
@@ -140,7 +145,8 @@ def main() -> None:
             interval=args.interval,
             git_repo_url=args.git_ssh_url,
             git_repo_branch=args.git_branch,
-            git_repo_clone_location=args.pass_dir
+            git_repo_clone_location=args.pass_dir,
+            priority=args.priority
         ).daemon_start(
             dict()
         )

@@ -59,7 +59,7 @@ class GitRepo:
 
         self.cloned = True
 
-    def pass_git_pull(self) -> None:
+    def git_pull(self) -> None:
         """
         Run 'git pull' in the cloned repository. This method will be called repeatedly, on an interval.
         """
@@ -74,7 +74,7 @@ class PassOperator:
     Encapsulate operator state.
     """
 
-    def __init__(self, interval: int, git_repo_url: str, git_repo_branch: str, git_repo_clone_location: str ='/opt/pass-operator/repo') -> None:
+    def __init__(self, interval: int, git_repo_url: str, git_repo_branch: str, priority: int, git_repo_clone_location: str ='/opt/pass-operator/repo') -> None:
         self.interval = interval
 
         # Clone the pass git repository into the pod.
@@ -86,6 +86,7 @@ class PassOperator:
 
         self.managed_secrets: Dict[str, str] = dict()
         self._api = kubernetes.client.CoreV1Api()
+        self.priority = priority
 
     @property
     def interval(self) -> int:
@@ -151,15 +152,15 @@ class PassOperator:
         pass
 
     @kopf.on.startup()
-    def start(self, settings: kopf.OperatorSettings, version: str, priority: int =100) -> None:
+    def start(self, settings: kopf.OperatorSettings, version: str) -> None:
         """
         Reconcile current state of PassSecret objects and remote git repository (desired state);
         bring current state of those objects into alignment.
         """
         log.info(f'Starting operator version {version}')
 
-        log.info(f'Setting operator priority to {priority}')
-        settings.peering.priority = priority
+        log.info(f'Setting operator priority to {self.priority}')
+        settings.peering.priority = self.priority
 
     @kopf.on.update('PassSecret')
     def update(self, **kwargs: Any) -> None:
@@ -180,7 +181,6 @@ class PassOperator:
             None.
         """
 
-
     @kopf.on.delete('PassSecret')
     def delete(self, **kwargs: Any) -> None:
         """
@@ -191,22 +191,16 @@ class PassOperator:
         """
 
     @kopf.timer('PassSecret', interval=interval, initial_delay=1)
-    def reconciliation(self) -> Any:
+    def reconciliation(self) -> None:
         """
         Reconcile secrets across all namespaces and ensure they match the stored desired state.
-
-        Args:
-            spec (_type_): _description_
-            log (_type_): _description_
-
-        Returns:
-            Any: _description_
         """
+        self.pass_git_repo.git_pull()
 
     @kopf.on.probe(id='now')
-    def get_current_timestamp(self, **kwargs):
+    def get_current_timestamp(self, **kwargs) -> str:
         return datetime.datetime.utcnow().isoformat()
 
     @kopf.on.probe(id='status')
-    def get_current_status(self, **kwargs):
+    def get_current_status(self, **kwargs) -> str:
         return 'ok'
