@@ -23,6 +23,7 @@ fi
 eval "$(ssh-agent -s)"
 mkdir ~/.ssh/
 printf "%s" "$PASS_SSH_PRIVATE_KEY" > ~/.ssh/private-key
+chmod 600 ~/.ssh/private-key
 ssh-add ~/.ssh/private-key
 
 # Import private gpg key for secrets' decryption.
