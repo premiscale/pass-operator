@@ -38,7 +38,6 @@ PASS_GPG_KEY = os.getenv('PASS_GPG_KEY')
 PASS_GPG_KEY_ID = os.getenv('PASS_GPG_KEY_ID')
 PASS_GIT_URL = os.getenv('PASS_GIT_URL')
 PASS_GIT_BRANCH = os.getenv('PASS_GIT_BRANCH') or 'main'
-PASS_SSH_PRIVATE_KEY = os.getenv('PASS_SSH_PRIVATE_KEY')
 
 
 @cache
@@ -152,20 +151,8 @@ def main() -> None:
         print(f'passoperator v{__version__}')
         sys.exit(0)
 
-    if not PASS_GPG_KEY:
-        log.error(f'Must provide a valid GPG key (PASS_GPG_KEY).')
-        sys.exit(1)
-
-    if not PASS_GPG_KEY_ID:
-        log.error(f'Must provide a valid GPG key ID (PASS_GPG_KEY_ID).')
-        sys.exit(1)
-
     if not PASS_GIT_URL:
         log.error(f'Must provide a valid git URL (PASS_GIT_URL).')
-        sys.exit(1)
-
-    if not PASS_SSH_PRIVATE_KEY:
-        log.error(f'Must provide a valid private SSH key to clone Git repo. (PASS_SSH_PRIVATE_KEY).')
         sys.exit(1)
 
     # Configure logger
