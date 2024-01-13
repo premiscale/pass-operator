@@ -1,6 +1,7 @@
 #! /usr/bin/env bash
 # Start the pass operator after some initial SSH setup.
 
+
 set -eo pipefail
 
 
@@ -28,6 +29,8 @@ ssh-add ~/.ssh/private-key
 
 # Import private gpg key for secrets' decryption.
 mkdir ~/.gnupg
+chmod 600 -R ~/.gnupg
+printf "%s" "$PASS_GPG_KEY"
 gpg --dearmor <(printf "%s" "$PASS_GPG_KEY") > ~/.gnupg/private-key
 cat ~/.gnupg/private-key
 gpg --import ~/.gnupg/private-key
