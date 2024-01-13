@@ -187,7 +187,7 @@ class PassOperator:
         Remove the secret from memory.
 
         Args:
-            spec (str): _description_
+            spec (str):
         """
 
     @kopf.timer('PassSecret', interval=interval, initial_delay=1)

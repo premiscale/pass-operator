@@ -24,15 +24,14 @@ deployment:
     pass_binary: /usr/bin/pass
     pass_directory: /opt/password-store/repo
 
-    ssh_key:
-      # If create is true, then nameRef is not used.
-      secret:
-        create: false
-        name: private-ssh-key
-        key: ssh-private-key
+    ssh_key_secret:
+      # If create is false, value is not used; users may bring their own.
+      create: false
+      name: private-ssh-key
+      key: ssh-private-key
 
-        # raw string of the secret key. Do not b64enc it.
-        value: ""
+      # raw string of the secret key. Do not b64enc it.
+      value: ""
     gpg_key_id: ""
 
     git:
