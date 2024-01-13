@@ -1,5 +1,5 @@
 apiVersion: v2
-name: password-store-operator
+name: pass-operator
 description: A kubernetes operator that syncs and decrypts secrets from password store (https://www.passwordstore.org/) git repositories.
 type: application
 version: 1.0.0

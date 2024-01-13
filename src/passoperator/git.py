@@ -1,13 +1,15 @@
 """
-Define some high-level methods for interacting with a git repository from pass.
+Methods to interact minimally with a Git repository.
 """
 
-import logging
-import sys
 
-from typing import Union, Optional
-from git import Repo
+import sys
+import logging
+import os
+
 from pathlib import Path
+from typing import Union
+from git import Repo
 
 
 log = logging.getLogger(__name__)
@@ -18,7 +20,7 @@ class GitRepo:
     Abstract gitpython with some higher-level methods for cloning and pulling updates from a git project.
     """
 
-    def __init__(self, repo_url: str, branch: str, clone_location: Union[Path, str] ='/opt/pass-operator/repo') -> None:
+    def __init__(self, repo_url: str, branch: str, clone_location: Union[Path, str] ='repo') -> None:
         self.repo_url = repo_url
         self.branch = branch
         self.clone_location = clone_location
@@ -40,7 +42,7 @@ class GitRepo:
 
         repo = Repo.clone_from(
             url=self.repo_url,
-            to_path=self.clone_location
+            to_path=(os.getenv('HOME') or '') + '/.password-store/' + str(self.clone_location)
         )
 
         if self.branch not in repo.branches:
@@ -52,7 +54,7 @@ class GitRepo:
 
         self.cloned = True
 
-    def pass_git_pull(self) -> None:
+    def git_pull(self) -> None:
         """
         Run 'git pull' in the cloned repository. This method will be called repeatedly, on an interval.
         """

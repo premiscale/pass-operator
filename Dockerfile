@@ -41,18 +41,20 @@ ENV PATH=${PATH}:/opt/pass-operator/.local/bin
 # Install and initialize PremiScale.
 RUN mkdir -p "$HOME"/.local/bin \
     && pip install --upgrade pip \
-    && pip install --no-cache-dir --no-input --extra-index-url="${PYTHON_INDEX}" password-store-operator=="${PYTHON_PACKAGE_VERSION}"
+    && pip install --no-cache-dir --no-input --extra-index-url="${PYTHON_INDEX}" pass-operator=="${PYTHON_PACKAGE_VERSION}"
 
-ENV PASSWORD_STORE_OPERATOR_LOG_LEVEL=info \
-    PASSWORD_STORE_OPERATOR_INTERVAL=60 \
-    SSH_PRIVATE_KEY="" \
+ENV OPERATOR_INTERVAL=60 \
+    OPERATOR_INITIAL_DELAY=3 \
+    OPERATOR_PRIORITY=100 \
+    OPERATOR_NAMESPACE=default \
     PASS_BINARY=/usr/bin/pass \
-    PASS_DIRECTORY=$HOME/repo \
-    GPG_KEY_ID="" \
-    GIT_SSH_URL="" \
-    GIT_BRANCH=main
+    PASS_DIRECTORY=repo \
+    PASS_GPG_KEY_ID="" \
+    PASS_GPG_KEY="" \
+    PASS_GIT_URL="" \
+    PASS_GIT_BRANCH=main \
+    PASS_SSH_PRIVATE_KEY=""
 
-COPY bin/entrypoint.sh /entrypoint.sh
+COPY bin/bootstrap.sh /bootstrap.sh
 
-ENTRYPOINT [ "/tini -- ./entrypoint.sh" ]
-CMD [ "passoperator" ]
+ENTRYPOINT [ "/tini", "--", "/bootstrap.sh" ]

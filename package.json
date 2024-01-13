@@ -1,7 +1,7 @@
 {
   "name": "pass-operator",
   "description": "A kubernetes operator that syncs and decrypts secrets from pass git repositories",
-  "repository": "git@github.com:premiscale/password-store-operator.git",
+  "repository": "git@github.com:premiscale/pass-operator.git",
   "author": "Emma Doyle <emma@premiscale.com>",
   "license": "GPLv3",
   "private": true,
