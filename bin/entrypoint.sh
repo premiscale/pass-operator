@@ -1,17 +1,17 @@
 #! /usr/bin/env bash
 # Start the pass operator after some initial SSH setup.
 
-if [ -n "$PASS_SSH_PRIVATE_KEY" ]; then
+if [ -z "$PASS_SSH_PRIVATE_KEY" ]; then
     printf "ERROR: PASS_SSH_PRIVATE_KEY is not defined. Please provide a valid private SSH key.\\n" >&2
     exit 1
 fi
 
-if [ -n "$PASS_GPG_KEY" ]; then
+if [ -z "$PASS_GPG_KEY" ]; then
     printf "ERROR: PASS_GPG_KEY is not defined. Please provide a valid private GPG key.\\n" >&2
     exit 1
 fi
 
-if [ -n "$PASS_GPG_KEY_ID" ]; then
+if [ -z "$PASS_GPG_KEY_ID" ]; then
     printf "ERROR: PASS_GPG_KEY_ID is not defined. Please provide a valid private GPG key ID.\\n" >&2
     exit 1
 fi
