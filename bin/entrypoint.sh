@@ -1,6 +1,9 @@
 #! /usr/bin/env bash
 # Start the pass operator after some initial SSH setup.
 
+set -eo pipefail
+
+
 if [ -z "$PASS_SSH_PRIVATE_KEY" ]; then
     printf "ERROR: PASS_SSH_PRIVATE_KEY is not defined. Please provide a valid private SSH key.\\n" >&2
     exit 1
@@ -18,6 +21,7 @@ fi
 
 # Add private SSH key to SSH agent for git pulls.
 eval "$(ssh-agent -s)"
+mkdir ~/.ssh/
 printf "%s" "$PASS_SSH_PRIVATE_KEY" > ~/.ssh/private-key
 ssh-add ~/.ssh/private-key
 
