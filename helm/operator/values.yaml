@@ -17,7 +17,7 @@ deployment:
       cpu: 0.25
       memory: 500Mi
 
-  pass_store:
+  passoperator:
     interval: 60
     log_level: info
 

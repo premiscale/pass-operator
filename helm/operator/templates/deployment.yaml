@@ -113,21 +113,21 @@ spec:
           {{- end }}
           env:
             - name: PASSWORD_STORE_OPERATOR_LOG_LEVEL
-              value: {{ .Values.deployment.pass_store.log_level }}
+              value: {{ .Values.deployment.passoperator.log_level }}
             - name: PASSWORD_STORE_OPERATOR_INTERVAL
-              value: {{ .Values.deployment.pass_store.interval }}
+              value: {{ .Values.deployment.passoperator.interval }}
             - name: PASS_BINARY
-              value: {{ .Values.deployment.pass_store.pass_binary }}
+              value: {{ .Values.deployment.passoperator.pass_binary }}
             - name: PASS_DIRECTORY
-              value: {{ .Values.deployment.pass_store.pass_directory }}
+              value: {{ .Values.deployment.passoperator.pass_directory }}
             - name: GIT_SSH_URL
-              value: {{ .Values.deployment.pass_store.git.url }}
+              value: {{ .Values.deployment.passoperator.git.url }}
             - name: GIT_BRANCH
-              value: {{ .Values.deployment.pass_store.git.branch }}
+              value: {{ .Values.deployment.passoperator.git.branch }}
             - name: GPG_KEY_ID
-              value: {{ .Values.deployment.pass_store.gpg_key_id }}
+              value: {{ .Values.deployment.passoperator.gpg_key_id }}
             - name: SSH_PRIVATE_KEY
-              {{- with .Values.deployment.pass_store.ssh_key }}
+              {{- with .Values.deployment.passoperator.ssh_key }}
               {{- if .secret.create }}
               valueFrom:
                 secretKeyRef:
