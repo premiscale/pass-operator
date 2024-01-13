@@ -55,11 +55,6 @@ def read_manifest(path: str) -> Dict[str, str]:
         return yaml.safe_load(obj.read().rstrip())
 
 
-# @kopf.on.cleanup()
-# def cleanup(**kwargs) -> None:
-#     pass
-
-
 @kopf.on.startup()
 def start(param: Any, retry: Any, started: Any, runtime: Any, logger: Any, memo: Any, activity: Any, settings: Any) -> None:
     """
@@ -69,6 +64,19 @@ def start(param: Any, retry: Any, started: Any, runtime: Any, logger: Any, memo:
     log.info(f'Starting operator version {__version__}')
     pass_git_repo.git_clone()
     # print(param, retry, started, runtime, logger, memo, activity, settings)
+
+
+@kopf.timer('PassSecret', interval=OPERATOR_INTERVAL, initial_delay=OPERATOR_INITIAL_DELAY)
+def reconciliation() -> None:
+    """
+    Reconcile secrets across all namespaces and ensure they match the state of the PassSecrets.
+    """
+    pass_git_repo.git_pull()
+
+
+# @kopf.on.cleanup()
+# def cleanup(**kwargs) -> None:
+#     pass
 
 
 # @kopf.on.update('PassSecret')
@@ -99,14 +107,6 @@ def start(param: Any, retry: Any, started: Any, runtime: Any, logger: Any, memo:
 #     Args:
 #         spec (str):
 #     """
-
-
-@kopf.timer('PassSecret', interval=OPERATOR_INTERVAL, initial_delay=OPERATOR_INITIAL_DELAY)
-def reconciliation() -> None:
-    """
-    Reconcile secrets across all namespaces and ensure they match the state of the PassSecrets.
-    """
-    pass_git_repo.git_pull()
 
 
 # @kopf.on.probe(id='now')
@@ -155,6 +155,14 @@ def main() -> None:
         log.error(f'Must provide a valid git URL (PASS_GIT_URL).')
         sys.exit(1)
 
+    global pass_git_repo
+    # Set up our git repository object.
+    pass_git_repo = GitRepo(
+        repo_url=PASS_GIT_URL,
+        branch=PASS_GIT_BRANCH,
+        clone_location=PASS_DIRECTORY
+    )
+
     # Configure logger
     if args.log_stdout:
         logging.basicConfig(
@@ -172,18 +180,11 @@ def main() -> None:
                 filename=args.log_file,
                 format='%(asctime)s | %(name)s | %(levelname)s | %(message)s',
                 level=args.log_level.value,
-                filemode='a'
+                filemode='w'
             )
         except (FileNotFoundError, PermissionError) as msg:
             log.error(f'Failed to configure logging, received: {msg}')
             sys.exit(1)
-
-    global pass_git_repo
-    pass_git_repo = GitRepo(
-        repo_url=PASS_GIT_URL,
-        branch=PASS_GIT_BRANCH,
-        clone_location=PASS_DIRECTORY
-    )
 
     kopf.run(
         # https://github.com/nolar/kopf/blob/main/kopf/cli.py#L86

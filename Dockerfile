@@ -55,7 +55,7 @@ ENV OPERATOR_INTERVAL=60 \
     PASS_GIT_BRANCH=main \
     PASS_SSH_PRIVATE_KEY=""
 
-COPY bin/entrypoint.sh /entrypoint.sh
+COPY bin/bootstrap.sh /bootstrap.sh
 
-ENTRYPOINT [ "/entrypoint.sh" ]
-CMD [ "/tini -- passoperator" ]
+ENTRYPOINT [ "/bin/bash", "-c" ]
+CMD [ "/bootstrap.sh" ]
