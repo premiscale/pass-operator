@@ -27,6 +27,7 @@ chmod 600 ~/.ssh/private-key
 ssh-add ~/.ssh/private-key
 
 # Import private gpg key for secrets' decryption.
+echo "$PASS_GPG_KEY"
 gpg --import <(printf "%s" "$PASS_GPG_KEY")
 
 # Initialize pass with the indicated directory and GPG key ID to decrypt secrets pulled from the Git repository.
