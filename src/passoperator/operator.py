@@ -145,7 +145,18 @@ class PassOperator:
         Returns:
             int: exit code.
         """
-        return kopf.run(**kopf_config)
+        return kopf.run(
+            # https://github.com/nolar/kopf/blob/main/kopf/cli.py#L86
+            **kopf_config
+            # paths: List[str],
+            # modules: List[str],
+            # peering_name: Optional[str],
+            # priority: self.priority,
+            # standalone: Optional[bool],
+            # namespaces: Collection[references.NamespacePattern],
+            # clusterwide: bool,
+            # liveness_endpoint: Optional[str],
+        )
 
     @kopf.on.cleanup()
     def cleanup(self, **kwargs) -> None:
@@ -159,6 +170,7 @@ class PassOperator:
         """
         log.info(f'Starting operator version {version}')
 
+        # This doesn't need to be set here, we should set it on kopf.run
         log.info(f'Setting operator priority to {self.priority}')
         settings.peering.priority = self.priority
 
