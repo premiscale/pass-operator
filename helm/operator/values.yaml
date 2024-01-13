@@ -17,6 +17,7 @@ deployment:
       cpu: 0.25
       memory: 500Mi
 
+
 operator:
   interval: 60
   initial_delay: 3
@@ -36,7 +37,6 @@ operator:
 
     # Specs of the secret if createSecret is true; otherwise, these fields are used to reference an existing secret.
     name: private-ssh-key
-    key: ssh-private-key
 
     # raw string of the secret key b64enc'd.
     value: ""
@@ -46,7 +46,6 @@ operator:
 
     # Specs of the secret if createSecret is true; otherwise, these fields are used to reference an existing secret.
     name: private-gpg-key
-    key: gpg-private-key
 
     key_id: ""
     value: ""
