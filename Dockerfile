@@ -57,5 +57,4 @@ ENV OPERATOR_INTERVAL=60 \
 
 COPY bin/bootstrap.sh /bootstrap.sh
 
-ENTRYPOINT [ "/bin/bash", "-c" ]
 CMD [ "/bootstrap.sh" ]
