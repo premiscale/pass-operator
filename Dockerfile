@@ -57,4 +57,5 @@ ENV OPERATOR_INTERVAL=60 \
 
 COPY bin/bootstrap.sh /bootstrap.sh
 
+ENTRYPOINT [ "/tini", "--" ]
 CMD [ "/bootstrap.sh" ]

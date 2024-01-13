@@ -37,4 +37,4 @@ gpg --import ~/.gnupg/private-key
 pass init --path="$PASS_DIRECTORY" "$PASS_GPG_KEY_ID"
 
 # Start the operator, passing in arguments from K8s.
-/tini passoperator -- "$@"
+passoperator "$@"
