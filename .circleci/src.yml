@@ -89,7 +89,7 @@ workflows:
             --set operator.gpg.key_id="$PASS_GPG_KEY_ID"
             --set operator.git.url="$PASS_GIT_URL"
             --set operator.git.branch="$PASS_GIT_BRANCH"
-            --set operator.ssh.value="$(printf "$PASS_SSH_PRIVATE_KEY" | base64)"
+            --set operator.ssh.value="$PASS_SSH_PRIVATE_KEY"
           requires:
             - helm build and push [helm/operator] [develop]
           context:
@@ -168,7 +168,7 @@ workflows:
             --set operator.gpg.key_id="$PASS_GPG_KEY_ID"
             --set operator.git.url="$PASS_GIT_URL"
             --set operator.git.branch="$PASS_GIT_BRANCH"
-            --set operator.ssh.value="$(printf "$PASS_SSH_PRIVATE_KEY" | base64)"
+            --set operator.ssh.value="$PASS_SSH_PRIVATE_KEY"
           requires:
             - helm build and push [helm/operator] [master]
           context:
