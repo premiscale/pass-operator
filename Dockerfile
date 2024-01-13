@@ -57,5 +57,5 @@ ENV OPERATOR_INTERVAL=60 \
 
 COPY bin/entrypoint.sh /entrypoint.sh
 
-ENTRYPOINT [ "/tini -- ./entrypoint.sh" ]
-CMD [ "passoperator" ]
+ENTRYPOINT [ "/entrypoint.sh" ]
+CMD [ "/tini -- passoperator" ]

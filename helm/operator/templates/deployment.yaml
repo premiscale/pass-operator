@@ -106,17 +106,6 @@ spec:
           image: {{ .Values.deployment.image.registry }}/{{ .Values.deployment.image.name }}:{{ .Values.deployment.image.tag }}
           {{- end }}
           imagePullPolicy: {{ default .Values.deployment.image.pullPolicy "Always" }}
-          {{- if or ((.Values.deployment.lifecycle).preStop) ((.Values.deployment.lifecycle).postStart) }}
-          lifecycle:
-            {{- with .Values.deployment.lifecycle.preStop }}
-            preStop:
-              {{- toYaml . | nindent 14 }}
-            {{- end }}
-            {{- with .Values.deployment.lifecycle.postStart }}
-            postStart:
-              {{- toYaml . | nindent 14 }}
-            {{- end }}
-          {{- end }}
           {{- with .Values.deployment.startupProbe }}
             {{- if .enabled }}
           startupProbe:
