@@ -17,26 +17,36 @@ deployment:
       cpu: 0.25
       memory: 500Mi
 
-  passoperator:
-    interval: 60
-    log_level: info
+operator:
+  interval: 60
+  initial_delay: 3
+  priority: 100
 
-    pass_binary: /usr/bin/pass
-    pass_directory: /opt/password-store/repo
+  pass:
+    binary: /usr/bin/pass
+    directory: /opt/password-store/repo
 
-    ssh_key_secret:
-      # If create is false, value is not used; users may bring their own.
-      create: false
-      name: private-ssh-key
-      key: ssh-private-key
+  log:
+    level: info
+    location: /opt/pass-operator/runtime.log
 
-      # raw string of the secret key. Do not b64enc it.
-      value: ""
-    gpg_key_id: ""
+  ssh:
+    # If create is false, value is not used; users may bring their own.
+    createSecret: false
 
-    git:
-      branch: main
-      url: ""
+    # Specs of the secret if create is true; otherwise, these fields are used to reference an existing secret.
+    name: private-ssh-key
+    key: ssh-private-key
+
+    # raw string of the secret key. Do not b64enc it.
+    value: ""
+
+  gpg:
+    key_id: ""
+
+  git:
+    branch: main
+    url: ""
 
 
 service:

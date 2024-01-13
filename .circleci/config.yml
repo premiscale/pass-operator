@@ -143,13 +143,20 @@ workflows:
           additional-values: >-
             --set global.registry="$DOCKER_DOMAIN"
             --set deployment.pullSecrets[0]=nexus-docker-registry
-            --set deployment.passoperator.ssh_key_secret.create="true"
-            --set deployment.passoperator.ssh_key_secret.value="$SSH_PRIVATE_KEY"
-            --set deployment.passoperator.git.url="$PASSSTORE_GIT_SSH_URL"
-            --set deployment.passoperator.git.branch="$BRANCH"
+            --set operator.interval="$OPERATOR_INTERVAL"
+            --set operator.initial_delay="$OPERATOR_INITIAL_DELAY"
+            --set operator.priority="$OPERATOR_PRIORITY"
+            --set operator.ssh.createSecret="true"
+            --set operator.pass.binary="$PASS_BINARY"
+            --set operator.pass.directory="$PASS_DIRECTORY"
+            --set operator.gpg.key_id="$PASS_GPG_KEY_ID"
+            --set operator.git.url="$PASS_GIT_URL"
+            --set operator.git.branch="$PASS_GIT_BRANCH"
+            --set operator.ssh.value="$(printf "$PASS_SSH_PRIVATE_KEY" | base64)"
           requires:
             - helm [helm/operator] [tag]
           context:
+            - password-store-operator
             - kubeconfig
             - nexus
           filters:

@@ -6,31 +6,19 @@ metadata:
   {{- with .Values.deployment.labels }}
   labels:
     {{- range $k, $v := . }}
-    {{ $k }}: {{ tpl $v $ }}
+    {{ $k }}: {{ $v }}
     {{- end }}
   {{- end }}
   {{- with .Values.deployment.annotations }}
   annotations:
     {{- range $k, $v := . }}
-    {{ $k }}: {{ tpl $v $ }}
+    {{ $k }}: {{ $v }}
     {{- end }}
   {{- end }}
 spec:
   ## DeploymentSpec v1 core
-  {{- with .Values.deployment.minReadySeconds }}
-  minReadySeconds: {{ . }}
-  {{- end }}
-  {{- with .Values.deployment.progressDeadlineSeconds }}
-  progressDeadlineSeconds: {{ . }}
-  {{- end }}
   replicas: {{ .Values.deployment.replicas | default 1 }}
-  {{- with .Values.deployment.strategy }}
-  strategy:
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
-  {{- if ne (int64 .Values.deployment.revisionHistoryLimit) 10 }}
-  revisionHistoryLimit: {{ .Values.deployment.revisionHistoryLimit | default 10 }}
-  {{- end }}
+  revisionHistoryLimit: 1
   # Select which pods (by label) this Deployment spec is targeting.
   selector:
     matchLabels: {{ include "pass-operator.selectorLabels" . | nindent 6 }}
@@ -44,19 +32,6 @@ spec:
       labels: {{ include "pass-operator.selectorLabels" . | nindent 8 }}
     spec:
       ## PodSpec v1core
-      {{- with .Values.deployment.activeDeadlineSeconds }}
-      activeDeadlineSeconds: {{ . }}
-      {{- end }}
-      {{- with .Values.deployment.hostAliases }}
-      hostAliases:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.deployment.hostIPC }}
-      hostIPC: {{ . }}
-      {{- end }}
-      {{- with .Values.deployment.hostNetwork }}
-      hostNetwork: {{ . }}
-      {{- end }}
       {{- if gt (len ((((.Values).deployment).pullSecrets) | default "")) 0 }}
       imagePullSecrets:
         {{- range $secret := .Values.deployment.pullSecrets }}
@@ -70,86 +45,46 @@ spec:
       securityContext:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.deployment.initContainers }}
-      initContainers:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.deployment.nodeName }}
-      nodeName: {{ . | quote }}
-      {{- end }}
-      {{- with .Values.deployment.nodeSelector }}
-      nodeSelector:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.deployment.affinity }}
-      affinity:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.deployment.tolerations }}
-      tolerations:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
       containers:
         ## Container v1 core (array)
-        - name: {{ tpl (default .Values.deployment.name .Chart.Name) $ }}
+        - name: {{ default .Values.deployment.name .Chart.Name }}
           args: [
-            "--log-stdout",
-            "--interval", "$PASSWORD_STORE_OPERATOR_INTERVAL",
-            "--log-level", "$PASSWORD_STORE_LOG_LEVEL",
-            "--pass-binary", "$PASS_BINARY",
-            "--pass-dir", "$PASS_DIRECTORY",
-            "--gpg-key-id", "$GPG_KEY_ID",
-            "--git-ssh-url", "$GIT_SSH_URL",
-            "--git-branch", "$GIT_BRANCH"
+            --log-stdout,
+            --log-level, {{ .Values.operator.log.level }},
+            --log-file, {{ .Values.operator.log.location }}
           ]
-          {{- with .Values.deployment.stdin }}
-          stdin: {{ . }}
-          {{- end }}
-          {{- with .Values.deployment.stdinOnce }}
-          stdinOnce: {{ . }}
-          {{- end }}
-          {{- if (((.Values).deployment).terminationMessagePath) }}
-          terminationMessagePath: {{ .Values.deployment.terminationMessagePath | quote }}
-          {{- end }}
           env:
-            - name: PASSWORD_STORE_OPERATOR_LOG_LEVEL
-              value: {{ .Values.deployment.passoperator.log_level }}
-            - name: PASSWORD_STORE_OPERATOR_INTERVAL
-              value: {{ .Values.deployment.passoperator.interval }}
+            # Operator
+            - name: OPERATOR_INTERVAL
+              value: {{ .Values.operator.interval }}
+            - name: OPERATOR_INITIAL_DELAY
+              value: {{ .Values.operator.initial_delay }}
+            - name: OPERATOR_PRIORITY
+              value: {{ .Values.operator.priority }}
+            - name: OPERATOR_NAMESPACE
+              value: {{ .Values.global.namespace | default .Release.Namespace }}
+            # Pass
             - name: PASS_BINARY
-              value: {{ .Values.deployment.passoperator.pass_binary }}
+              value: {{ .Values.operator.pass.binary }}
             - name: PASS_DIRECTORY
-              value: {{ .Values.deployment.passoperator.pass_directory }}
-            - name: GIT_SSH_URL
-              value: {{ .Values.deployment.passoperator.git.url }}
-            - name: GIT_BRANCH
-              value: {{ .Values.deployment.passoperator.git.branch }}
-            - name: GPG_KEY_ID
-              value: {{ .Values.deployment.passoperator.gpg_key_id }}
-            - name: SSH_PRIVATE_KEY
-              {{- with .Values.deployment.passoperator.ssh_key }}
-              {{- if .secret.create }}
+              value: {{ .Values.operator.pass.directory }}
+            - name: PASS_GPG_KEY_ID
+              value: {{ .Values.operator.gpg.key_id }}
+            - name: PASS_GIT_URL
+              value: {{ .Values.operator.git.url }}
+            - name: PASS_GIT_BRANCH
+              value: {{ .Values.operator.git.branch }}
+            - name: PASS_SSH_PRIVATE_KEY
+              {{- with .Values.operator.ssh }}
+                {{- if .createSecret }}
               valueFrom:
                 secretKeyRef:
-                  key: {{ .secret.key }}
-                  name: {{ .secret.name }}
-              {{- else }}
-              value: {{ .secret.value }}
+                  key: {{ .key }}
+                  name: {{ .name }}
+                {{- else }}
+              value: {{ .value }}
+                {{- end }}
               {{- end }}
-              {{- end }}
-          {{- with .Values.deployment.env }}
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-          {{- with .Values.deployment.extraEnv }}
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-          {{- with .Values.deployment.envFrom }}
-          envFrom:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-          {{- with .Values.deployment.tty }}
-          tty: {{ . }}
-          {{- end }}
           {{- with .Values.deployment.securityContext }}
           securityContext:
             {{- toYaml . | nindent 12 }}
@@ -204,13 +139,5 @@ spec:
           {{- end }}
           {{- with .Values.deployment.resources }}
           resources:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-          {{- with .Values.deployment.volumeDevices }}
-          volumeDevices:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-          {{- with .Values.deployment.volumeMounts }}
-          volumeMounts:
             {{- toYaml . | nindent 12 }}
           {{- end }}
