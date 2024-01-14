@@ -38,8 +38,8 @@ spec:
         - name: {{ $secret }}
         {{- end }}
       {{- end }}
-      {{- if ne (default .Values.deployment.serviceAccountName "default") "default" }}
-      serviceAccountName: {{ .Values.deployment.serviceAccountName }}
+      {{- if .Values.serviceAccount.create }}
+      serviceAccountName: {{ .Values.serviceAccount.name | default .Chart.Name }}
       {{- end }}
       {{- with .Values.deployment.podSecurityContext }}
       securityContext:

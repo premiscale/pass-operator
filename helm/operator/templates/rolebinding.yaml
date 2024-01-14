@@ -1,0 +1,21 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ .Values.rolebinding.name | default .Chart.Name }}
+  namespace: {{ .Values.global.namespace | default .Release.Namespace }}
+  {{- with .Values.rolebinding.labels }}
+  labels:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.rolebinding.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+subjects:
+  - kind: ServiceAccount
+    namespace: {{ .Values.global.namespace | default .Release.Namespace }}
+    name: {{ .Values.serviceAccount.name | default .Chart.Name }}
+roleRef:
+  kind: Role
+  name: {{ .Values.role.name | default .Chart.Name }}
+  apiGroup: rbac.authorization.k8s.io
