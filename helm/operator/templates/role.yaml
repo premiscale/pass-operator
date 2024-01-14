@@ -13,9 +13,9 @@ metadata:
   {{- end }}
 rules:
   - apiGroups:
-      - secrets.premiscale.com/v1alpha1
+      - secrets.premiscale.com
     resources:
-      - passsecrets
+      - '*'
     verbs:
       - list
       - get
