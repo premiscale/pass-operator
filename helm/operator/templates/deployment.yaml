@@ -38,8 +38,8 @@ spec:
         - name: {{ $secret }}
         {{- end }}
       {{- end }}
-      {{- if ne (default .Values.deployment.serviceAccountName "default") "default" }}
-      serviceAccountName: {{ .Values.deployment.serviceAccountName }}
+      {{- if .Values.serviceAccount.create }}
+      serviceAccountName: {{ .Values.serviceAccount.name | default .Chart.Name }}
       {{- end }}
       {{- with .Values.deployment.podSecurityContext }}
       securityContext:
@@ -53,6 +53,14 @@ spec:
             --log-level, {{ .Values.operator.log.level }},
             --log-file, {{ .Values.operator.log.location }}
           ]
+          {{- with .Values.deployment.livenessProbe }}
+            {{- if .enabled }}
+          ports:
+            - containerPort: {{ .port }}
+              name: healthcheck
+              protocol: TCP
+            {{- end }}
+          {{- end }}
           env:
             # Operator
             - name: OPERATOR_INTERVAL
@@ -63,6 +71,14 @@ spec:
               value: {{ .Values.operator.priority | quote }}
             - name: OPERATOR_NAMESPACE
               value: {{ .Values.global.namespace | default .Release.Namespace }}
+            - name: OPERATOR_POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: OPERATOR_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
             # Pass
             - name: PASS_BINARY
               value: {{ .Values.operator.pass.binary }}
@@ -112,7 +128,9 @@ spec:
             httpGet:
               path: {{ .path }}
               port: {{ .port }}
-            {{- toYaml .config | nindent 12 }}
+            {{- with .config }}
+            {{- toYaml .| nindent 12 }}
+            {{- end }}
             {{- end }}
           {{- end }}
           {{- with .Values.deployment.livenessProbe }}
@@ -121,7 +139,9 @@ spec:
             httpGet:
               path: {{ .path }}
               port: {{ .port }}
-            {{- toYaml .config | nindent 12 }}
+            {{- with .config }}
+            {{- toYaml .| nindent 12 }}
+            {{- end }}
             {{- end }}
           {{- end }}
           {{- with .Values.deployment.readinessProbe }}
@@ -130,7 +150,9 @@ spec:
             httpGet:
               path: {{ .path }}
               port: {{ .port }}
-            {{- toYaml .config | nindent 12 }}
+            {{- with .config }}
+            {{- toYaml .| nindent 12 }}
+            {{- end }}
             {{- end }}
           {{- end }}
           {{- with .Values.deployment.ports }}

@@ -1,5 +1,5 @@
 apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
+kind: ClusterRoleBinding
 metadata:
   name: {{ .Values.rolebinding.name | default .Chart.Name }}
   namespace: {{ .Values.global.namespace | default .Release.Namespace }}
@@ -16,6 +16,6 @@ subjects:
     namespace: {{ .Values.global.namespace | default .Release.Namespace }}
     name: {{ .Values.serviceAccount.name | default .Chart.Name }}
 roleRef:
-  kind: Role
-  name: {{ .Values.role.name | default .Chart.Name }}
+  kind: ClusterRole
+  name: {{ .Values.clusterrole.name | default .Chart.Name }}
   apiGroup: rbac.authorization.k8s.io

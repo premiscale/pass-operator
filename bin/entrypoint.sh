@@ -22,15 +22,11 @@ fi
 
 # Add private SSH key to SSH agent for git pulls.
 eval "$(ssh-agent -s)"
-printf "%s" "$PASS_SSH_PRIVATE_KEY" > ~/.ssh/private-key
-chmod 600 ~/.ssh/private-key
-ssh-add ~/.ssh/private-key
+printf "%s" "$PASS_SSH_PRIVATE_KEY" | ssh-add -
 
 # Import private gpg key for secrets' decryption.
-mkdir ~/.gnupg
-chmod 700 -R ~/.gnupg
-echo "$PASS_GPG_KEY" | gpg --dearmor > ~/.gnupg/private-key
-gpg --import ~/.gnupg/private-key
+# Generate the contents of this env var with 'gpg --armor --export-private-key <key_id> | base64 | pbcopy'
+echo "$PASS_GPG_KEY" | gpg --dearmor | gpg --import
 
 # Initialize pass with the indicated directory and GPG key ID to decrypt secrets pulled from the Git repository.
 pass init --path="$PASS_DIRECTORY" "$PASS_GPG_KEY_ID"

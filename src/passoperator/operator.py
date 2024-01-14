@@ -56,10 +56,9 @@ def read_manifest(path: str) -> Dict[str, str]:
 
 
 @kopf.on.startup()
-def start(param: Any, retry: Any, started: Any, runtime: Any, logger: Any, memo: Any, activity: Any, settings: Any) -> None:
+def start(**kwargs: Any) -> None:
     """
-    Reconcile current state of PassSecret objects and remote git repository (desired state);
-    bring current state of those objects into alignment.
+    Perform initial repo clone and set up operator runtime.
     """
     log.info(f'Starting operator version {__version__}')
     pass_git_repo.git_clone()
@@ -69,9 +68,11 @@ def start(param: Any, retry: Any, started: Any, runtime: Any, logger: Any, memo:
 @kopf.timer('PassSecret', interval=OPERATOR_INTERVAL, initial_delay=OPERATOR_INITIAL_DELAY)
 def reconciliation() -> None:
     """
-    Reconcile secrets across all namespaces and ensure they match the state of the PassSecrets.
+    Reconcile user-defined PassSecrets with the state of the cluster.
     """
+    log.info(f'Reconciling cluster state.')
     pass_git_repo.git_pull()
+    check_gpg_id()
 
 
 # @kopf.on.cleanup()
@@ -109,14 +110,14 @@ def reconciliation() -> None:
 #     """
 
 
-# @kopf.on.probe(id='now')
-# def get_current_timestamp(**kwargs) -> str:
-#     return datetime.datetime.utcnow().isoformat()
+@kopf.on.probe(id='now')
+def get_current_timestamp(**kwargs) -> str:
+    return datetime.datetime.utcnow().isoformat()
 
 
-# @kopf.on.probe(id='status')
-# def get_current_status(**kwargs) -> str:
-#     return 'ok'
+@kopf.on.probe(id='status')
+def get_current_status(**kwargs) -> str:
+    return 'ok'
 
 
 def check_gpg_id(path: Path = Path(f'~/.password-store/{PASS_DIRECTORY}/.gpg-id').expanduser(), remove: bool =False) -> None:
@@ -128,8 +129,6 @@ def check_gpg_id(path: Path = Path(f'~/.password-store/{PASS_DIRECTORY}/.gpg-id'
         remove (bool): indicate whether or not to remove this file, should it exist.
     """
     if path.exists():
-        log.info(f'reading {path}')
-
         with open(path, mode='r') as gpg_id_f:
             if gpg_id_f.read().rstrip() != PASS_GPG_KEY_ID:
                 log.error(f'PASS_GPG_KEY_ID ({PASS_GPG_KEY_ID}) does not equal .gpg-id contained in {path}.')
@@ -213,13 +212,10 @@ def main() -> None:
     check_gpg_id(remove=True)
 
     kopf.run(
-        # https://github.com/nolar/kopf/blob/main/kopf/cli.py#L86
-        # paths: List[str],
-        # modules: List[str],
-        # peering_name: Optional[str]
+        # https://kopf.readthedocs.io/en/stable/packages/kopf/#kopf.run
         priority=OPERATOR_PRIORITY,
         standalone=True,
-        namespaces=OPERATOR_NAMESPACE,
+        namespace=OPERATOR_NAMESPACE,
         clusterwide=False,
-        # liveness_endpoint: Optional[str],
+        liveness_endpoint='http://0.0.0.0:8080/healthz'
     )

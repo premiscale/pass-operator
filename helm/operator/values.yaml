@@ -17,6 +17,12 @@ deployment:
       cpu: 0.25
       memory: 500Mi
 
+  livenessProbe:
+    enabled: true
+    port: 8080
+    path: /healthz
+    config: {}
+
 
 operator:
   interval: 60
@@ -56,7 +62,7 @@ operator:
 
 
 service:
-  create: true
+  create: false
   type: ClusterIP
   ports:
     - appProtocol: http
@@ -67,3 +73,11 @@ service:
 
 serviceAccount:
   create: true
+
+# Namespace-local PassSecrets require RBAC setup for operator access through the ServiceAccount.
+role: {}
+rolebinding: {}
+
+# Cluster-wide Secrets require RBAC setup for operator access through the ServiceAccount.
+clusterrole: {}
+clusterrolebinding: {}

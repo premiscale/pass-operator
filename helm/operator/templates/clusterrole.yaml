@@ -1,22 +1,20 @@
 apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
+kind: ClusterRole
 metadata:
-  name: {{ .Values.role.name | default .Chart.Name }}
+  name: {{ .Values.clusterrole.name | default .Chart.Name }}
   namespace: {{ .Values.global.namespace | default .Release.Namespace }}
-  {{- with .Values.role.labels }}
+  {{- with .Values.clusterrole.labels }}
   labels:
     {{- toYaml . | nindent 4 }}
   {{- end }}
-  {{- with .Values.role.annotations }}
+  {{- with .Values.clusterrole.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 rules:
   - apiGroups:
-      - secrets.premiscale.com
+      - ""
     resources:
-      - PassSecrets
+      - secrets
     verbs:
-      - list
-      - get
-      - watch
+      - "*"

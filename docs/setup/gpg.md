@@ -54,7 +54,7 @@ You can find a lot of explanation about how to generate keys with GPG online, bu
 2. Export your private key and b64 encode it (otherwise it will dump a bunch of binary data to your shell).
 
     ```shell
-    gpg --export-secret-keys D1847B5ACFFB05196518D403DF04830B1AE47FD2 | base64
+    gpg --armor --export-secret-keys 51924ADAFC92656FAFEB672D4B90DE5D5BF143B8 | base64
     ...
     ```
 
