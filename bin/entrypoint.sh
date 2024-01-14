@@ -29,7 +29,7 @@ ssh-add ~/.ssh/private-key
 # Import private gpg key for secrets' decryption.
 mkdir ~/.gnupg
 chmod 700 -R ~/.gnupg
-echo "$PASS_GPG_KEY" > ~/.gnupg/private-key
+echo "$PASS_GPG_KEY" | gpg --dearmor > ~/.gnupg/private-key
 gpg --import ~/.gnupg/private-key
 
 # Initialize pass with the indicated directory and GPG key ID to decrypt secrets pulled from the Git repository.
