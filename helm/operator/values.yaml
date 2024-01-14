@@ -67,6 +67,5 @@ service:
 
 serviceAccount:
   create: true
-
 role: {}
 rolebinding: {}

@@ -212,13 +212,11 @@ def main() -> None:
     check_gpg_id(remove=True)
 
     kopf.run(
-        # https://github.com/nolar/kopf/blob/main/kopf/cli.py#L86
-        # paths: List[str],
-        # modules: List[str],
-        # peering_name: Optional[str]
+        # https://kopf.readthedocs.io/en/stable/packages/kopf/#kopf.run
         priority=OPERATOR_PRIORITY,
         standalone=True,
-        namespaces=OPERATOR_NAMESPACE,
+        namespaces=[OPERATOR_NAMESPACE],
+        namespace=OPERATOR_NAMESPACE,
         clusterwide=False,
-        # liveness_endpoint: Optional[str],
+        liveness_endpoint='/healthz'
     )
