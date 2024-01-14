@@ -215,7 +215,6 @@ def main() -> None:
         # https://kopf.readthedocs.io/en/stable/packages/kopf/#kopf.run
         priority=OPERATOR_PRIORITY,
         standalone=True,
-        namespaces=[OPERATOR_NAMESPACE],
         namespace=OPERATOR_NAMESPACE,
         clusterwide=False,
         liveness_endpoint='/healthz'
