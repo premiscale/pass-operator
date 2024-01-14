@@ -63,6 +63,14 @@ spec:
               value: {{ .Values.operator.priority | quote }}
             - name: OPERATOR_NAMESPACE
               value: {{ .Values.global.namespace | default .Release.Namespace }}
+            - name: OPERATOR_POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: OPERATOR_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
             # Pass
             - name: PASS_BINARY
               value: {{ .Values.operator.pass.binary }}

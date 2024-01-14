@@ -217,5 +217,5 @@ def main() -> None:
         standalone=True,
         namespace=OPERATOR_NAMESPACE,
         clusterwide=False,
-        liveness_endpoint='/healthz'
+        liveness_endpoint='http://0.0.0.0:8080/healthz'
     )
