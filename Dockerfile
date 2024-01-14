@@ -39,7 +39,7 @@ ARG PYTHON_PACKAGE_VERSION=0.0.1
 ENV PATH=${PATH}:/opt/pass-operator/.local/bin
 
 # Install and initialize PremiScale.
-RUN mkdir -p "$HOME"/.local/bin \
+RUN mkdir -p "$HOME"/.local/bin "$HOME"/.ssh \
     && pip install --upgrade pip \
     && pip install --no-cache-dir --no-input --extra-index-url="${PYTHON_INDEX}" pass-operator=="${PYTHON_PACKAGE_VERSION}"
 
@@ -56,5 +56,6 @@ ENV OPERATOR_INTERVAL=60 \
     PASS_SSH_PRIVATE_KEY=""
 
 COPY bin/entrypoint.sh /entrypoint.sh
+COPY bin/ssh_config /opt/pass-operator/.ssh/config
 
 ENTRYPOINT [ "/tini", "--", "/entrypoint.sh" ]
