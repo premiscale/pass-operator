@@ -55,6 +55,6 @@ ENV OPERATOR_INTERVAL=60 \
     PASS_GIT_BRANCH=main \
     PASS_SSH_PRIVATE_KEY=""
 
-COPY bin/bootstrap.sh /bootstrap.sh
+COPY bin/entrypoint.sh /entrypoint.sh
 
-ENTRYPOINT [ "/tini", "--", "/bootstrap.sh" ]
+ENTRYPOINT [ "/tini", "--", "/entrypoint.sh" ]

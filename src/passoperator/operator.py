@@ -119,6 +119,29 @@ def reconciliation() -> None:
 #     return 'ok'
 
 
+def check_gpg_id(path: Path = Path(f'~/.password-store/{PASS_DIRECTORY}/.gpg-id'), remove: bool =False) -> None:
+    """
+    Ensure the gpg ID exists (leftover from 'pass init' in the entrypoint, or a git clone) and its contents match PASS_GPG_KEY_ID.
+
+    Args:
+        path (Path): Path-like object to the .gpg-id file.
+        remove (bool): indicate whether or not to remove this file, should it exist.
+    """
+    if path.exists():
+        log.info(f'reading {path}')
+
+        with open(path, mode='r') as gpg_id_f:
+            if gpg_id_f.read().rstrip() != PASS_GPG_KEY_ID:
+                log.error(f'PASS_GPG_KEY_ID ({PASS_GPG_KEY_ID}) does not equal .gpg-id contained in {path}.')
+                sys.exit(1)
+
+        if remove:
+            path.unlink(missing_ok=False)
+    else:
+        log.error(f'.gpg-id at "{path}" does not exist. pass init failure.')
+        sys.exit(1)
+
+
 def main() -> None:
     """
     Set up this wrapping Python program with logging, etc.
@@ -185,6 +208,9 @@ def main() -> None:
         except (FileNotFoundError, PermissionError) as msg:
             log.error(f'Failed to configure logging, received: {msg}')
             sys.exit(1)
+
+    # Reset the directory to be cloned into.
+    check_gpg_id(remove=True)
 
     kopf.run(
         # https://github.com/nolar/kopf/blob/main/kopf/cli.py#L86
