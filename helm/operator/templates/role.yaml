@@ -15,7 +15,7 @@ rules:
   - apiGroups:
       - secrets.premiscale.com
     resources:
-      - PassSecrets
+      - '*'
     verbs:
       - list
       - get
