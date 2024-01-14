@@ -58,7 +58,7 @@ spec:
           ports:
             - containerPort: {{ .port }}
               name: healthcheck
-              protocol: tcp
+              protocol: TCP
             {{- end }}
           {{- end }}
           env:
@@ -128,7 +128,9 @@ spec:
             httpGet:
               path: {{ .path }}
               port: {{ .port }}
-            {{- toYaml .config | nindent 12 }}
+            {{- with .config }}
+            {{- toYaml .| nindent 12 }}
+            {{- end }}
             {{- end }}
           {{- end }}
           {{- with .Values.deployment.livenessProbe }}
@@ -148,7 +150,9 @@ spec:
             httpGet:
               path: {{ .path }}
               port: {{ .port }}
-            {{- toYaml .config | nindent 12 }}
+            {{- with .config }}
+            {{- toYaml .| nindent 12 }}
+            {{- end }}
             {{- end }}
           {{- end }}
           {{- with .Values.deployment.ports }}
