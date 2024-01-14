@@ -67,5 +67,11 @@ service:
 
 serviceAccount:
   create: true
+
+# Namespace-local PassSecrets require RBAC setup for operator access through the ServiceAccount.
 role: {}
 rolebinding: {}
+
+# Cluster-wide Secrets require RBAC setup for operator access through the ServiceAccount.
+clusterrole: {}
+clusterrolebinding: {}
