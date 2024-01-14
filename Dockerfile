@@ -56,7 +56,6 @@ ENV OPERATOR_INTERVAL=60 \
     PASS_SSH_PRIVATE_KEY=""
 
 COPY bin/entrypoint.sh /entrypoint.sh
-COPY bin/ssh_config $HOME/.ssh/config
-RUN chmod 400 $HOME/.ssh/config
+COPY --chmod=400 bin/ssh_config $HOME/.ssh/config
 
 ENTRYPOINT [ "/tini", "--", "/entrypoint.sh" ]
