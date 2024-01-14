@@ -72,6 +72,7 @@ def reconciliation() -> None:
     Reconcile secrets across all namespaces and ensure they match the state of the PassSecrets.
     """
     pass_git_repo.git_pull()
+    check_gpg_id()
 
 
 # @kopf.on.cleanup()
@@ -128,8 +129,6 @@ def check_gpg_id(path: Path = Path(f'~/.password-store/{PASS_DIRECTORY}/.gpg-id'
         remove (bool): indicate whether or not to remove this file, should it exist.
     """
     if path.exists():
-        log.info(f'reading {path}')
-
         with open(path, mode='r') as gpg_id_f:
             if gpg_id_f.read().rstrip() != PASS_GPG_KEY_ID:
                 log.error(f'PASS_GPG_KEY_ID ({PASS_GPG_KEY_ID}) does not equal .gpg-id contained in {path}.')
