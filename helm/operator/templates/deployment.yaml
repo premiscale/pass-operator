@@ -53,6 +53,14 @@ spec:
             --log-level, {{ .Values.operator.log.level }},
             --log-file, {{ .Values.operator.log.location }}
           ]
+          {{- with .Values.deployment.livenessProbe }}
+            {{- if .enabled }}
+          ports:
+            - containerPort: {{ .port }}
+              name: healthcheck
+              protocol: tcp
+            {{- end }}
+          {{- end }}
           env:
             # Operator
             - name: OPERATOR_INTERVAL
@@ -129,7 +137,9 @@ spec:
             httpGet:
               path: {{ .path }}
               port: {{ .port }}
-            {{- toYaml .config | nindent 12 }}
+            {{- with .config }}
+            {{- toYaml .| nindent 12 }}
+            {{- end }}
             {{- end }}
           {{- end }}
           {{- with .Values.deployment.readinessProbe }}
