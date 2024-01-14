@@ -190,7 +190,7 @@ def main() -> None:
     if args.log_stdout:
         logging.basicConfig(
             stream=sys.stdout,
-            format='%(asctime)s | %(name)s | %(levelname)s | %(message)s',
+            format='%(asctime)s | %(levelname)s | %(name)s | %(message)s',
             level=args.log_level.value
         )
     else:
