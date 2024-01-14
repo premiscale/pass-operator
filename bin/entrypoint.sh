@@ -5,10 +5,6 @@
 set -o pipefail
 
 
-export GPG_TTY
-GPG_TTY="$(tty)"
-
-
 if [ -z "$PASS_SSH_PRIVATE_KEY" ]; then
     printf "ERROR: PASS_SSH_PRIVATE_KEY is not defined. Please provide a valid private SSH key.\\n" >&2
     exit 1
@@ -30,7 +26,7 @@ printf "%s" "$PASS_SSH_PRIVATE_KEY" | ssh-add -
 
 # Import private gpg key for secrets' decryption.
 # Generate the contents of this env var with 'gpg --armor --export-private-key <key_id> | base64 | pbcopy'
-echo "$PASS_GPG_KEY" | gpg --dearmor | gpg --import -
+echo "$PASS_GPG_KEY" | gpg --dearmor | gpg --import
 
 # Initialize pass with the indicated directory and GPG key ID to decrypt secrets pulled from the Git repository.
 pass init --path="$PASS_DIRECTORY" "$PASS_GPG_KEY_ID"
