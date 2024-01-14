@@ -36,5 +36,5 @@ gpg --import ~/.gnupg/private-key
 # Initialize pass with the indicated directory and GPG key ID to decrypt secrets pulled from the Git repository.
 pass init --path="$PASS_DIRECTORY" "$PASS_GPG_KEY_ID"
 
-# Start the operator, passing in arguments from K8s.
+# Start the operator, passing in arguments from Helm.
 passoperator "$@"

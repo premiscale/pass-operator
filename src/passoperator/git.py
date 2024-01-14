@@ -23,7 +23,7 @@ class GitRepo:
     def __init__(self, repo_url: str, branch: str, clone_location: Union[Path, str] ='repo') -> None:
         self.repo_url = repo_url
         self.branch = branch
-        self.clone_location = clone_location
+        self.clone_location = (os.getenv('HOME') or '') + '/.password-store/' + str(clone_location)
         self.cloned = False
         self.repo: Repo
 
@@ -42,7 +42,7 @@ class GitRepo:
 
         repo = Repo.clone_from(
             url=self.repo_url,
-            to_path=(os.getenv('HOME') or '') + '/.password-store/' + str(self.clone_location)
+            to_path=self.clone_location
         )
 
         if self.branch not in repo.branches:
