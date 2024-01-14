@@ -13,7 +13,7 @@ metadata:
   {{- end }}
 rules:
   - apiGroups:
-      - secrets.premiscale.com
+      - secrets.premiscale.com/v1alpha1
     resources:
       - PassSecrets
     verbs:
