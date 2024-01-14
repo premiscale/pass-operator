@@ -22,9 +22,9 @@ fi
 
 # Add private SSH key to SSH agent for git pulls.
 eval "$(ssh-agent -s)"
-mkdir ~/.ssh/
 printf "%s" "$PASS_SSH_PRIVATE_KEY" > ~/.ssh/private-key
 chmod 600 ~/.ssh/private-key
+chmod 400 ~/.ssh/config
 ssh-add ~/.ssh/private-key
 
 # Import private gpg key for secrets' decryption.
