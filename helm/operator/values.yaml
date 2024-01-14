@@ -35,7 +35,7 @@ operator:
     # If create is false, value is not used; users may bring their own.
     createSecret: false
 
-    # Specs of the secret if createSecret is true; otherwise, these fields are used to reference an existing secret.
+    # Name of the secret. If createSecret is false, this is used to reference an existing, user-provided secret.
     name: private-ssh-key
 
     # raw string of the secret key b64enc'd.
@@ -44,7 +44,7 @@ operator:
   gpg:
     createSecret: false
 
-    # Specs of the secret if createSecret is true; otherwise, these fields are used to reference an existing secret.
+    # Name of the secret. If createSecret is false, this is used to reference an existing, user-provided secret.
     name: private-gpg-key
 
     key_id: ""
