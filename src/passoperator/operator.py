@@ -119,7 +119,7 @@ def reconciliation() -> None:
 #     return 'ok'
 
 
-def check_gpg_id(path: Path = Path(f'~/.password-store/{PASS_DIRECTORY}/.gpg-id'), remove: bool =False) -> None:
+def check_gpg_id(path: Path = Path(f'{os.getenv("HOME")}/.password-store/{PASS_DIRECTORY}/.gpg-id'), remove: bool =False) -> None:
     """
     Ensure the gpg ID exists (leftover from 'pass init' in the entrypoint, or a git clone) and its contents match PASS_GPG_KEY_ID.
 
