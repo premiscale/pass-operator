@@ -2,7 +2,7 @@
 # Start the pass operator after some initial SSH setup.
 
 
-set -eo pipefail
+set -o pipefail
 
 
 if [ -z "$PASS_SSH_PRIVATE_KEY" ]; then
@@ -22,7 +22,6 @@ fi
 
 # Add private SSH key to SSH agent for git pulls.
 eval "$(ssh-agent -s)"
-mkdir ~/.ssh/
 printf "%s" "$PASS_SSH_PRIVATE_KEY" > ~/.ssh/private-key
 chmod 600 ~/.ssh/private-key
 ssh-add ~/.ssh/private-key
@@ -36,5 +35,5 @@ gpg --import ~/.gnupg/private-key
 # Initialize pass with the indicated directory and GPG key ID to decrypt secrets pulled from the Git repository.
 pass init --path="$PASS_DIRECTORY" "$PASS_GPG_KEY_ID"
 
-# Start the operator, passing in arguments from K8s.
+# Start the operator, passing in arguments from Helm.
 passoperator "$@"
