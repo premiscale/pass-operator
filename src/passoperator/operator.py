@@ -56,10 +56,9 @@ def read_manifest(path: str) -> Dict[str, str]:
 
 
 @kopf.on.startup()
-def start(param: Any, retry: Any, started: Any, runtime: Any, logger: Any, memo: Any, activity: Any, settings: Any) -> None:
+def start(**kwargs: Any) -> None:
     """
-    Reconcile current state of PassSecret objects and remote git repository (desired state);
-    bring current state of those objects into alignment.
+    Perform initial repo clone and set up operator runtime.
     """
     log.info(f'Starting operator version {__version__}')
     pass_git_repo.git_clone()
@@ -69,8 +68,9 @@ def start(param: Any, retry: Any, started: Any, runtime: Any, logger: Any, memo:
 @kopf.timer('PassSecret', interval=OPERATOR_INTERVAL, initial_delay=OPERATOR_INITIAL_DELAY)
 def reconciliation() -> None:
     """
-    Reconcile secrets across all namespaces and ensure they match the state of the PassSecrets.
+    Reconcile user-defined PassSecrets with the state of the cluster.
     """
+    log.info(f'Reconciling cluster state.')
     pass_git_repo.git_pull()
     check_gpg_id()
 
@@ -110,14 +110,14 @@ def reconciliation() -> None:
 #     """
 
 
-# @kopf.on.probe(id='now')
-# def get_current_timestamp(**kwargs) -> str:
-#     return datetime.datetime.utcnow().isoformat()
+@kopf.on.probe(id='now')
+def get_current_timestamp(**kwargs) -> str:
+    return datetime.datetime.utcnow().isoformat()
 
 
-# @kopf.on.probe(id='status')
-# def get_current_status(**kwargs) -> str:
-#     return 'ok'
+@kopf.on.probe(id='status')
+def get_current_status(**kwargs) -> str:
+    return 'ok'
 
 
 def check_gpg_id(path: Path = Path(f'~/.password-store/{PASS_DIRECTORY}/.gpg-id').expanduser(), remove: bool =False) -> None:
