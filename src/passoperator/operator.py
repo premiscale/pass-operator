@@ -178,8 +178,8 @@ def main() -> None:
         log.error(f'Must provide a valid git URL (PASS_GIT_URL).')
         sys.exit(1)
 
+    # Set up our global git repository object.
     global pass_git_repo
-    # Set up our git repository object.
     pass_git_repo = GitRepo(
         repo_url=PASS_GIT_URL,
         branch=PASS_GIT_BRANCH,
