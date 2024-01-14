@@ -5,6 +5,10 @@
 set -o pipefail
 
 
+export GPG_TTY
+GPG_TTY="$(tty)"
+
+
 if [ -z "$PASS_SSH_PRIVATE_KEY" ]; then
     printf "ERROR: PASS_SSH_PRIVATE_KEY is not defined. Please provide a valid private SSH key.\\n" >&2
     exit 1
