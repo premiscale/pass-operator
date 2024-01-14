@@ -9,7 +9,7 @@ in Git, a practice that is often discouraged and typically forbidden at most org
 
 ## How it works
 
-From a high level, this operator continually runs `git pull` on a specified interval to grab updates from a git repository populated with encrypted
+From a high level, this operator runs `git pull` on an interval to grab updates from a git repository populated with encrypted
 secrets by `pass`. It maps secrets' paths to key values through the application of a [`PassSecret`](helm/operator/crds/PassSecret.yaml) Kubernetes [CRD](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/),
 such as the following.
 
