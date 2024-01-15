@@ -18,6 +18,8 @@ rules:
       - secrets
     verbs:
       - "*"
+
+  # https://github.com/nolar/kopf/issues/901#issuecomment-1063911897
   - apiGroups:
       - ""
     resources:
@@ -25,4 +27,10 @@ rules:
     verbs:
       - list
       - watch
-      - get
+  - apiGroups:
+      - apiextensions.k8s.io
+    resources:
+      - "*"
+    verbs:
+      - list
+      - watch
