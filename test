@@ -1,0 +1,14 @@
+{
+    'apiVersion': 'v1',
+    'kind': 'Secret',
+    'metadata': {
+        'name': 'singular_data',
+        'namespace': 'pass-operator-develop'
+    },
+    'stringData': {
+        'key': 'singular_data.1',
+        'path': 'premiscale/tests/singular_data.1'
+    },
+    'type': 'Opaque',
+    'immutable': False
+}

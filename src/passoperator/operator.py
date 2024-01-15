@@ -97,9 +97,10 @@ def create(body: kopf.Body, **kwargs: Any) -> None:
     data = body.spec['data']
 
     stringData = dict()
-    for i in range(len(data)):
-        for key in data[i]:
-            stringData[key] = data[i][key]
+    for datum in data:
+        key = datum['key']
+        value = datum['path']
+        stringData[key] = value
 
     new_secret = {
         'apiVersion': 'v1',
