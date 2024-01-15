@@ -86,6 +86,19 @@ def update(**kwargs: Any) -> None:
     log.info(f'PassSecret updated: {kwargs}')
 
 
+def decrypt(path: Path) -> str:
+    """
+    Decrypt a secret value contained in a path.
+
+    Args:
+        path (Path): path to the secret (as you would run 'pass show <path>').
+
+    Returns:
+        str: the decrypted secret value. TODO: switch this to return bytes, which is a bit more flexible.
+    """
+    return ''
+
+
 @kopf.on.create('secrets.premiscale.com', 'v1alpha1', 'passsecret')
 def create(body: kopf.Body, **kwargs: Any) -> None:
     """
@@ -101,9 +114,11 @@ def create(body: kopf.Body, **kwargs: Any) -> None:
         'kind': 'Secret',
         'metadata': {
             'name': managedSecret['name'],
-            'namespace':managedSecret['namespace']
+            'namespace': managedSecret['namespace']
         },
-        'stringData': {datum['key']: datum['path'] for datum in data},
+        'stringData': {
+            datum['key']: datum['path'] for datum in data
+        },
         'type': managedSecret['type'],
         'immutable': managedSecret['immutable']
     }
