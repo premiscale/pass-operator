@@ -70,7 +70,7 @@ def reconciliation() -> None:
     """
     Reconcile user-defined PassSecrets with the state of the cluster.
     """
-    log.info(f'Reconciling cluster state.')
+    print(f'Reconciling cluster state.')
     pass_git_repo.git_pull()
     check_gpg_id()
 
@@ -98,7 +98,7 @@ def create(**kwargs: Any) -> None:
     Returns:
         None.
     """
-    log.info(f'PassSecret created')
+    print(f'PassSecret created')
 
 
 @kopf.on.delete('secrets.premiscale.com', 'v1alpha1', 'passsecret')
@@ -109,7 +109,7 @@ def delete(**kwargs: Any) -> None:
     Args:
         spec (str):
     """
-    log.info(f'PassSecret deleted')
+    print(f'PassSecret deleted')
 
 
 # @kopf.on.probe(id='now')
