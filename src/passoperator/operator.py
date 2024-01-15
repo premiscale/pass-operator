@@ -87,27 +87,29 @@ def reconciliation() -> None:
 #     """
 
 
-# @kopf.on.create('PassSecret')
-# def create(**kwargs: Any) -> None:
-#     """
-#     Create a new Secret from a PassSecret manifest.
+@kopf.on.create('PassSecret')
+def create(**kwargs: Any) -> None:
+    """
+    Create a new Secret from a PassSecret manifest.
 
-#     Args:
-#         version (str): version of the agent.
+    Args:
+        version (str): version of the agent.
 
-#     Returns:
-#         None.
-#     """
+    Returns:
+        None.
+    """
+    log.info(f'PassSecret created')
 
 
-# @kopf.on.delete('PassSecret')
-# def delete(**kwargs: Any) -> None:
-#     """
-#     Remove the secret from memory.
+@kopf.on.delete('PassSecret')
+def delete(**kwargs: Any) -> None:
+    """
+    Remove the secret from memory.
 
-#     Args:
-#         spec (str):
-#     """
+    Args:
+        spec (str):
+    """
+    log.info(f'PassSecret deleted')
 
 
 # @kopf.on.probe(id='now')

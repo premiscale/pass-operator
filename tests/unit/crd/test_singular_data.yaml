@@ -1,7 +1,7 @@
 apiVersion: secrets.premiscale.com/v1alpha1
 kind: PassSecret
 metadata:
-  name: singular_data
+  name: singular-data
   namespace: pass-operator-tests
 spec:
   data:
