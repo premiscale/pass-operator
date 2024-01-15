@@ -96,12 +96,6 @@ def create(body: kopf.Body, **kwargs: Any) -> None:
     managedSecret = body.spec['managedSecret']
     data = body.spec['data']
 
-    stringData = dict()
-    for datum in data:
-        key = datum['key']
-        value = datum['path']
-        stringData[key] = value
-
     new_secret = {
         'apiVersion': 'v1',
         'kind': 'Secret',
@@ -109,7 +103,7 @@ def create(body: kopf.Body, **kwargs: Any) -> None:
             'name': managedSecret['name'],
             'namespace':managedSecret['namespace']
         },
-        'stringData': stringData,
+        'stringData': {datum['key']: datum['path'] for datum in data},
         'type': managedSecret['type'],
         'immutable': managedSecret['immutable']
     }
