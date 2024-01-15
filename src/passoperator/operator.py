@@ -5,11 +5,11 @@ A kubernetes operator that syncs and decrypts secrets from Linux password store 
 import logging
 import sys
 import kopf
-import kubernetes
 import yaml
 import os
 
 from typing import Any, Dict
+from kubernetes import client, config
 from pathlib import Path
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from importlib import metadata as meta, resources
@@ -22,6 +22,7 @@ from src.passoperator.utils import LogLevel
 __version__ = meta.version('pass-operator')
 log = logging.getLogger(__name__)
 pass_git_repo: GitRepo
+config.load_incluster_config()
 
 
 # Environment variables to configure the operator's performance.
@@ -109,26 +110,43 @@ def create(body: kopf.Body, **kwargs: Any) -> None:
     managedSecret = body.spec['managedSecret']
     data = body.spec['data']
 
-    new_secret = {
-        'apiVersion': 'v1',
-        'kind': 'Secret',
-        'metadata': {
+    # new_secret = {
+    #     'apiVersion': 'v1',
+    #     'kind': 'Secret',
+    #     'metadata': {
+    #         'name': managedSecret['name'],
+    #         'namespace': managedSecret['namespace']
+    #     },
+    #     'stringData': {
+    #         datum['key']: datum['path'] for datum in data
+    #     },
+    #     'type': managedSecret['type'],
+    #     'immutable': managedSecret['immutable']
+    # }
+
+    # print(new_secret)
+
+    v1 = client.CoreV1Api()
+    body = client.V1Secret(
+        api_version='v1',
+        kind='Secret',
+        metadata={
             'name': managedSecret['name'],
             'namespace': managedSecret['namespace']
         },
-        'stringData': {
+        string_data={
             datum['key']: datum['path'] for datum in data
         },
-        'type': managedSecret['type'],
-        'immutable': managedSecret['immutable']
-    }
+        type=managedSecret['type'],
+        immutable=managedSecret['immutable']
+    )
 
-    print(new_secret)
+    obj = v1.create_namespaced_secret(
+        namespace=managedSecret['namespace'],
+        body=body
+    )
 
-    api = kubernetes.client.ApiClient()
-    # obj = api.call_api(
-    #     resource_path=''
-    # )
+    print(obj)
 
 
 @kopf.on.delete('secrets.premiscale.com', 'v1alpha1', 'passsecret')
