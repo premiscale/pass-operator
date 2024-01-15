@@ -94,16 +94,22 @@ def create(body: kopf.Body, **kwargs: Any) -> None:
     """
     log.info(f'PassSecret created: {kwargs}')
 
+    managedSecret = body.spec['managedSecret']
+    data = body.spec['data']
+
+    stringData = dict()
+    for i in range(len(data)):
+        for key in data[i]:
+            stringData[key] = data[i][key]
+
     new_secret = {
         'apiVersion': 'v1',
         'kind': 'Secret',
         'metadata': {
-            'name': body.spec['managedSecret']['name'],
-            'namespace': body.spec['managedSecret']['namespace']
+            'name': managedSecret['name'],
+            'namespace':managedSecret['namespace']
         },
-        'stringData': {
-            key: body.spec['data'][key] for key in body.spec['data']
-        },
+        'stringData': stringData,
         'type': body.spec['type'],
         'immutable': body.spec['immutable']
     }
