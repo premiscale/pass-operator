@@ -115,6 +115,11 @@ def create(body: kopf.Body, **kwargs: Any) -> None:
 
     print(new_secret)
 
+    api = kubernetes.client.ApiClient()
+    # obj = api.call_api(
+    #     resource_path=''
+    # )
+
 
 @kopf.on.delete('secrets.premiscale.com', 'v1alpha1', 'passsecret')
 def delete(**kwargs: Any) -> None:
