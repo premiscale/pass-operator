@@ -8,7 +8,6 @@ import kopf
 import kubernetes
 import yaml
 import os
-import jq
 
 from typing import Any, Dict
 from pathlib import Path
