@@ -65,7 +65,7 @@ def start(**kwargs: Any) -> None:
     # print(param, retry, started, runtime, logger, memo, activity, settings)
 
 
-@kopf.timer('PassSecret', interval=OPERATOR_INTERVAL, initial_delay=OPERATOR_INITIAL_DELAY)
+@kopf.timer('secrets.premiscale.com', 'v1alpha1', 'passsecret', interval=OPERATOR_INTERVAL, initial_delay=OPERATOR_INITIAL_DELAY)
 def reconciliation() -> None:
     """
     Reconcile user-defined PassSecrets with the state of the cluster.
@@ -87,7 +87,7 @@ def reconciliation() -> None:
 #     """
 
 
-@kopf.on.create('PassSecret')
+@kopf.on.create('secrets.premiscale.com', 'v1alpha1', 'passsecret')
 def create(**kwargs: Any) -> None:
     """
     Create a new Secret from a PassSecret manifest.
@@ -101,7 +101,7 @@ def create(**kwargs: Any) -> None:
     log.info(f'PassSecret created')
 
 
-@kopf.on.delete('PassSecret')
+@kopf.on.delete('secrets.premiscale.com', 'v1alpha1', 'passsecret')
 def delete(**kwargs: Any) -> None:
     """
     Remove the secret from memory.
