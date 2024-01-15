@@ -110,14 +110,14 @@ def reconciliation() -> None:
 #     """
 
 
-@kopf.on.probe(id='now')
-def get_current_timestamp(**kwargs) -> str:
-    return datetime.datetime.utcnow().isoformat()
+# @kopf.on.probe(id='now')
+# def get_current_timestamp(**kwargs) -> str:
+#     return datetime.datetime.utcnow().isoformat()
 
 
-@kopf.on.probe(id='status')
-def get_current_status(**kwargs) -> str:
-    return 'ok'
+# @kopf.on.probe(id='status')
+# def get_current_status(**kwargs) -> str:
+#     return 'ok'
 
 
 def check_gpg_id(path: Path = Path(f'~/.password-store/{PASS_DIRECTORY}/.gpg-id').expanduser(), remove: bool =False) -> None:
