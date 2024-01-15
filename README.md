@@ -76,7 +76,7 @@ pass git git-command-args...
 ...
 ```
 
-we may easily link our local password store to a remote Git repository. This operator uses `git` alongside `pass` to pull secret updates (it never pushes them, however).
+we may easily link our local password store to a remote Git repository. This operator uses `git` alongside `pass` to pull secret updates.
 
 ```shell
 $ git init ~/.password-store/repo/

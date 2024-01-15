@@ -5,15 +5,13 @@ A kubernetes operator that syncs and decrypts secrets from Linux password store 
 import logging
 import sys
 import kopf
-import yaml
 import os
 
-from typing import Any, Dict
+from typing import Any
 from kubernetes import client, config
 from pathlib import Path
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
-from importlib import metadata as meta, resources
-from functools import cache
+from importlib import metadata as meta
 
 from src.passoperator.git import GitRepo
 from src.passoperator.utils import LogLevel
@@ -38,21 +36,6 @@ PASS_GPG_KEY = os.getenv('PASS_GPG_KEY')
 PASS_GPG_KEY_ID = os.getenv('PASS_GPG_KEY_ID')
 PASS_GIT_URL = os.getenv('PASS_GIT_URL')
 PASS_GIT_BRANCH = os.getenv('PASS_GIT_BRANCH') or 'main'
-
-
-@cache
-def read_manifest(path: str) -> Dict[str, str]:
-    """
-    Read a secret template from file and cache the contents.
-
-    Args:
-        path (str): filename to read from data.
-
-    Returns:
-        str: contents of the file.
-    """
-    with resources.open_text('src.data', path) as obj:
-        return yaml.safe_load(obj.read().rstrip())
 
 
 @kopf.on.startup()
@@ -109,24 +92,8 @@ def create(body: kopf.Body, **kwargs: Any) -> None:
 
     managedSecret = body.spec['managedSecret']
     data = body.spec['data']
-
-    # new_secret = {
-    #     'apiVersion': 'v1',
-    #     'kind': 'Secret',
-    #     'metadata': {
-    #         'name': managedSecret['name'],
-    #         'namespace': managedSecret['namespace']
-    #     },
-    #     'stringData': {
-    #         datum['key']: datum['path'] for datum in data
-    #     },
-    #     'type': managedSecret['type'],
-    #     'immutable': managedSecret['immutable']
-    # }
-
-    # print(new_secret)
-
     v1 = client.CoreV1Api()
+
     body = client.V1Secret(
         api_version='v1',
         kind='Secret',
@@ -141,12 +108,13 @@ def create(body: kopf.Body, **kwargs: Any) -> None:
         immutable=managedSecret['immutable']
     )
 
-    obj = v1.create_namespaced_secret(
-        namespace=managedSecret['namespace'],
-        body=body
-    )
-
-    print(obj)
+    try:
+        obj = v1.create_namespaced_secret(
+            namespace=managedSecret['namespace'],
+            body=body
+        )
+    except client.ApiException as e:
+        log.error(e)
 
 
 @kopf.on.delete('secrets.premiscale.com', 'v1alpha1', 'passsecret')
