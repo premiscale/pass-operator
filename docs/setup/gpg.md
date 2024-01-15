@@ -44,7 +44,7 @@ You can find a lot of explanation about how to generate keys with GPG online, bu
     You'll now see your key on your keyring.
 
     ```shell
-    gpg --list-keys 51924ADAFC92656FAFEB672D4B90DE5D5BF143B8
+    $ gpg --list-keys 51924ADAFC92656FAFEB672D4B90DE5D5BF143B8
     pub   rsa3072 2024-01-12 [SC] [expires: 2026-01-11]
           51924ADAFC92656FAFEB672D4B90DE5D5BF143B8
     uid           [ultimate] Emma Doyle <emma@premiscale.com>
@@ -54,7 +54,7 @@ You can find a lot of explanation about how to generate keys with GPG online, bu
 2. Export your private key and b64 encode it (otherwise it will dump a bunch of binary data to your shell).
 
     ```shell
-    gpg --armor --export-secret-keys 51924ADAFC92656FAFEB672D4B90DE5D5BF143B8 | base64
+    $ gpg --armor --export-secret-keys 51924ADAFC92656FAFEB672D4B90DE5D5BF143B8 | base64
     ...
     ```
 
