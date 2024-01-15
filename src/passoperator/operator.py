@@ -63,7 +63,6 @@ def start(**kwargs: Any) -> None:
     """
     log.info(f'Starting operator version {__version__}')
     pass_git_repo.clone()
-    # print(param, retry, started, runtime, logger, memo, activity, settings)
 
 
 @kopf.timer('secrets.premiscale.com', 'v1alpha1', 'passsecret', interval=OPERATOR_INTERVAL, initial_delay=OPERATOR_INITIAL_DELAY, sharp=True)
@@ -81,51 +80,28 @@ def reconciliation(**kwargs) -> None:
 #     pass
 
 
-# @kopf.on.update('PassSecret')
-# def update(**kwargs: Any) -> None:
-#     """
-#     An update was received on the PassSecret object, so attempt to update the corresponding Secret.
-#     """
-
-
-# @kopf.on.update('secrets.premiscale.com', 'v1alpha1', 'passsecret')
+@kopf.on.update('secrets.premiscale.com', 'v1alpha1', 'passsecret')
+def update(**kwargs: Any) -> None:
+    """
+    An update was received on the PassSecret object, so attempt to update the corresponding Secret.
+    """
+    log.info(f'PassSecret updated: {kwargs}')
 
 
 @kopf.on.create('secrets.premiscale.com', 'v1alpha1', 'passsecret')
 def create(**kwargs: Any) -> None:
     """
     Create a new Secret from a PassSecret manifest.
-
-    Args:
-        version (str): version of the agent.
-
-    Returns:
-        None.
     """
-
-
     log.info(f'PassSecret created: {kwargs}')
 
 
 @kopf.on.delete('secrets.premiscale.com', 'v1alpha1', 'passsecret')
 def delete(**kwargs: Any) -> None:
     """
-    Remove the secret from memory.
-
-    Args:
-        spec (str):
+    Remove the secret.
     """
     log.info(f'PassSecret deleted: {kwargs}')
-
-
-# @kopf.on.probe(id='now')
-# def get_current_timestamp(**kwargs) -> str:
-#     return datetime.datetime.utcnow().isoformat()
-
-
-# @kopf.on.probe(id='status')
-# def get_current_status(**kwargs) -> str:
-#     return 'ok'
 
 
 def check_gpg_id(path: Path = Path(f'~/.password-store/{PASS_DIRECTORY}/.gpg-id').expanduser(), remove: bool =False) -> None:
