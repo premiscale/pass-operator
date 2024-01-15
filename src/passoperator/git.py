@@ -40,17 +40,17 @@ class GitRepo:
             log.warn(f'Repository at URL {self.repo_url} has already been cloned to location "{self.clone_location}". Skipping.')
             return None
 
-        repo = Repo.clone_from(
+        self.repo = Repo.clone_from(
             url=self.repo_url,
             to_path=self.clone_location
         )
 
-        if self.branch not in repo.branches:
+        if self.branch not in self.repo.branches:
             log.error(f'Branch "{self.branch}" not found in project at URL "{self.repo_url}"')
             sys.exit(1)
 
-        if str(repo.active_branch) != self.branch:
-            repo.git.checkout(self.branch)
+        if str(self.repo.active_branch) != self.branch:
+            self.repo.git.checkout(self.branch)
 
         self.cloned = True
 
