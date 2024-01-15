@@ -66,11 +66,11 @@ def start(**kwargs: Any) -> None:
 
 
 @kopf.timer('secrets.premiscale.com', 'v1alpha1', 'passsecret', interval=OPERATOR_INTERVAL, initial_delay=OPERATOR_INITIAL_DELAY)
-def reconciliation() -> None:
+def reconciliation(**kwargs) -> None:
     """
     Reconcile user-defined PassSecrets with the state of the cluster.
     """
-    log.info(f'Reconciling cluster state.')
+    log.info(f'Reconciling cluster state: {kwargs}.')
     pass_git_repo.git_pull()
     check_gpg_id()
 
@@ -110,7 +110,7 @@ def delete(**kwargs: Any) -> None:
     Args:
         spec (str):
     """
-    log.info(f'PassSecret deleted {kwargs}')
+    log.info(f'PassSecret deleted: {kwargs}')
 
 
 # @kopf.on.probe(id='now')
