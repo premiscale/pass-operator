@@ -110,8 +110,8 @@ def create(body: kopf.Body, **kwargs: Any) -> None:
             'namespace':managedSecret['namespace']
         },
         'stringData': stringData,
-        'type': body.spec['type'],
-        'immutable': body.spec['immutable']
+        'type': managedSecret['type'],
+        'immutable': managedSecret['immutable']
     }
 
     print(new_secret)
