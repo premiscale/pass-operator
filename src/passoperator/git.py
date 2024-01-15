@@ -27,7 +27,7 @@ class GitRepo:
         self.cloned = False
         self.repo: Repo
 
-    def git_clone(self) -> None:
+    def clone(self) -> None:
         """
         Clone a git repository. Should only be called once.
 
@@ -54,11 +54,11 @@ class GitRepo:
 
         self.cloned = True
 
-    def git_pull(self) -> None:
+    def pull(self) -> None:
         """
         Run 'git pull' in the cloned repository. This method will be called repeatedly, on an interval.
         """
         if not self.cloned:
-            self.git_clone()
+            self.clone()
 
-        self.repo.pull()
+        self.repo.remotes.origin.pull()

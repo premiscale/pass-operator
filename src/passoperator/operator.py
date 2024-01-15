@@ -61,17 +61,17 @@ def start(**kwargs: Any) -> None:
     Perform initial repo clone and set up operator runtime.
     """
     log.info(f'Starting operator version {__version__}')
-    pass_git_repo.git_clone()
+    pass_git_repo.clone()
     # print(param, retry, started, runtime, logger, memo, activity, settings)
 
 
-@kopf.timer('secrets.premiscale.com', 'v1alpha1', 'passsecret', interval=OPERATOR_INTERVAL, initial_delay=OPERATOR_INITIAL_DELAY)
+@kopf.timer('secrets.premiscale.com', 'v1alpha1', 'passsecret', interval=OPERATOR_INTERVAL, initial_delay=OPERATOR_INITIAL_DELAY, sharp=True)
 def reconciliation(**kwargs) -> None:
     """
     Reconcile user-defined PassSecrets with the state of the cluster.
     """
     log.info(f'Reconciling cluster state: {kwargs}.')
-    pass_git_repo.git_pull()
+    pass_git_repo.pull()
     check_gpg_id()
 
 
