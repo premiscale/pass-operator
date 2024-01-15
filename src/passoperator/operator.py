@@ -9,7 +9,7 @@ import kubernetes
 import datetime
 import yaml
 import os
-import yq
+import jq
 
 from typing import Any, Dict
 from pathlib import Path
@@ -89,11 +89,13 @@ def update(**kwargs: Any) -> None:
 
 
 @kopf.on.create('secrets.premiscale.com', 'v1alpha1', 'passsecret')
-def create(**kwargs: Any) -> None:
+def create(body: dict, **kwargs: Any) -> None:
     """
     Create a new Secret from a PassSecret manifest.
     """
     log.info(f'PassSecret created: {kwargs}')
+    _body = jq.compile('.').input_value(body)
+    log.info(_body)
 
 
 @kopf.on.delete('secrets.premiscale.com', 'v1alpha1', 'passsecret')
