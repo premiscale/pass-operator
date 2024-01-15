@@ -6,7 +6,6 @@ import logging
 import sys
 import kopf
 import kubernetes
-import datetime
 import yaml
 import os
 import jq
@@ -94,6 +93,7 @@ def create(body: dict, **kwargs: Any) -> None:
     Create a new Secret from a PassSecret manifest.
     """
     log.info(f'PassSecret created: {kwargs}')
+    print(type(body), dir(body))
     _body = jq.compile('.').input_value(body)
     log.info(_body)
 
