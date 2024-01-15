@@ -88,14 +88,14 @@ def update(**kwargs: Any) -> None:
 
 
 @kopf.on.create('secrets.premiscale.com', 'v1alpha1', 'passsecret')
-def create(body: dict, **kwargs: Any) -> None:
+def create(body: kopf.Body, **kwargs: Any) -> None:
     """
     Create a new Secret from a PassSecret manifest.
     """
     log.info(f'PassSecret created: {kwargs}')
     print(type(body), dir(body))
-    _body = jq.compile('.').input_value(body)
-    log.info(_body)
+
+    log.info(body.spec, body.values)
 
 
 @kopf.on.delete('secrets.premiscale.com', 'v1alpha1', 'passsecret')
