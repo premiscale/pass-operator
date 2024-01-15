@@ -93,10 +93,22 @@ def create(body: kopf.Body, **kwargs: Any) -> None:
     Create a new Secret with the spec of the newly-created PassSecret.
     """
     log.info(f'PassSecret created: {kwargs}')
-    print(type(body), dir(body))
 
-    log.info(body.spec)
-    log.info(body.spec['data'])
+    new_secret = {
+        'apiVersion': 'v1',
+        'kind': 'Secret',
+        'metadata': {
+            'name': body.spec['managedSecret']['name'],
+            'namespace': body.spec['managedSecret']['namespace']
+        },
+        'stringData': {
+            key: body.spec['data'][key] for key in body.spec['data']
+        },
+        'type': body.spec['type'],
+        'immutable': body.spec['immutable']
+    }
+
+    print(new_secret)
 
 
 @kopf.on.delete('secrets.premiscale.com', 'v1alpha1', 'passsecret')
