@@ -28,6 +28,7 @@ gitpython = "^3.1.31"
 kopf = "^1.36.2"
 pylint = "^3.0.3"
 jq = "^1.6.0"
+yq = "^3.2.3"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.3.2"

@@ -9,6 +9,7 @@ import kubernetes
 import datetime
 import yaml
 import os
+import yq
 
 from typing import Any, Dict
 from pathlib import Path
@@ -87,7 +88,9 @@ def reconciliation(**kwargs) -> None:
 #     """
 
 
-@kopf.on.update('secrets.premiscale.com', 'v1alpha1', 'passsecret')
+# @kopf.on.update('secrets.premiscale.com', 'v1alpha1', 'passsecret')
+
+
 @kopf.on.create('secrets.premiscale.com', 'v1alpha1', 'passsecret')
 def create(**kwargs: Any) -> None:
     """
@@ -99,6 +102,8 @@ def create(**kwargs: Any) -> None:
     Returns:
         None.
     """
+
+
     log.info(f'PassSecret created: {kwargs}')
 
 
