@@ -70,7 +70,7 @@ def reconciliation(**kwargs) -> None:
     """
     Reconcile user-defined PassSecrets with the state of the cluster.
     """
-    kopf.info(f'PassSecret created: {kwargs}')
+    kopf.info(f'PassSecret: {kwargs}')
     pass_git_repo.git_pull()
     check_gpg_id()
 
@@ -110,7 +110,7 @@ def delete(**kwargs: Any) -> None:
     Args:
         spec (str):
     """
-    kopf.info(f'PassSecret created: {kwargs}')(f'PassSecret deleted {kwargs}')
+    kopf.info(f'PassSecret deleted {kwargs}')
 
 
 # @kopf.on.probe(id='now')
