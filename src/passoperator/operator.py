@@ -87,7 +87,7 @@ def create(body: kopf.Body, **kwargs: Any) -> None:
     stringData = dict()
 
     for datum in data:
-        if (dec_datum := decrypt(Path(f'{PASS_DIRECTORY}/{datum["path"]}'))) is not None:
+        if (dec_datum := decrypt(Path(f'~/.password-store/{PASS_DIRECTORY}/{datum["path"]}').expanduser())) is not None:
             stringData[datum['key']] = dec_datum
         else:
             log.error(f'Could not decrypt contents of secret {passSecretName} with path {datum["path"]}')
