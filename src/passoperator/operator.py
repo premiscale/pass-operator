@@ -104,7 +104,7 @@ def create(body: kopf.Body, **kwargs: Any) -> None:
     )
 
     try:
-        obj = v1.create_namespaced_secret(
+        v1.create_namespaced_secret(
             namespace=managedSecret['namespace'],
             body=body
         )
