@@ -87,11 +87,11 @@ def create(body: kopf.Body, **kwargs: Any) -> None:
     stringData = dict()
 
     for datum in data:
-        if (dec_datum := decrypt(Path(f'~/.password-store/{PASS_DIRECTORY}/{datum["path"]}').expanduser())) is not None:
-            stringData[datum['key']] = dec_datum
+        if (decrypted_datum := decrypt(Path(f'~/.password-store/{PASS_DIRECTORY}/{datum["path"]}').expanduser())) is not None:
+            stringData[datum['key']] = decrypted_datum
         else:
             log.error(f'Could not decrypt contents of secret {passSecretName} with path {datum["path"]}')
-            return None
+            raise kopf.PermanentError()
 
     body = client.V1Secret(
         api_version='v1',
