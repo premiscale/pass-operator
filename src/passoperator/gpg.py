@@ -32,6 +32,8 @@ def decrypt(path: Path, home: Path = Path('~/.gnupg').expanduser()) -> Optional[
                 always_trust=True
             )
 
+            print(f'Decrypted: {str(gpg_f_decrypted)}')
+            print(f'Decrypted2: {gpg_f_decrypted}')
             return str(gpg_f_decrypted)
     except (IOError, PermissionError) as e:
         log.error(e)
