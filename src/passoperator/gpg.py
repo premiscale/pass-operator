@@ -21,7 +21,7 @@ def decrypt(path: Path, home: Path = Path('~/.gnupg').expanduser(), passphrase: 
         home (Path): GnuPG home directory (default: ~/.gnupg)
 
     Returns:
-        str: the decrypted string.
+        Optional[str]: the decrypted string if we could decrypt it; None, otherwise.
     """
     gpg = GPG(gnupghome=home)
 

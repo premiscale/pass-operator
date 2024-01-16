@@ -29,7 +29,6 @@ printf "%s" "$PASS_SSH_PRIVATE_KEY" | ssh-add -
 if [ -z "$PASS_GPG_PASSPHRASE" ]; then
     echo "$PASS_GPG_KEY" | gpg --dearmor | gpg --batch --import
 else
-
     echo "$PASS_GPG_KEY" | gpg --dearmor > dearmored_key.gpg
     echo "$PASS_GPG_PASSPHRASE" | gpg --batch --import dearmored_key.gpg
     rm dearmored_key.gpg
