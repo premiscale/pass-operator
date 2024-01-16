@@ -95,6 +95,17 @@ spec:
               value: {{ .value }}
                 {{- end }}
               {{- end }}
+            - name: PASS_GPG_PASSPHRASE
+              {{- with .Values.operator.gpg }}
+                {{- if .createSecret }}
+              valueFrom:
+                secretKeyRef:
+                  key: passphrase
+                  name: {{ .name }}
+                {{- else }}
+              value: {{ .passphrase }}
+                {{- end }}
+              {{- end }}
             - name: PASS_GPG_KEY_ID
               value: {{ .Values.operator.gpg.key_id }}
             - name: PASS_GIT_URL

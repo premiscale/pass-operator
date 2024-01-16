@@ -55,6 +55,7 @@ operator:
 
     key_id: ""
     value: ""
+    passphrase: ""
 
   git:
     branch: main

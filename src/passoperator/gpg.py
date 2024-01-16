@@ -12,7 +12,7 @@ from gnupg import GPG
 log = logging.getLogger(__name__)
 
 
-def decrypt(path: Path, home: Path = Path('~/.gnupg').expanduser()) -> Optional[str]:
+def decrypt(path: Path, home: Path = Path('~/.gnupg').expanduser(), passphrase: str = '') -> Optional[str]:
     """
     Decrypt a path in the store to a string.
 
@@ -30,7 +30,7 @@ def decrypt(path: Path, home: Path = Path('~/.gnupg').expanduser()) -> Optional[
         decrypted_file = gpg.decrypt_file(
             f'{path}.gpg',
             always_trust=True,
-            extra_args='--yes'
+            passphrase=passphrase
         )
 
         return str(decrypted_file)

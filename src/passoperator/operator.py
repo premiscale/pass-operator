@@ -35,6 +35,7 @@ PASS_BINARY = os.getenv('PASS_BINARY', '/usr/bin/pass')
 PASS_DIRECTORY = os.getenv('PASS_DIRECTORY', 'repo')
 PASS_GPG_KEY = os.getenv('PASS_GPG_KEY')
 PASS_GPG_KEY_ID = os.getenv('PASS_GPG_KEY_ID')
+PASS_GPG_PASSPHRASE = os.getenv('PASS_GPG_PASSPHRASE')
 PASS_GIT_URL = os.getenv('PASS_GIT_URL')
 PASS_GIT_BRANCH = os.getenv('PASS_GIT_BRANCH', 'main')
 
