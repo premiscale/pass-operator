@@ -12,7 +12,7 @@ from gnupg import GPG
 log = logging.getLogger(__name__)
 
 
-def decrypt(path: Path, home: Path = Path('~/.gnupg').expanduser(), passphrase: str = '') -> Optional[str]:
+def decrypt(path: Path, home: Path = Path('~/.gnupg').expanduser(), passphrase: Optional[str] = None) -> Optional[str]:
     """
     Decrypt a path in the store to a string.
 
@@ -28,12 +28,12 @@ def decrypt(path: Path, home: Path = Path('~/.gnupg').expanduser(), passphrase: 
     try:
         # https://gnupg.readthedocs.io/en/latest/#decryption
         decrypted_file = gpg.decrypt_file(
-            f'{path}.gpg',
+            f'{str(path)}.gpg',
             always_trust=True,
             passphrase=passphrase
         )
 
-        return str(decrypted_file)
+        return str(decrypted_file).rstrip()
     except (IOError, PermissionError) as e:
         log.error(e)
         return None
