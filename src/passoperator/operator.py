@@ -76,6 +76,9 @@ def update(**kwargs: Any) -> None:
 def create(body: kopf.Body, **kwargs: Any) -> None:
     """
     Create a new Secret with the spec of the newly-created PassSecret.
+
+    Args:
+        body [kopf.Body]: body of the create event.
     """
     managedSecret = body.spec['managedSecret']
     passSecretName = managedSecret["name"]
