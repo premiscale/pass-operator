@@ -25,18 +25,18 @@ config.load_incluster_config()
 
 
 # Environment variables to configure the operator's performance.
-OPERATOR_INTERVAL = int(os.getenv('OPERATOR_INTERVAL') or 60)
-OPERATOR_INITIAL_DELAY = int(os.getenv('OPERATOR_INITIAL_DELAY') or 3)
-OPERATOR_PRIORITY = int(os.getenv('OPERATOR_PRIORITY') or 100)
-OPERATOR_NAMESPACE = os.getenv('OPERATOR_NAMESPACE') or 'default'
+OPERATOR_INTERVAL = int(os.getenv('OPERATOR_INTERVAL', 60))
+OPERATOR_INITIAL_DELAY = int(os.getenv('OPERATOR_INITIAL_DELAY', 3))
+OPERATOR_PRIORITY = int(os.getenv('OPERATOR_PRIORITY', 100))
+OPERATOR_NAMESPACE = os.getenv('OPERATOR_NAMESPACE', 'default')
 
 # Environment variables to configure pass.
-PASS_BINARY = os.getenv('PASS_BINARY') or '/usr/bin/pass'
-PASS_DIRECTORY = os.getenv('PASS_DIRECTORY') or 'repo'
+PASS_BINARY = os.getenv('PASS_BINARY', '/usr/bin/pass')
+PASS_DIRECTORY = os.getenv('PASS_DIRECTORY', 'repo')
 PASS_GPG_KEY = os.getenv('PASS_GPG_KEY')
 PASS_GPG_KEY_ID = os.getenv('PASS_GPG_KEY_ID')
 PASS_GIT_URL = os.getenv('PASS_GIT_URL')
-PASS_GIT_BRANCH = os.getenv('PASS_GIT_BRANCH') or 'main'
+PASS_GIT_BRANCH = os.getenv('PASS_GIT_BRANCH', 'main')
 
 
 @kopf.on.startup()
