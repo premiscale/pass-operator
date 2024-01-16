@@ -73,7 +73,7 @@ def update(**kwargs: Any) -> None:
 
 
 @kopf.on.create('secrets.premiscale.com', 'v1alpha1', 'passsecret')
-def create(body: kopf.Body, **kwargs: Any) -> None:
+def create(body: kopf.Body, **_: Any) -> None:
     """
     Create a new Secret with the spec of the newly-created PassSecret.
 
@@ -81,7 +81,8 @@ def create(body: kopf.Body, **kwargs: Any) -> None:
         body [kopf.Body]: body of the create event.
     """
     managedSecret = body.spec['managedSecret']
-    passSecretName = managedSecret["name"]
+    passSecretName = body.metadata['name']
+    managedSecretName = managedSecret["name"]
     data = body.spec['data']
 
     log.info(f'PassSecret "{passSecretName}" created')
@@ -97,14 +98,14 @@ def create(body: kopf.Body, **kwargs: Any) -> None:
             )):
             stringData[secret['key']] = decrypted_secret
         else:
-            log.error(f'Could not decrypt contents of secret {passSecretName} with path {secret["path"]}')
+            log.error(f'Could not decrypt contents of secret {secret["key"]} with path {secret["path"]}')
             raise kopf.PermanentError()
 
     body = client.V1Secret(
         api_version='v1',
         kind='Secret',
         metadata={
-            'name': passSecretName,
+            'name': managedSecretName,
             'namespace': managedSecret['namespace']
         },
         string_data=stringData,
@@ -122,11 +123,28 @@ def create(body: kopf.Body, **kwargs: Any) -> None:
 
 
 @kopf.on.delete('secrets.premiscale.com', 'v1alpha1', 'passsecret')
-def delete(**kwargs: Any) -> None:
+def delete(body: kopf.Body, **_: Any) -> None:
     """
     Remove the secret.
     """
-    log.info(f'PassSecret deleted: {kwargs}')
+
+    managedSecret = body.spec['managedSecret']
+    passSecretName = body.metadata['name']
+    managedSecretName = managedSecret["name"]
+    # data = body.spec['data']
+
+    log.info(f'PassSecret deleted: {passSecretName}')
+
+    v1 = client.CoreV1Api()
+
+    try:
+        v1.delete_namespaced_secret(
+            name=managedSecretName,
+            namespace=managedSecret['namespace']
+        )
+        log.info(f'Managed secret {managedSecretName} deleted')
+    except client.ApiException as e:
+        log.error(e)
 
 
 def check_gpg_id(path: Path = Path(f'~/.password-store/{PASS_DIRECTORY}/.gpg-id').expanduser(), remove: bool =False) -> None:
