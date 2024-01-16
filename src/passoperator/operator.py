@@ -15,6 +15,7 @@ from importlib import metadata as meta
 
 from src.passoperator.git import GitRepo
 from src.passoperator.utils import LogLevel
+from src.passoperator.gpg import decrypt
 
 
 __version__ = meta.version('pass-operator')
@@ -70,19 +71,6 @@ def update(**kwargs: Any) -> None:
     log.info(f'PassSecret updated: {kwargs}')
 
 
-def decrypt(path: Path) -> str:
-    """
-    Decrypt a secret value contained in a path.
-
-    Args:
-        path (Path): path to the secret (as you would run 'pass show <path>').
-
-    Returns:
-        str: the decrypted secret value. TODO: switch this to return bytes, which is a bit more flexible.
-    """
-    return ''
-
-
 @kopf.on.create('secrets.premiscale.com', 'v1alpha1', 'passsecret')
 def create(body: kopf.Body, **kwargs: Any) -> None:
     """
@@ -94,6 +82,15 @@ def create(body: kopf.Body, **kwargs: Any) -> None:
     data = body.spec['data']
     v1 = client.CoreV1Api()
 
+    stringData = dict()
+
+    for datum in data:
+        if (dec_datum := decrypt(datum['path'])) is not None:
+            stringData[datum['key']] = dec_datum
+        else:
+            log.error(f'Could not decrypt contents of secret {managedSecret["name"]} with path {datum["path"]}')
+            return None
+
     body = client.V1Secret(
         api_version='v1',
         kind='Secret',
@@ -101,9 +98,7 @@ def create(body: kopf.Body, **kwargs: Any) -> None:
             'name': managedSecret['name'],
             'namespace': managedSecret['namespace']
         },
-        string_data={
-            datum['key']: datum['path'] for datum in data
-        },
+        string_data=stringData,
         type=managedSecret['type'],
         immutable=managedSecret['immutable']
     )
