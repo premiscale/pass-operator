@@ -133,7 +133,7 @@ def delete(body: kopf.Body, **_: Any) -> None:
     managedSecretName = managedSecret["name"]
     # data = body.spec['data']
 
-    log.info(f'PassSecret deleted: {passSecretName}')
+    log.info(f'PassSecret "{passSecretName}" deleted')
 
     v1 = client.CoreV1Api()
 
