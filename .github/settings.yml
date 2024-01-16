@@ -1,4 +1,4 @@
-_extends: .github-private
+_extends: .github
 
 repository:
   name: pass-operator
