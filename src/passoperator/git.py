@@ -41,7 +41,7 @@ class GitRepo:
             loc (str): Local file path to clone to.
         """
         if self.cloned:
-            log.warn(f'Repository at URL {self.repo_url} has already been cloned to location "{self.clone_location}". Skipping.')
+            log.warn(f'Repository at URL {self.repo_url} has already been cloned to location "{self.clone_location}". Skipping')
             return None
 
         self.repo = Repo.clone_from(

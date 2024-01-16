@@ -53,7 +53,7 @@ def reconciliation(**kwargs) -> None:
     """
     Reconcile user-defined PassSecrets with the state of the cluster.
     """
-    log.info(f'Reconciling cluster state: {kwargs}.')
+    log.info(f'Reconciling cluster state')
     pass_git_repo.pull()
     check_gpg_id()
 
@@ -76,10 +76,12 @@ def create(body: kopf.Body, **kwargs: Any) -> None:
     """
     Create a new Secret with the spec of the newly-created PassSecret.
     """
-    log.info(f'PassSecret created: {kwargs}')
-
     managedSecret = body.spec['managedSecret']
+    passSecretName = managedSecret["name"]
     data = body.spec['data']
+
+    log.info(f'PassSecret "{passSecretName}" created')
+
     v1 = client.CoreV1Api()
 
     stringData = dict()
@@ -88,14 +90,14 @@ def create(body: kopf.Body, **kwargs: Any) -> None:
         if (dec_datum := decrypt(datum['path'])) is not None:
             stringData[datum['key']] = dec_datum
         else:
-            log.error(f'Could not decrypt contents of secret {managedSecret["name"]} with path {datum["path"]}')
+            log.error(f'Could not decrypt contents of secret {passSecretName} with path {datum["path"]}')
             return None
 
     body = client.V1Secret(
         api_version='v1',
         kind='Secret',
         metadata={
-            'name': managedSecret['name'],
+            'name': passSecretName,
             'namespace': managedSecret['namespace']
         },
         string_data=stringData,
@@ -131,13 +133,13 @@ def check_gpg_id(path: Path = Path(f'~/.password-store/{PASS_DIRECTORY}/.gpg-id'
     if path.exists():
         with open(path, mode='r') as gpg_id_f:
             if gpg_id_f.read().rstrip() != PASS_GPG_KEY_ID:
-                log.error(f'PASS_GPG_KEY_ID ({PASS_GPG_KEY_ID}) does not equal .gpg-id contained in {path}.')
+                log.error(f'PASS_GPG_KEY_ID ({PASS_GPG_KEY_ID}) does not equal .gpg-id contained in {path}')
                 sys.exit(1)
 
         if remove:
             path.unlink(missing_ok=False)
     else:
-        log.error(f'.gpg-id at "{path}" does not exist. pass init failure.')
+        log.error(f'.gpg-id at "{path}" does not exist. pass init failure')
         sys.exit(1)
 
 
@@ -174,7 +176,7 @@ def main() -> None:
         sys.exit(0)
 
     if not PASS_GIT_URL:
-        log.error(f'Must provide a valid git URL (PASS_GIT_URL).')
+        log.error(f'Must provide a valid git URL (PASS_GIT_URL)')
         sys.exit(1)
 
     # Set up our global git repository object.
