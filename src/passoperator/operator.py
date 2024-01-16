@@ -89,6 +89,7 @@ def create(body: kopf.Body, **kwargs: Any) -> None:
     for datum in data:
         if (decrypted_datum := decrypt(Path(f'~/.password-store/{PASS_DIRECTORY}/{datum["path"]}').expanduser())) is not None:
             stringData[datum['key']] = decrypted_datum
+            print(decrypted_datum)
         else:
             log.error(f'Could not decrypt contents of secret {passSecretName} with path {datum["path"]}')
             raise kopf.PermanentError()
