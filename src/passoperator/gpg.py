@@ -26,11 +26,14 @@ def decrypt(path: Path, home: Path = Path('~/.gnupg').expanduser()) -> Optional[
     gpg = GPG(gnupghome=home)
 
     try:
-        with open(f'{path}.gpg', 'rb') as gpg_f:
-            # https://gnupg.readthedocs.io/en/latest/#decryption
-            gpg_f_decrypted = gpg.decrypt_file(gpg_f)
+        # https://gnupg.readthedocs.io/en/latest/#decryption
+        decrypted_file = gpg.decrypt_file(
+            f'{path}.gpg',
+            always_trust=True,
+            extra_args='--yes'
+        )
 
-        return str(gpg_f_decrypted)
+        return str(decrypted_file)
     except (IOError, PermissionError) as e:
         log.error(e)
         return None
