@@ -41,7 +41,7 @@ class GitRepo:
             loc (str): Local file path to clone to.
         """
         if self.cloned:
-            log.warn(f'Repository at URL {self.repo_url} has already been cloned to location "{self.clone_location}". Skipping.')
+            log.warn(f'Repository at URL {self.repo_url} has already been cloned to location "{self.clone_location}". Skipping')
             return None
 
         self.repo = Repo.clone_from(
@@ -58,6 +58,8 @@ class GitRepo:
 
         self.cloned = True
 
+        log.info(f'Successfully cloned repo {self.repo_url} to password store {self.clone_location}')
+
     def pull(self) -> None:
         """
         Run 'git pull' in the cloned repository. This method will be called repeatedly, on an interval.
@@ -65,4 +67,5 @@ class GitRepo:
         if not self.cloned:
             self.clone()
 
+        log.info(f'Updating local password store at "{self.clone_location}"')
         self.repo.remotes.origin.pull()

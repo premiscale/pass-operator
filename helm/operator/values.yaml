@@ -55,6 +55,7 @@ operator:
 
     key_id: ""
     value: ""
+    passphrase: ""
 
   git:
     branch: main
@@ -63,12 +64,12 @@ operator:
 
 service:
   create: false
-  type: ClusterIP
-  ports:
-    - appProtocol: http
-      name: http
-      port: 443
-      targetPort: 443
+  # type: ClusterIP
+  # ports:
+  #   - appProtocol: http
+  #     name: http
+  #     port: 443
+  #     targetPort: 443
 
 
 serviceAccount:

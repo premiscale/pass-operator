@@ -5,54 +5,39 @@ A kubernetes operator that syncs and decrypts secrets from Linux password store 
 import logging
 import sys
 import kopf
-import kubernetes
-import datetime
-import yaml
 import os
 
-from typing import Any, Dict
+from typing import Any
+from kubernetes import client, config
 from pathlib import Path
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
-from importlib import metadata as meta, resources
-from functools import cache
+from importlib import metadata as meta
 
 from src.passoperator.git import GitRepo
 from src.passoperator.utils import LogLevel
+from src.passoperator.gpg import decrypt
 
 
 __version__ = meta.version('pass-operator')
 log = logging.getLogger(__name__)
 pass_git_repo: GitRepo
+config.load_incluster_config()
 
 
 # Environment variables to configure the operator's performance.
-OPERATOR_INTERVAL = int(os.getenv('OPERATOR_INTERVAL') or 60)
-OPERATOR_INITIAL_DELAY = int(os.getenv('OPERATOR_INITIAL_DELAY') or 3)
-OPERATOR_PRIORITY = int(os.getenv('OPERATOR_PRIORITY') or 100)
-OPERATOR_NAMESPACE = os.getenv('OPERATOR_NAMESPACE') or 'default'
+OPERATOR_INTERVAL = int(os.getenv('OPERATOR_INTERVAL', 60))
+OPERATOR_INITIAL_DELAY = int(os.getenv('OPERATOR_INITIAL_DELAY', 3))
+OPERATOR_PRIORITY = int(os.getenv('OPERATOR_PRIORITY', 100))
+OPERATOR_NAMESPACE = os.getenv('OPERATOR_NAMESPACE', 'default')
 
 # Environment variables to configure pass.
-PASS_BINARY = os.getenv('PASS_BINARY') or '/usr/bin/pass'
-PASS_DIRECTORY = os.getenv('PASS_DIRECTORY') or 'repo'
+PASS_BINARY = os.getenv('PASS_BINARY', '/usr/bin/pass')
+PASS_DIRECTORY = os.getenv('PASS_DIRECTORY', 'repo')
 PASS_GPG_KEY = os.getenv('PASS_GPG_KEY')
 PASS_GPG_KEY_ID = os.getenv('PASS_GPG_KEY_ID')
+PASS_GPG_PASSPHRASE = os.getenv('PASS_GPG_PASSPHRASE')
 PASS_GIT_URL = os.getenv('PASS_GIT_URL')
-PASS_GIT_BRANCH = os.getenv('PASS_GIT_BRANCH') or 'main'
-
-
-@cache
-def read_manifest(path: str) -> Dict[str, str]:
-    """
-    Read a secret template from file and cache the contents.
-
-    Args:
-        path (str): filename to read from data.
-
-    Returns:
-        str: contents of the file.
-    """
-    with resources.open_text('src.data', path) as obj:
-        return yaml.safe_load(obj.read().rstrip())
+PASS_GIT_BRANCH = os.getenv('PASS_GIT_BRANCH', 'main')
 
 
 @kopf.on.startup()
@@ -62,7 +47,6 @@ def start(**kwargs: Any) -> None:
     """
     log.info(f'Starting operator version {__version__}')
     pass_git_repo.clone()
-    # print(param, retry, started, runtime, logger, memo, activity, settings)
 
 
 @kopf.timer('secrets.premiscale.com', 'v1alpha1', 'passsecret', interval=OPERATOR_INTERVAL, initial_delay=OPERATOR_INITIAL_DELAY, sharp=True)
@@ -70,7 +54,7 @@ def reconciliation(**kwargs) -> None:
     """
     Reconcile user-defined PassSecrets with the state of the cluster.
     """
-    log.info(f'Reconciling cluster state: {kwargs}.')
+    log.info(f'Reconciling cluster state')
     pass_git_repo.pull()
     check_gpg_id()
 
@@ -80,47 +64,66 @@ def reconciliation(**kwargs) -> None:
 #     pass
 
 
-# @kopf.on.update('PassSecret')
-# def update(**kwargs: Any) -> None:
-#     """
-#     An update was received on the PassSecret object, so attempt to update the corresponding Secret.
-#     """
-
-
 @kopf.on.update('secrets.premiscale.com', 'v1alpha1', 'passsecret')
+def update(**kwargs: Any) -> None:
+    """
+    An update was received on the PassSecret object, so attempt to update the corresponding Secret.
+    """
+    log.info(f'PassSecret updated: {kwargs}')
+
+
 @kopf.on.create('secrets.premiscale.com', 'v1alpha1', 'passsecret')
-def create(**kwargs: Any) -> None:
+def create(body: kopf.Body, **kwargs: Any) -> None:
     """
-    Create a new Secret from a PassSecret manifest.
-
-    Args:
-        version (str): version of the agent.
-
-    Returns:
-        None.
+    Create a new Secret with the spec of the newly-created PassSecret.
     """
-    log.info(f'PassSecret created: {kwargs}')
+    managedSecret = body.spec['managedSecret']
+    passSecretName = managedSecret["name"]
+    data = body.spec['data']
+
+    log.info(f'PassSecret "{passSecretName}" created')
+
+    v1 = client.CoreV1Api()
+
+    stringData = dict()
+
+    for secret in data:
+        if (decrypted_secret := decrypt(
+                Path(f'~/.password-store/{PASS_DIRECTORY}/{secret["path"]}').expanduser(),
+                passphrase=PASS_GPG_PASSPHRASE
+            )):
+            stringData[secret['key']] = decrypted_secret
+        else:
+            log.error(f'Could not decrypt contents of secret {passSecretName} with path {secret["path"]}')
+            raise kopf.PermanentError()
+
+    body = client.V1Secret(
+        api_version='v1',
+        kind='Secret',
+        metadata={
+            'name': passSecretName,
+            'namespace': managedSecret['namespace']
+        },
+        string_data=stringData,
+        type=managedSecret['type'],
+        immutable=managedSecret['immutable']
+    )
+
+    try:
+        v1.create_namespaced_secret(
+            namespace=managedSecret['namespace'],
+            body=body
+        )
+    except client.ApiException as e:
+        log.error(e)
 
 
 @kopf.on.delete('secrets.premiscale.com', 'v1alpha1', 'passsecret')
 def delete(**kwargs: Any) -> None:
     """
-    Remove the secret from memory.
-
-    Args:
-        spec (str):
+    Remove the secret.
     """
     log.info(f'PassSecret deleted: {kwargs}')
-
-
-# @kopf.on.probe(id='now')
-# def get_current_timestamp(**kwargs) -> str:
-#     return datetime.datetime.utcnow().isoformat()
-
-
-# @kopf.on.probe(id='status')
-# def get_current_status(**kwargs) -> str:
-#     return 'ok'
 
 
 def check_gpg_id(path: Path = Path(f'~/.password-store/{PASS_DIRECTORY}/.gpg-id').expanduser(), remove: bool =False) -> None:
@@ -134,13 +137,13 @@ def check_gpg_id(path: Path = Path(f'~/.password-store/{PASS_DIRECTORY}/.gpg-id'
     if path.exists():
         with open(path, mode='r') as gpg_id_f:
             if gpg_id_f.read().rstrip() != PASS_GPG_KEY_ID:
-                log.error(f'PASS_GPG_KEY_ID ({PASS_GPG_KEY_ID}) does not equal .gpg-id contained in {path}.')
+                log.error(f'PASS_GPG_KEY_ID ({PASS_GPG_KEY_ID}) does not equal .gpg-id contained in {path}')
                 sys.exit(1)
 
         if remove:
             path.unlink(missing_ok=False)
     else:
-        log.error(f'.gpg-id at "{path}" does not exist. pass init failure.')
+        log.error(f'.gpg-id at "{path}" does not exist. pass init failure')
         sys.exit(1)
 
 
@@ -177,7 +180,7 @@ def main() -> None:
         sys.exit(0)
 
     if not PASS_GIT_URL:
-        log.error(f'Must provide a valid git URL (PASS_GIT_URL).')
+        log.error(f'Must provide a valid git URL (PASS_GIT_URL)')
         sys.exit(1)
 
     # Set up our global git repository object.

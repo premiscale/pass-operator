@@ -5,9 +5,9 @@ metadata:
   namespace: pass-operator-develop
 spec:
   data:
-    - key: singular_data.1
-      path: premiscale/tests/singular_data.1
+    - key: singular_data
+      path: premiscale/operator/singular-data
   managedSecret:
-    name: singular_data
+    name: singular-data
     namespace: pass-operator-develop
     type: Opaque
