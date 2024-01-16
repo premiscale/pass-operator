@@ -23,7 +23,7 @@ def decrypt(path: Path, home: Path = Path('~/.gnupg').expanduser()) -> Optional[
     Returns:
         str: the decrypted string.
     """
-    gpg = GPG(home=home)
+    gpg = GPG(gnupghome=home)
 
     try:
         with open(f'{path}.gpg', 'rb') as gpg_f:
