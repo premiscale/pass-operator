@@ -27,8 +27,23 @@ spec:
       path: premiscale/mydata
   managedSecret:
     name: mysecret
-    namespace: premiscale
+    namespace: pass-operator-test
     type: Opaque
+    immutable: false
+```
+
+The above `PassSecret` manifest translates to the following `Secret`.
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mysecret
+  namespace: pass-operator-test
+data:
+  mykey: <contents of premiscale/mydata>
+immutable: false
+type: Opaque
 ```
 
 ## Use
