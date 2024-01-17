@@ -12,6 +12,7 @@ from kubernetes import client, config
 from pathlib import Path
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from importlib import metadata as meta
+from ipaddress import IPv4Address
 
 from src.passoperator.git import GitRepo
 from src.passoperator.utils import LogLevel
@@ -29,6 +30,7 @@ OPERATOR_INTERVAL = int(os.getenv('OPERATOR_INTERVAL', 60))
 OPERATOR_INITIAL_DELAY = int(os.getenv('OPERATOR_INITIAL_DELAY', 3))
 OPERATOR_PRIORITY = int(os.getenv('OPERATOR_PRIORITY', 100))
 OPERATOR_NAMESPACE = os.getenv('OPERATOR_NAMESPACE', 'default')
+OPERATOR_POD_IP = IPv4Address(os.getenv('OPERATOR_POD_IP', '0.0.0.0'))
 
 # Environment variables to configure pass.
 PASS_BINARY = os.getenv('PASS_BINARY', '/usr/bin/pass')
@@ -65,11 +67,56 @@ def reconciliation(**kwargs) -> None:
 
 
 @kopf.on.update('secrets.premiscale.com', 'v1alpha1', 'passsecret')
-def update(**kwargs: Any) -> None:
+def update(body: kopf.Body, **_: Any) -> None:
     """
     An update was received on the PassSecret object, so attempt to update the corresponding Secret.
+
+    This method is pretty much identical to 'create'-type events.
+
+    Args:
+        body [kopf.Body]: body of the create event.
     """
-    log.info(f'PassSecret updated: {kwargs}')
+    managedSecret = body.spec['managedSecret']
+    passSecretName = body.metadata['name']
+    managedSecretName = managedSecret["name"]
+    data = body.spec['data']
+
+    log.info(f'PassSecret "{passSecretName}" updated')
+
+    v1 = client.CoreV1Api()
+
+    stringData = dict()
+
+    for secret in data:
+        if (decrypted_secret := decrypt(
+                Path(f'~/.password-store/{PASS_DIRECTORY}/{secret["path"]}').expanduser(),
+                passphrase=PASS_GPG_PASSPHRASE
+            )):
+            stringData[secret['key']] = decrypted_secret
+        else:
+            log.error(f'Could not decrypt contents of secret {secret["key"]} with path {secret["path"]}')
+            raise kopf.PermanentError()
+
+    body = client.V1Secret(
+        api_version='v1',
+        kind='Secret',
+        metadata={
+            'name': managedSecretName,
+            'namespace': managedSecret['namespace']
+        },
+        string_data=stringData,
+        type=managedSecret['type'],
+        immutable=managedSecret['immutable']
+    )
+
+    try:
+        v1.patch_namespaced_secret(
+            name=managedSecretName,
+            namespace=managedSecret['namespace'],
+            body=body
+        )
+    except client.ApiException as e:
+        log.error(e)
 
 
 @kopf.on.create('secrets.premiscale.com', 'v1alpha1', 'passsecret')
@@ -142,7 +189,7 @@ def delete(body: kopf.Body, **_: Any) -> None:
             name=managedSecretName,
             namespace=managedSecret['namespace']
         )
-        log.info(f'Managed secret {managedSecretName} deleted')
+        log.info(f'Managed secret "{managedSecretName}" deleted')
     except client.ApiException as e:
         log.error(e)
 
@@ -244,5 +291,5 @@ def main() -> None:
         standalone=True,
         namespace=OPERATOR_NAMESPACE,
         clusterwide=False,
-        liveness_endpoint='http://0.0.0.0:8080/healthz'
+        liveness_endpoint=f'http://{OPERATOR_POD_IP}:8080/healthz'
     )
