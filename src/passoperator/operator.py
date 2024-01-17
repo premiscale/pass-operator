@@ -67,11 +67,55 @@ def reconciliation(**kwargs) -> None:
 
 
 @kopf.on.update('secrets.premiscale.com', 'v1alpha1', 'passsecret')
-def update(**kwargs: Any) -> None:
+def update(body: kopf.Body, **_: Any) -> None:
     """
     An update was received on the PassSecret object, so attempt to update the corresponding Secret.
+
+    This method is pretty much identical to 'create'-type events.
+
+    Args:
+        body [kopf.Body]: body of the create event.
     """
-    log.info(f'PassSecret updated: {kwargs}')
+    managedSecret = body.spec['managedSecret']
+    passSecretName = body.metadata['name']
+    managedSecretName = managedSecret["name"]
+    data = body.spec['data']
+
+    log.info(f'PassSecret "{passSecretName}" updated')
+
+    v1 = client.CoreV1Api()
+
+    stringData = dict()
+
+    for secret in data:
+        if (decrypted_secret := decrypt(
+                Path(f'~/.password-store/{PASS_DIRECTORY}/{secret["path"]}').expanduser(),
+                passphrase=PASS_GPG_PASSPHRASE
+            )):
+            stringData[secret['key']] = decrypted_secret
+        else:
+            log.error(f'Could not decrypt contents of secret {secret["key"]} with path {secret["path"]}')
+            raise kopf.PermanentError()
+
+    body = client.V1Secret(
+        api_version='v1',
+        kind='Secret',
+        metadata={
+            'name': managedSecretName,
+            'namespace': managedSecret['namespace']
+        },
+        string_data=stringData,
+        type=managedSecret['type'],
+        immutable=managedSecret['immutable']
+    )
+
+    try:
+        v1.patch_namespaced_secret(
+            namespace=managedSecret['namespace'],
+            body=body
+        )
+    except client.ApiException as e:
+        log.error(e)
 
 
 @kopf.on.create('secrets.premiscale.com', 'v1alpha1', 'passsecret')
@@ -144,7 +188,7 @@ def delete(body: kopf.Body, **_: Any) -> None:
             name=managedSecretName,
             namespace=managedSecret['namespace']
         )
-        log.info(f'Managed secret {managedSecretName} deleted')
+        log.info(f'Managed secret "{managedSecretName}" deleted')
     except client.ApiException as e:
         log.error(e)
 
