@@ -111,6 +111,7 @@ def update(body: kopf.Body, **_: Any) -> None:
 
     try:
         v1.patch_namespaced_secret(
+            name=managedSecretName,
             namespace=managedSecret['namespace'],
             body=body
         )
