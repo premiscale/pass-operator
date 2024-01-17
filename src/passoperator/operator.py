@@ -12,6 +12,7 @@ from kubernetes import client, config
 from pathlib import Path
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from importlib import metadata as meta
+from ipaddress import IPv4Address
 
 from src.passoperator.git import GitRepo
 from src.passoperator.utils import LogLevel
@@ -29,6 +30,7 @@ OPERATOR_INTERVAL = int(os.getenv('OPERATOR_INTERVAL', 60))
 OPERATOR_INITIAL_DELAY = int(os.getenv('OPERATOR_INITIAL_DELAY', 3))
 OPERATOR_PRIORITY = int(os.getenv('OPERATOR_PRIORITY', 100))
 OPERATOR_NAMESPACE = os.getenv('OPERATOR_NAMESPACE', 'default')
+OPERATOR_POD_IP = IPv4Address(os.getenv('OPERATOR_POD_IP', '0.0.0.0'))
 
 # Environment variables to configure pass.
 PASS_BINARY = os.getenv('PASS_BINARY', '/usr/bin/pass')
@@ -244,5 +246,5 @@ def main() -> None:
         standalone=True,
         namespace=OPERATOR_NAMESPACE,
         clusterwide=False,
-        liveness_endpoint='http://0.0.0.0:8080/healthz'
+        liveness_endpoint=f'http://{OPERATOR_POD_IP}:8080/healthz'
     )
