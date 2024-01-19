@@ -36,7 +36,9 @@ workflows:
 
       - general/github-release:
           name: Create GitHub release from tag
-          context: github
+          context:
+            - github
+            - circleci
           requires:
             - request-approval
           filters:
@@ -91,6 +93,7 @@ workflows:
             --build-arg=PYTHON_USERNAME=$NEXUS_USERNAME
             --build-arg=PYTHON_PASSWORD=$NEXUS_PASSWORD
             --build-arg=PYTHON_REPOSITORY=python
+            --build-arg=REPO_DOMAIN=$REPO_DOMAIN
           requires:
             - nexus pass-operator upload [python]
             - request-approval
@@ -108,10 +111,11 @@ workflows:
             - dockerhub
           # This installs the artifact from my private registry instead of the public one.
           args: >-
-            --build-arg=PYTHON_PACKAGE_VERSION=0.0.<< pipeline.number >>
+            --build-arg=PYTHON_PACKAGE_VERSION=$CI_COMMIT_TAG
             --build-arg=PYTHON_USERNAME=$NEXUS_USERNAME
             --build-arg=PYTHON_PASSWORD=$NEXUS_PASSWORD
-            --build-arg=PYTHON_REPOSITORY=python-develop
+            --build-arg=PYTHON_REPOSITORY=python
+            --build-arg=REPO_DOMAIN=$REPO_DOMAIN
           requires:
             - nexus pass-operator upload [python]
             - request-approval
