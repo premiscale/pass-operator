@@ -47,20 +47,8 @@ workflows:
             tags:
               only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/
 
-      - general/helm-release-nexus:
-          name: helm build and push [helm/operator]
-          context: nexus
-          path: helm/operator
-          requires:
-            - request-approval
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/
-
       - general/python-release-poetry:
-          name: nexus pass-operator upload [python]
+          name: python package [nexus]
           context: nexus
           repository: python
           requires:
@@ -72,7 +60,7 @@ workflows:
               only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/
 
       - general/python-release-poetry:
-          name: pypi pass-operator upload [pypi]
+          name: python package [pypi]
           context: pypi
           repository: pypi
           requires:
@@ -84,7 +72,7 @@ workflows:
               only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/
 
       - general/docker-nexus:
-          name: docker [pass-operator] [tag]
+          name: docker build [nexus]
           image-name: pass-operator
           context: nexus
           nexus-domain: $DOCKER_DOMAIN
@@ -95,8 +83,8 @@ workflows:
             --build-arg=PYTHON_REPOSITORY=python
             --build-arg=REPO_DOMAIN=$REPO_DOMAIN
           requires:
-            - nexus pass-operator upload [python]
-            - request-approval
+            - python package [nexus]
+            - python package [pypi]
           filters:
             branches:
               ignore: /.*/
@@ -104,7 +92,7 @@ workflows:
               only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/
 
       - general/docker-hub:
-          name: dockerhub [pass-operator] [tag]
+          name: docker build [dockerhub]
           image-name: pass-operator
           context:
             - nexus
@@ -117,8 +105,8 @@ workflows:
             --build-arg=PYTHON_REPOSITORY=python
             --build-arg=REPO_DOMAIN=$REPO_DOMAIN
           requires:
-            - nexus pass-operator upload [python]
-            - request-approval
+            - python package [nexus]
+            - python package [pypi]
           filters:
             branches:
               ignore: /.*/
@@ -126,13 +114,14 @@ workflows:
               only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/
 
       - general/helm-release-nexus:
-          name: helm [helm/operator] [tag]
+          name: helm package [nexus]
           context: nexus
           repo: $HELM_REPOSITORY_URL
           # Uses https://mikefarah.gitbook.io/yq/operators/env-variable-operators#dynamically-update-a-path-from-an-environment-variable
           image-tag-path: .deployment.image.tag
           requires:
-            - dockerhub [pass-operator] [tag]
+            - docker build [dockerhub]
+            - docker build [nexus]
           filters:
             branches:
               ignore: /.*/
@@ -140,7 +129,7 @@ workflows:
               only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/
 
       - general/helm-upgrade:
-          name: helm upgrade install [helm/operator] [tag]
+          name: helm upgrade [nexus]
           cluster: $CHELSEA_CLUSTER
           namespace: pass-operator
           repo: $HELM_REPOSITORY_URL
@@ -161,7 +150,7 @@ workflows:
             --set operator.git.branch="$PASS_GIT_BRANCH"
             --set operator.ssh.value="$PASS_SSH_PRIVATE_KEY"
           requires:
-            - helm [helm/operator] [tag]
+            - helm package [nexus]
           context:
             - password-store-operator
             - kubeconfig
