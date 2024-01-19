@@ -47,6 +47,7 @@ workflows:
             --build-arg=PYTHON_USERNAME=$NEXUS_USERNAME
             --build-arg=PYTHON_PASSWORD=$NEXUS_PASSWORD
             --build-arg=PYTHON_REPOSITORY=python-develop
+            --build-arg=REPO_DOMAIN=$REPO_DOMAIN
           tag: 0.0.<< pipeline.number >>
           requires:
             - twine upload [python-develop]
@@ -128,6 +129,7 @@ workflows:
             --build-arg=PYTHON_USERNAME=$NEXUS_USERNAME
             --build-arg=PYTHON_PASSWORD=$NEXUS_PASSWORD
             --build-arg=PYTHON_REPOSITORY=python-master
+            --build-arg=REPO_DOMAIN=$REPO_DOMAIN
           tag: 0.0.<< pipeline.number >>
           requires:
             - twine upload [python-master]
