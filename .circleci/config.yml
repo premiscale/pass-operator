@@ -119,7 +119,9 @@ workflows:
           name: helm package [nexus]
           context: nexus
           repo: $HELM_REPOSITORY_URL
-          # Uses https://mikefarah.gitbook.io/yq/operators/env-variable-operators#dynamically-update-a-path-from-an-environment-variable
+          path: helm/operator
+          version: $CIRCLE_TAG
+          image-tag: $CIRCLE_TAG
           image-tag-path: .deployment.image.tag
           requires:
             - docker build [dockerhub]
