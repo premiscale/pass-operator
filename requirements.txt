@@ -280,9 +280,9 @@ idna==3.6 ; python_version >= "3.10" and python_version < "4.0" \
 iso8601==2.1.0 ; python_version >= "3.10" and python_version < "4.0" \
     --hash=sha256:6b1d3829ee8921c4301998c909f7829fa9ed3cbdac0d3b16af2d743aed1ba8df \
     --hash=sha256:aac4145c4dcb66ad8b648a02830f5e2ff6c24af20f4f482689be402db2429242
-kopf==1.36.2 ; python_version >= "3.10" and python_version < "4.0" \
-    --hash=sha256:801e84671145fd19d2a2fcbc4a934ae8f6cd3bca966fc437099f815f7ab11e84 \
-    --hash=sha256:bb5e63f9e2092d22abe28c0b43ababe36d216d8efa3411a36ffb40223dd55a44
+kopf==1.37.1; python_version >= "3.10" and python_version < "4.0" \
+    --hash=sha256:dbeafe715987705d6fb44a49a26ca065b9e537a85c654efa94a520c6d16509d5 \
+    --hash=sha256:f38829cb702d788ab536ecd51f10d83175b971874af1d6c8178a864cf9af4ece
 kubernetes==29.0.0 ; python_version >= "3.10" and python_version < "4.0" \
     --hash=sha256:ab8cb0e0576ccdfb71886366efb102c6a20f268d817be065ce7f9909c631e43e \
     --hash=sha256:c4812e227ae74d07d53c88293e564e54b850452715a59a927e7e1bc6b9a60459
