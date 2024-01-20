@@ -93,7 +93,7 @@ def update(body: kopf.Body, **_: Any) -> None:
                 Path(f'~/.password-store/{PASS_DIRECTORY}/{secretValue}').expanduser(),
                 passphrase=PASS_GPG_PASSPHRASE
             )):
-            stringData[secret['key']] = decrypted_secret
+            stringData[secret] = decrypted_secret
         else:
             log.error(f'Could not decrypt contents of secret {secret["key"]} with path {secret["path"]}')
             raise kopf.PermanentError()
@@ -145,7 +145,7 @@ def create(body: kopf.Body, **_: Any) -> None:
                 Path(f'~/.password-store/{PASS_DIRECTORY}/{secretValue}').expanduser(),
                 passphrase=PASS_GPG_PASSPHRASE
             )):
-            stringData[secret['key']] = decrypted_secret
+            stringData[secret] = decrypted_secret
         else:
             log.error(f'Could not decrypt contents of secret {secret["key"]} with path {secret["path"]}')
             raise kopf.PermanentError()
