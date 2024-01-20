@@ -10,13 +10,18 @@ executors:
     docker:
       - image: cimg/python:3.10.11
 
+
 workflows:
   src:
     jobs:
       - general/python-pylint:
           name: pylint
-          modules_path: src/
           context: nexus
+
+      - general/python-mypy:
+          name: mypy
+          executor: python-3-10
+          configuration_file: pyproject.toml
 
       # develop
 
