@@ -33,6 +33,7 @@ workflows:
           pypirc-config: .pypirc
           requires:
             - pylint
+            - mypy
           filters:
             branches:
               ignore:

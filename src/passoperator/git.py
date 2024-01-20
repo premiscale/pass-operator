@@ -49,7 +49,7 @@ class GitRepo:
             to_path=self.clone_location
         )
 
-        if self.branch not in self.repo.branches:
+        if self.branch not in list(self.repo.branches):
             log.error(f'Branch "{self.branch}" not found in project at URL "{self.repo_url}"')
             sys.exit(1)
 
