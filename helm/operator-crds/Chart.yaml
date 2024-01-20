@@ -1,5 +1,5 @@
 apiVersion: v2
 name: pass-operator-crds
-description: Operator custom resource definitions (CRDs)
+description: Password store operator custom resource definitions (CRDs)
 type: application
 version: 1.0.0

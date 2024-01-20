@@ -4,9 +4,8 @@ metadata:
   name: singular-data
   namespace: pass-operator-develop
 spec:
-  data:
-    - key: singular_data
-      path: premiscale/operator/singular-data
+  encryptedData:
+    singular_data: premiscale/operator/singular-data
   managedSecret:
     name: singular-data
     namespace: pass-operator-develop

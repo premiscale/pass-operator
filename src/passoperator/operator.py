@@ -79,7 +79,7 @@ def update(body: kopf.Body, **_: Any) -> None:
     managedSecret = body.spec['managedSecret']
     passSecretName = body.metadata['name']
     managedSecretName = managedSecret["name"]
-    data = body.spec['data']
+    encryptedData = body.spec['encryptedData']
 
     log.info(f'PassSecret "{passSecretName}" updated')
 
@@ -87,9 +87,10 @@ def update(body: kopf.Body, **_: Any) -> None:
 
     stringData = dict()
 
-    for secret in data:
+    for secret in encryptedData:
+        secretValue = encryptedData[secret]
         if (decrypted_secret := decrypt(
-                Path(f'~/.password-store/{PASS_DIRECTORY}/{secret["path"]}').expanduser(),
+                Path(f'~/.password-store/{PASS_DIRECTORY}/{secretValue}').expanduser(),
                 passphrase=PASS_GPG_PASSPHRASE
             )):
             stringData[secret['key']] = decrypted_secret
@@ -130,7 +131,7 @@ def create(body: kopf.Body, **_: Any) -> None:
     managedSecret = body.spec['managedSecret']
     passSecretName = body.metadata['name']
     managedSecretName = managedSecret["name"]
-    data = body.spec['data']
+    encryptedData = body.spec['encryptedData']
 
     log.info(f'PassSecret "{passSecretName}" created')
 
@@ -138,9 +139,10 @@ def create(body: kopf.Body, **_: Any) -> None:
 
     stringData = dict()
 
-    for secret in data:
+    for secret in encryptedData:
+        secretValue = encryptedData[secret]
         if (decrypted_secret := decrypt(
-                Path(f'~/.password-store/{PASS_DIRECTORY}/{secret["path"]}').expanduser(),
+                Path(f'~/.password-store/{PASS_DIRECTORY}/{secretValue}').expanduser(),
                 passphrase=PASS_GPG_PASSPHRASE
             )):
             stringData[secret['key']] = decrypted_secret
@@ -178,7 +180,7 @@ def delete(body: kopf.Body, **_: Any) -> None:
     managedSecret = body.spec['managedSecret']
     passSecretName = body.metadata['name']
     managedSecretName = managedSecret["name"]
-    # data = body.spec['data']
+    # encryptedData = body.spec['encryptedData']
 
     log.info(f'PassSecret "{passSecretName}" deleted')
 
