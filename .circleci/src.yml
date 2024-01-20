@@ -18,10 +18,6 @@ workflows:
           modules_path: src/
           context: nexus
 
-      - general/helm-lint:
-          name: helm lint [helm/operator]
-          chart-path: helm/operator
-
       # develop
 
       - general/python-release-poetry:
