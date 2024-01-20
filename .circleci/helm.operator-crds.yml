@@ -27,6 +27,7 @@ workflows:
           cluster: $CHELSEA_CLUSTER
           namespace: pass-operator-develop
           repo: $HELM_DEVELOP_REPOSITORY_URL
+          install-name: pass-operator-crds
           version: 0.0.<< pipeline.number >>
           requires:
             - helm build and push [helm/operator-crds] [develop]
@@ -57,6 +58,7 @@ workflows:
           cluster: $CHELSEA_CLUSTER
           namespace: pass-operator-develop
           repo: $HELM_MASTER_REPOSITORY_URL
+          install-name: pass-operator-crds
           version: 0.0.<< pipeline.number >>
           requires:
             - helm build and push [helm/operator-crds] [master]
