@@ -22,9 +22,8 @@ metadata:
   name: mysecret
   namespace: pass-operator-test
 spec:
-  data:
-    - key: mykey
-      path: premiscale/mydata
+  encryptedData:
+    mykey: premiscale/mydata
   managedSecret:
     name: mysecret
     namespace: pass-operator-test
@@ -41,7 +40,7 @@ metadata:
   name: mysecret
   namespace: pass-operator-test
 data:
-  mykey: <contents of premiscale/mydata>
+  mykey: <decrypted contents of premiscale/mydata>
 immutable: false
 type: Opaque
 ```

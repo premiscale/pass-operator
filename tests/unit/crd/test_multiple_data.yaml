@@ -4,15 +4,11 @@ metadata:
   name: multiple-data
   namespace: pass-operator-develop
 spec:
-  data:
-    - key: tests.example1
-      path: premiscale/operator/multiple-data-1
-    - key: tests.example2
-      path: premiscale/operator/multiple-data-2
-    - key: tests.example3
-      path: premiscale/operator/multiple-data-3
-    - key: tests.example4
-      path: premiscale/operator/multiple-data-4
+  encryptedData:
+    tests.example1: premiscale/operator/multiple-data-1
+    tests.example2: premiscale/operator/multiple-data-2
+    tests.example3: premiscale/operator/multiple-data-3
+    tests.example4: premiscale/operator/multiple-data-4
   managedSecret:
     name: multiple-data
     namespace: pass-operator-develop

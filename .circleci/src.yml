@@ -10,17 +10,18 @@ executors:
     docker:
       - image: cimg/python:3.10.11
 
+
 workflows:
   src:
     jobs:
       - general/python-pylint:
           name: pylint
-          modules_path: src/
           context: nexus
 
-      - general/helm-lint:
-          name: helm lint [helm/operator]
-          chart-path: helm/operator
+      - general/python-mypy:
+          name: mypy
+          executor: python-3-10
+          configuration_file: pyproject.toml
 
       # develop
 
@@ -32,6 +33,7 @@ workflows:
           pypirc-config: .pypirc
           requires:
             - pylint
+            - mypy
           filters:
             branches:
               ignore:

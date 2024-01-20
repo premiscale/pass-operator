@@ -4,9 +4,8 @@ metadata:
   name: singular-data
   namespace: pass-operator-develop
 spec:
-  encryptedData:
-    singular_data: premiscale/operator/singular-data
+  encryptedData: {}
   managedSecret:
-    name: singular-data-test-different-name-2
+    name: singular-data
     namespace: pass-operator-develop
     type: Opaque
