@@ -1,0 +1,69 @@
+version: 2.1
+
+
+orbs:
+  general: premiscale/general@1.0.13
+
+
+workflows:
+  helm-operator-crds:
+    jobs:
+      # develop
+
+      - general/helm-release-nexus:
+          name: helm build and push [helm/operator-crds] [develop]
+          context: nexus
+          repo: $HELM_DEVELOP_REPOSITORY_URL
+          path: helm/operator-crds
+          version: 0.0.<< pipeline.number >>
+          image-tag: 0.0.<< pipeline.number >>
+          filters:
+            branches:
+              ignore:
+                - master
+
+      - general/helm-upgrade:
+          name: helm upgrade install [helm/operator-crds] [develop]
+          cluster: $CHELSEA_CLUSTER
+          namespace: pass-operator-develop
+          repo: $HELM_DEVELOP_REPOSITORY_URL
+          version: 0.0.<< pipeline.number >>
+          requires:
+            - helm build and push [helm/operator-crds] [develop]
+          context:
+            - kubeconfig
+            - nexus
+          filters:
+            branches:
+              ignore:
+                - master
+
+      # master
+
+      - general/helm-release-nexus:
+          name: helm build and push [helm/operator-crds] [master]
+          context: nexus
+          repo: $HELM_MASTER_REPOSITORY_URL
+          path: helm/operator-crds
+          version: 0.0.<< pipeline.number >>
+          image-tag: 0.0.<< pipeline.number >>
+          filters:
+            branches:
+              only:
+                - master
+
+      - general/helm-upgrade:
+          name: helm upgrade install [helm/operator-crds]
+          cluster: $CHELSEA_CLUSTER
+          namespace: pass-operator-develop
+          repo: $HELM_MASTER_REPOSITORY_URL
+          version: 0.0.<< pipeline.number >>
+          requires:
+            - helm build and push [helm/operator-crds] [master]
+          context:
+            - kubeconfig
+            - nexus
+          filters:
+            branches:
+              only:
+                - master

@@ -132,6 +132,18 @@ workflows:
             tags:
               only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/
 
+      - general/helm-release-nexus:
+          name: helm package crds [nexus]
+          context: nexus
+          repo: $HELM_REPOSITORY_URL
+          path: helm/operator-crds
+          version: $CIRCLE_TAG
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/
+
       - general/helm-upgrade:
           name: helm upgrade [nexus]
           cluster: $CHELSEA_CLUSTER
