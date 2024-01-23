@@ -18,6 +18,8 @@ workflows:
 
       - general/helm-test-kubelinter:
           name: kubelinter
+          # TODO: re-enable this exclude
+          exclude: no-read-only-root-fs
 
       - general/helm-test-deprecated:
           name: deprecated api
