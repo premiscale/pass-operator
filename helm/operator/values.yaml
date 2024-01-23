@@ -25,11 +25,12 @@ deployment:
 
   podSecurityContext:
     runAsNonRoot: true
-    fsGroup: 975668
+    fsGroupChangePolicy: OnRootMismatch
+    fsGroup: 9756
 
   containerSecurityContext:
     readOnlyRootFilesystem: true
-    runAsUser: 975668
+    runAsUser: 9756
 
 
 operator:
@@ -43,7 +44,6 @@ operator:
 
   log:
     level: info
-    location: /opt/pass-operator/runtime.log
 
   ssh:
     # If create is false, value is not used; users may bring their own.

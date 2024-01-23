@@ -25,9 +25,9 @@ RUN apt update \
     && rm -rf /var/apt/lists/*
 
 # Add 'operator' user and group.
-RUN groupadd -r -f -g 975668 operator \
+RUN groupadd -r -f -g 9756 operator \
     && cat /etc/group \
-    && useradd -rm -d /opt/pass-operator -s /bin/bash -g operator -u 975668 operator
+    && useradd -rm -d /opt/pass-operator -s /bin/bash -g operator -u 9756 operator
 
 WORKDIR /opt/pass-operator
 

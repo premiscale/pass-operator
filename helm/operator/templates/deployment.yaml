@@ -69,8 +69,7 @@ spec:
         - name: {{ default .Values.deployment.name .Chart.Name }}
           args: [
             --log-stdout,
-            --log-level, {{ .Values.operator.log.level }},
-            --log-file, {{ .Values.operator.log.location }}
+            --log-level, {{ .Values.operator.log.level }}
           ]
           {{- with .Values.deployment.livenessProbe }}
             {{- if .enabled }}
