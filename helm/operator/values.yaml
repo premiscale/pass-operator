@@ -25,11 +25,11 @@ deployment:
 
   podSecurityContext:
     runAsNonRoot: true
+    fsGroup: 975668
 
   containerSecurityContext:
     readOnlyRootFilesystem: true
     runAsUser: 975668
-    fsGroup: 975668
 
 
 operator:
