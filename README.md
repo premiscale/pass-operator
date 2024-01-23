@@ -39,7 +39,7 @@ kind: Secret
 metadata:
   name: mysecret
   namespace: pass-operator-test
-data:
+stringData:
   mykey: <decrypted contents of premiscale/mydata>
 immutable: false
 type: Opaque
