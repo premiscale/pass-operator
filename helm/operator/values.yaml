@@ -28,6 +28,7 @@ deployment:
 
   containerSecurityContext:
     readOnlyRootFilesystem: true
+    runAsUser: 100001
 
 
 operator:
