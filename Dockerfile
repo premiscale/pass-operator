@@ -44,7 +44,7 @@ ARG PYTHON_PACKAGE_VERSION=0.0.1
 ENV PATH=${PATH}:/opt/pass-operator/.local/bin
 
 # Set up SSH and install the pass-operator package from my private registry.
-RUN mkdir -p "$HOME"/.local/bin "$HOME"/.ssh \
+RUN mkdir -p "$HOME"/.local/bin \
     && pip install --upgrade pip \
     && pip install --no-cache-dir --no-input --extra-index-url="${PYTHON_INDEX}" pass-operator=="${PYTHON_PACKAGE_VERSION}"
 

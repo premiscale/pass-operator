@@ -30,7 +30,9 @@ deployment:
 
   containerSecurityContext:
     readOnlyRootFilesystem: true
+    allowPrivilegeEscalation: false
     runAsUser: 9756
+    runAsGroup: 9756
 
 
 operator:
