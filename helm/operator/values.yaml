@@ -25,14 +25,11 @@ deployment:
 
   podSecurityContext:
     runAsNonRoot: true
-    fsGroupChangePolicy: OnRootMismatch
-    fsGroup: 9756
 
   containerSecurityContext:
-    readOnlyRootFilesystem: true
+    # TODO for a future sprint.
+    # readOnlyRootFilesystem: true
     allowPrivilegeEscalation: false
-    runAsUser: 9756
-    runAsGroup: 9756
 
 
 operator:
@@ -57,9 +54,6 @@ operator:
     # raw string of the secret key b64enc'd.
     value: ""
 
-    volume:
-      sizeLimit: 256Ki
-
   gpg:
     createSecret: false
 
@@ -70,16 +64,9 @@ operator:
     value: ""
     passphrase: ""
 
-    volume:
-      sizeLimit: 100Ki
-
   git:
     branch: main
     url: ""
-
-    # Memory-based filesystem to store git repository.
-    volume:
-      sizeLimit: 20Mi
 
 
 service:

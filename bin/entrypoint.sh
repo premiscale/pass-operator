@@ -25,6 +25,7 @@ eval "$(ssh-agent -s)"
 printf "%s" "$PASS_SSH_PRIVATE_KEY" | ssh-add -
 
 # Set up ~/.ssh/config to disable strict host key checking on github.com.
+mkdir .ssh/
 printf "Host github.com\\n    StrictHostKeyChecking no\\n" > ~/.ssh/config
 chmod 400 ~/.ssh/config
 
