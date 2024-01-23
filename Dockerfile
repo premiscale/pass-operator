@@ -30,7 +30,7 @@ RUN useradd -rm -d /opt/pass-operator -s /bin/bash -g operator -u 10001 operator
 WORKDIR /opt/pass-operator
 
 RUN chown -R operator:operator .
-USER operator
+USER 10001
 
 ARG PYTHON_USERNAME
 ARG PYTHON_PASSWORD
