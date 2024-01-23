@@ -24,14 +24,18 @@ fi
 eval "$(ssh-agent -s)"
 printf "%s" "$PASS_SSH_PRIVATE_KEY" | ssh-add -
 
+# Set up ~/.ssh/config to disable strict host key checking on github.com.
+printf "Host github.com\\n    StrictHostKeyChecking no\\n" > ~/.ssh/config
+chmod 400 ~/.ssh/config
+
 # Import private gpg key for secrets' decryption.
 # Generate the contents of this env var with 'gpg --armor --export-private-key <key_id> | base64 | pbcopy'
 if [ -z "$PASS_GPG_PASSPHRASE" ]; then
     echo "$PASS_GPG_KEY" | gpg --dearmor | gpg --batch --import
 else
-    echo "$PASS_GPG_KEY" | gpg --dearmor > dearmored_key.gpg
-    echo "$PASS_GPG_PASSPHRASE" | gpg --batch --import dearmored_key.gpg
-    rm dearmored_key.gpg
+    echo "$PASS_GPG_KEY" | gpg --dearmor > .gnupg/dearmored_key.gpg
+    echo "$PASS_GPG_PASSPHRASE" | gpg --batch --import .gnupg/dearmored_key.gpg
+    rm .gnupg/dearmored_key.gpg
 fi
 
 # Initialize pass with the indicated directory and GPG key ID to decrypt secrets pulled from the Git repository.

@@ -2,18 +2,24 @@ version: 2.1
 
 
 orbs:
-  general: premiscale/general@1.0.13
+  general: premiscale/general@1.1.1
 
 
 workflows:
   helm:
     jobs:
       - general/helm-lint:
-          name: helm lint [<< matrix.chart-path >>]
-          matrix:
-            parameters:
-              chart-path:
-                - helm/operator
-                - helm/operator-crds
-            alias: helm-lint
-          chart-path: << matrix.chart-path >>
+          name: helm lint
+
+      - general/helm-test-kubesec:
+          kubeconform-schema: >-
+            --schema-location https://raw.githubusercontent.com/premiscale/pass-operator/$CIRCLE_BRANCH/helm/operator-crds/_json/PassSecret.json
+          name: kubesec
+
+      - general/helm-test-kubelinter:
+          name: kubelinter
+          # TODO: re-enable this exclude
+          exclude: no-read-only-root-fs
+
+      - general/helm-test-deprecated:
+          name: deprecated api

@@ -87,15 +87,15 @@ def update(body: kopf.Body, **_: Any) -> None:
 
     stringData = dict()
 
-    for secret in encryptedData:
-        secretValue = encryptedData[secret]
+    for secretKey in encryptedData:
+        secretPath = encryptedData[secretKey]
         if (decryptedSecret := decrypt(
-                Path(f'~/.password-store/{PASS_DIRECTORY}/{secretValue}').expanduser(),
+                Path(f'~/.password-store/{PASS_DIRECTORY}/{secretPath}').expanduser(),
                 passphrase=PASS_GPG_PASSPHRASE
             )):
-            stringData[secret] = decryptedSecret
+            stringData[secretKey] = decryptedSecret
         else:
-            log.error(f'Could not decrypt contents of secret {secret["key"]} with path {secret["path"]}')
+            log.error(f'Could not decrypt contents of PassSecret {passSecretName} with path {secretPath}')
             raise kopf.PermanentError()
 
     body = client.V1Secret(
@@ -139,15 +139,15 @@ def create(body: kopf.Body, **_: Any) -> None:
 
     stringData = dict()
 
-    for secret in encryptedData:
-        secretValue = encryptedData[secret]
+    for secretKey in encryptedData:
+        secretPath = encryptedData[secretKey]
         if (decryptedSecret := decrypt(
-                Path(f'~/.password-store/{PASS_DIRECTORY}/{secretValue}').expanduser(),
+                Path(f'~/.password-store/{PASS_DIRECTORY}/{secretPath}').expanduser(),
                 passphrase=PASS_GPG_PASSPHRASE
             )):
-            stringData[secret] = decryptedSecret
+            stringData[secretKey] = decryptedSecret
         else:
-            log.error(f'Could not decrypt contents of secret {secret["key"]} with path {secret["path"]}')
+            log.error(f'Could not decrypt contents of PassSecret {passSecretName} with path {secretPath}')
             raise kopf.PermanentError()
 
     body = client.V1Secret(

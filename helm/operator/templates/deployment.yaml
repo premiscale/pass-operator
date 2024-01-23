@@ -50,8 +50,7 @@ spec:
         - name: {{ default .Values.deployment.name .Chart.Name }}
           args: [
             --log-stdout,
-            --log-level, {{ .Values.operator.log.level }},
-            --log-file, {{ .Values.operator.log.location }}
+            --log-level, {{ .Values.operator.log.level }}
           ]
           {{- with .Values.deployment.livenessProbe }}
             {{- if .enabled }}
@@ -123,7 +122,7 @@ spec:
               value: {{ .value }}
                 {{- end }}
               {{- end }}
-          {{- with .Values.deployment.securityContext }}
+          {{- with .Values.deployment.containerSecurityContext }}
           securityContext:
             {{- toYaml . | nindent 12 }}
           {{- end }}

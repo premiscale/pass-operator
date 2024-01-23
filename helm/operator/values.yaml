@@ -6,7 +6,7 @@ global:
 deployment:
   image:
     name: pass-operator
-    tag: latest
+    tag: ignore
     pullPolicy: Always
 
   resources:
@@ -23,6 +23,14 @@ deployment:
     path: /healthz
     config: {}
 
+  podSecurityContext:
+    runAsNonRoot: true
+
+  containerSecurityContext:
+    # TODO for a future sprint.
+    # readOnlyRootFilesystem: true
+    allowPrivilegeEscalation: false
+
 
 operator:
   interval: 60
@@ -35,7 +43,6 @@ operator:
 
   log:
     level: info
-    location: /opt/pass-operator/runtime.log
 
   ssh:
     # If create is false, value is not used; users may bring their own.

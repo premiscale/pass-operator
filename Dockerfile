@@ -3,8 +3,10 @@ ARG TAG=3.10.11
 
 FROM ${IMAGE}:${TAG}
 
+SHELL [ "/bin/bash", "-c" ]
+
 # https://github.com/opencontainers/image-spec/blob/main/annotations.md#pre-defined-annotation-keys
-LABEL org.opencontainers.image.description "© PremiScale, Inc. 2023"
+LABEL org.opencontainers.image.description "© PremiScale, Inc. 2024"
 LABEL org.opencontainers.image.licenses "GPLv3"
 LABEL org.opencontainers.image.authors "Emma Doyle <emma@premiscale.com>"
 LABEL org.opencontainers.image.documentation "https://premiscale.com"
@@ -23,12 +25,12 @@ RUN apt update \
     && rm -rf /var/apt/lists/*
 
 # Add 'operator' user and group.
-RUN useradd -rm -d /opt/pass-operator -s /bin/bash -g operator -u 1001 operator
+RUN useradd -rm -d /opt/pass-operator -s /bin/bash -g operator -u 10001 operator
 
 WORKDIR /opt/pass-operator
 
 RUN chown -R operator:operator .
-USER operator
+USER 10001
 
 ARG PYTHON_USERNAME
 ARG PYTHON_PASSWORD
@@ -39,8 +41,9 @@ ARG PYTHON_PACKAGE_VERSION=0.0.1
 
 ENV PATH=${PATH}:/opt/pass-operator/.local/bin
 
-# Install and initialize PremiScale.
-RUN mkdir -p "$HOME"/.local/bin "$HOME"/.ssh \
+# Set up SSH and install the pass-operator package from my private registry.
+RUN mkdir -p "$HOME"/.local/bin "$HOME"/.ssh "$HOME"/.gnupg \
+    && chmod 700 "$HOME"/.gnupg \
     && pip install --upgrade pip \
     && pip install --no-cache-dir --no-input --extra-index-url="${PYTHON_INDEX}" pass-operator=="${PYTHON_PACKAGE_VERSION}"
 
@@ -58,6 +61,5 @@ ENV OPERATOR_INTERVAL=60 \
     PASS_SSH_PRIVATE_KEY=""
 
 COPY bin/entrypoint.sh /entrypoint.sh
-COPY --chown=operator:operator --chmod=400 bin/ssh_config /opt/pass-operator/.ssh/config
 
 ENTRYPOINT [ "/tini", "--", "/entrypoint.sh" ]
