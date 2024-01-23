@@ -3,7 +3,7 @@ ARG TAG=3.10.11
 
 FROM ${IMAGE}:${TAG}
 
-SHELL [ "/bin/bash" ]
+SHELL [ "/bin/bash", "-c" ]
 
 # https://github.com/opencontainers/image-spec/blob/main/annotations.md#pre-defined-annotation-keys
 LABEL org.opencontainers.image.description "© PremiScale, Inc. 2024"
