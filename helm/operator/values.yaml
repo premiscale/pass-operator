@@ -28,7 +28,8 @@ deployment:
 
   containerSecurityContext:
     readOnlyRootFilesystem: true
-    runAsUser: 100001
+    runAsUser: 975668
+    fsGroup: 975668
 
 
 operator:
