@@ -25,6 +25,7 @@ deployment:
 
   podSecurityContext:
     runAsNonRoot: true
+    readOnlyRootFilesystem: true
 
 
 operator:
