@@ -27,7 +27,7 @@ RUN apt update \
 # Add 'operator' user and group.
 RUN cat /etc/group \
     && groupadd -r -g 975668 operator \
-    cat /etc/group \
+    && cat /etc/group \
     && useradd -rm -d /opt/pass-operator -s /bin/bash -g operator -u 975668 operator
 
 WORKDIR /opt/pass-operator
