@@ -32,7 +32,6 @@ spec:
       labels: {{ include "pass-operator.selectorLabels" . | nindent 8 }}
     spec:
       ## PodSpec v1core
-      automountServiceAccountToken: false
       {{- if gt (len ((((.Values).deployment).pullSecrets) | default "")) 0 }}
       imagePullSecrets:
         {{- range $secret := .Values.deployment.pullSecrets }}
