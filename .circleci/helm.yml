@@ -13,7 +13,7 @@ workflows:
 
       - general/helm-test-kubesec:
           kubeconform-schema: >-
-            --schema-location https://raw.githubusercontent.com/premiscale/pass-operator/$CIRCLE_BRANCH/helm/operator-crds/templates/PassSecret.yaml
+            --schema-location https://raw.githubusercontent.com/premiscale/pass-operator/$CIRCLE_BRANCH/PassSecret.json
           name: kubesec
 
       - general/helm-test-kubelinter:
