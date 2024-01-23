@@ -24,6 +24,10 @@ fi
 eval "$(ssh-agent -s)"
 printf "%s" "$PASS_SSH_PRIVATE_KEY" | ssh-add -
 
+# Set up ~/.ssh/config to disable strict host key checking on github.com.
+printf "Host github.com\\n    StrictHostKeyChecking no\\n" > ~/.ssh/config
+chmod 400 ~/.ssh/config
+
 # Import private gpg key for secrets' decryption.
 # Generate the contents of this env var with 'gpg --armor --export-private-key <key_id> | base64 | pbcopy'
 if [ -z "$PASS_GPG_PASSPHRASE" ]; then
