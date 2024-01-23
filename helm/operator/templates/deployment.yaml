@@ -58,6 +58,12 @@ spec:
             medium: Memory
             sizeLimit: {{ .sizeLimit }}
         {{- end }}
+        {{- with .Values.operator.ssh.volume }}
+        - name: ssh
+          emptyDir:
+            medium: Memory
+            sizeLimit: {{ .sizeLimit }}
+        {{- end }}
       containers:
         ## Container v1 core (array)
         - name: {{ default .Values.deployment.name .Chart.Name }}
@@ -80,6 +86,9 @@ spec:
               readOnly: false
             - name: gpg
               mountPath: /opt/pass-operator/.gnupg/
+              readOnly: false
+            - name: ssh
+              mountPath: /opt/pass-operator/.ssh/
               readOnly: false
           env:
             # Operator

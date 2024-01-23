@@ -54,6 +54,9 @@ operator:
     # raw string of the secret key b64enc'd.
     value: ""
 
+    volume:
+      sizeLimit: 256Ki
+
   gpg:
     createSecret: false
 
