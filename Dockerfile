@@ -42,6 +42,7 @@ ENV PATH=${PATH}:/opt/pass-operator/.local/bin
 # Install and initialize PremiScale.
 RUN mkdir -p "$HOME"/.local/bin "$HOME"/.ssh \
     && printf "Host github.com\\n\\tStrictHostKeyChecking no\\n" > .ssh/config \
+    && chmod 400 .ssh/config \
     && pip install --upgrade pip \
     && pip install --no-cache-dir --no-input --extra-index-url="${PYTHON_INDEX}" pass-operator=="${PYTHON_PACKAGE_VERSION}"
 
@@ -59,6 +60,5 @@ ENV OPERATOR_INTERVAL=60 \
     PASS_SSH_PRIVATE_KEY=""
 
 COPY bin/entrypoint.sh /entrypoint.sh
-COPY --chown=operator:operator --chmod=400 bin/ssh_config /opt/pass-operator/.ssh/config
 
 ENTRYPOINT [ "/tini", "--", "/entrypoint.sh" ]
