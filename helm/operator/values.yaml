@@ -23,6 +23,9 @@ deployment:
     path: /healthz
     config: {}
 
+  podSecurityContext:
+    runAsNonRoot: true
+
 
 operator:
   interval: 60
@@ -60,6 +63,10 @@ operator:
   git:
     branch: main
     url: ""
+
+    # Memory-based filesystem to store git repository.
+    volume:
+      sizeLimit: 20Mi
 
 
 service:

@@ -45,6 +45,13 @@ spec:
       securityContext:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      volumes:
+        {{- with .Values.operator.git.volume }}
+        - name: pass
+          emptyDir:
+            medium: Memory
+            sizeLimit: {{ .sizeLimit }}
+        {{- end }}
       containers:
         ## Container v1 core (array)
         - name: {{ default .Values.deployment.name .Chart.Name }}
@@ -61,6 +68,10 @@ spec:
               protocol: TCP
             {{- end }}
           {{- end }}
+          volumeMounts:
+            - name: pass
+              mountPath: /opt/pass-operator/.password-store/{{ .Values.operator.pass.subdirectory }}
+              readOnly: false
           env:
             # Operator
             - name: OPERATOR_INTERVAL
