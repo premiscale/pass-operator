@@ -6,7 +6,7 @@ global:
 deployment:
   image:
     name: pass-operator
-    tag: latest
+    tag: ignore
     pullPolicy: Always
 
   resources:
