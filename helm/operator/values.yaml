@@ -60,6 +60,9 @@ operator:
     value: ""
     passphrase: ""
 
+    volume:
+      sizeLimit: 100Ki
+
   git:
     branch: main
     url: ""

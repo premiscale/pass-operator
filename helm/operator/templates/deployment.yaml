@@ -52,6 +52,12 @@ spec:
             medium: Memory
             sizeLimit: {{ .sizeLimit }}
         {{- end }}
+        {{- with .Values.operator.gpg.volume }}
+        - name: gpg
+          emptyDir:
+            medium: Memory
+            sizeLimit: {{ .sizeLimit }}
+        {{- end }}
       containers:
         ## Container v1 core (array)
         - name: {{ default .Values.deployment.name .Chart.Name }}
@@ -71,6 +77,9 @@ spec:
           volumeMounts:
             - name: pass
               mountPath: /opt/pass-operator/.password-store/{{ .Values.operator.pass.subdirectory }}
+              readOnly: false
+            - name: gpg
+              mountPath: /opt/pass-operator/.gnupg/
               readOnly: false
           env:
             # Operator
