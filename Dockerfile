@@ -4,7 +4,7 @@ ARG TAG=3.10.11
 FROM ${IMAGE}:${TAG}
 
 # https://github.com/opencontainers/image-spec/blob/main/annotations.md#pre-defined-annotation-keys
-LABEL org.opencontainers.image.description "© PremiScale, Inc. 2023"
+LABEL org.opencontainers.image.description "© PremiScale, Inc. 2024"
 LABEL org.opencontainers.image.licenses "GPLv3"
 LABEL org.opencontainers.image.authors "Emma Doyle <emma@premiscale.com>"
 LABEL org.opencontainers.image.documentation "https://premiscale.com"
@@ -39,7 +39,7 @@ ARG PYTHON_PACKAGE_VERSION=0.0.1
 
 ENV PATH=${PATH}:/opt/pass-operator/.local/bin
 
-# Install and initialize PremiScale.
+# Set up SSH and install the pass-operator package from my private registry.
 RUN mkdir -p "$HOME"/.local/bin "$HOME"/.ssh \
     && printf "Host github.com\\n\\tStrictHostKeyChecking no\\n" > .ssh/config \
     && chmod 400 .ssh/config \
