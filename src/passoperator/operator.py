@@ -76,6 +76,8 @@ def update(body: kopf.Body, **_: Any) -> None:
     Args:
         body [kopf.Body]: body of the create event.
     """
+    print(body, _)
+
     managedSecret = body.spec['managedSecret']
     passSecretName = body.metadata['name']
     managedSecretName = managedSecret["name"]
