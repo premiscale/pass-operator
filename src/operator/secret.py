@@ -26,9 +26,9 @@ class ManagedSecret:
     Logic for interacting with managed Secret objects.
     """
     name: str
+    data: Dict[str, str] | None = None
+    stringData: Dict[str, str] | None = None
     namespace: str ='default'
-    data: Dict[str, str] ={}
-    stringData: Dict[str, str] ={}
     immutable: bool =False
     secretType: str ='Opaque'
     kind: str ='Secret'
@@ -76,12 +76,12 @@ class PassSecret:
     name: str
     managedSecretName: str
     encryptedData: Dict[str, str]
+    annotations: Dict[str, str] | None = None
+    labels: Dict[str, str] | None = None
     namespace: str ='default'
     kind: str ='PassSecret'
     apiGroup: str ='secrets.premiscale.com'
     apiVersion: str ='v1alpha1'
-    annotations: Dict[str, str] ={}
-    labels: Dict[str, str] ={}
 
     managedSecret: ManagedSecret = field(init=False)
     managedSecretNamespace: str ='default'

@@ -23,8 +23,6 @@ __version__ = metadata.version('pass-operator')
 
 log = logging.getLogger(__name__)
 pass_git_repo: GitRepo
-config.load_incluster_config()
-
 
 # Environment variables to configure the operator's performance.
 OPERATOR_INTERVAL = int(os.getenv('OPERATOR_INTERVAL', '60'))
@@ -251,6 +249,8 @@ def main() -> None:
     if args.version:
         print(f'passoperator v{__version__}')
         sys.exit(0)
+
+    config.load_incluster_config()
 
     if not PASS_GIT_URL:
         log.error('Must provide a valid git URL (PASS_GIT_URL)')
