@@ -180,6 +180,9 @@ class PassSecret:
     def decrypt(self) -> Dict[str, str] | None:
         """
         Decrypt the contents of this PassSecret's paths and store them on an attribute
+
+        Returns:
+            Optional[Dict[str, str]]: a dictionary of data keys and decrypted paths' values. If decryption was not possible, None.
         """
         stringData = dict()
 
@@ -225,7 +228,7 @@ def reconciliation(**kwargs) -> None:
 
 
 @kopf.on.update('secrets.premiscale.com', 'v1alpha1', 'passsecret')
-def update(old: Dict, new: Dict, meta: Dict, **_: Any) -> None:
+def update(old: kopf.BodyEssence, new: kopf.BodyEssence, meta: kopf.Meta, **_: Any) -> None:
     """
     An update was received on the PassSecret object, so attempt to update the corresponding Secret.
 
