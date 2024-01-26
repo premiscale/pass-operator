@@ -78,6 +78,7 @@ def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.
         old [dict]: old body of the PassSecret.
         new [dict]: new body of the PassSecret.
     """
+    # Parse the old PassSecret manifest.
     try:
         oldPassSecret = PassSecret.from_dict(
             manifest={
@@ -95,6 +96,7 @@ def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.
         log.error(e)
         raise kopf.PermanentError()
 
+    # Parse the new PassSecret manifest.
     try:
         newPassSecret = PassSecret.from_dict(
             manifest={
@@ -115,13 +117,29 @@ def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.
     v1 = client.CoreV1Api()
 
     try:
-        v1.patch_namespaced_secret(
-            name=oldPassSecret.name,
-            namespace=oldPassSecret.namespace,
-            body=client.V1Secret(
-                **newPassSecret.managedSecret.to_client_dict()
+        if newPassSecret.managedSecret.namespace != oldPassSecret.managedSecret.namespace:
+            # Namespace is different. Delete the former secret and create a new one.
+            v1.delete_namespaced_secret(
+                name=oldPassSecret.managedSecret.name,
+                namespace=oldPassSecret.managedSecret.namespace
             )
-        )
+
+            v1.create_namespaced_secret(
+                namespace=newPassSecret.managedSecret.namespace,
+                body=client.V1Secret(
+                    **newPassSecret.managedSecret.to_client_dict()
+                )
+            )
+        else:
+            # Namespace is the same, secret's being updated in-place.
+            v1.patch_namespaced_secret(
+                name=oldPassSecret.name,
+                namespace=oldPassSecret.namespace,
+                body=client.V1Secret(
+                    **newPassSecret.managedSecret.to_client_dict()
+                )
+            )
+
         log.info(f'Updated PassSecret "{newPassSecret.name}"')
     except client.ApiException as e:
         log.error(e)
@@ -183,7 +201,7 @@ def delete(body: kopf.Body, **_: Any) -> None:
             name=secret.managedSecret.name,
             namespace=secret.managedSecret.namespace
         )
-        log.info(f'Deleted PassSecret "{secret.name}" managed secret "{secret.managedSecret.name}" in namespace "{secret.managedSecret}"')
+        log.info(f'Deleted PassSecret "{secret.name}" managed secret "{secret.managedSecret.name}" in namespace "{secret.managedSecret.namespace}"')
     except client.ApiException as e:
         log.error(e)
 
@@ -193,8 +211,8 @@ def check_gpg_id(path: Path = Path(f'~/.password-store/{PASS_DIRECTORY}/.gpg-id'
     Ensure the gpg ID exists (leftover from 'pass init' in the entrypoint, or a git clone) and its contents match PASS_GPG_KEY_ID.
 
     Args:
-        path (Path): Path-like object to the .gpg-id file.
-        remove (bool): indicate whether or not to remove this file, should it exist.
+        path [Path]: Path-like object to the .gpg-id file.
+        remove [bool]: indicate whether or not to remove this file, should it exist.
     """
     if path.exists():
         with open(path, mode='r', encoding='utf-8') as gpg_id_f:
