@@ -155,7 +155,7 @@ def create(body: kopf.Body, **_: Any) -> None:
                 **secret.managedSecret.to_client_dict()
             )
         )
-        log.info(f'PassSecret {secret.name} managed secret {secret.managedSecret.name} created in namespace {secret.managedSecret.namespace}')
+        log.info(f'PassSecret "{secret.name}" with managed secret "{secret.managedSecret.name}" created in namespace "{secret.managedSecret.namespace}"')
     except client.ApiException as e:
         log.error(e)
 
@@ -183,7 +183,7 @@ def delete(body: kopf.Body, **_: Any) -> None:
             name=secret.managedSecret.name,
             namespace=secret.managedSecret.namespace
         )
-        log.info(f'PassSecret {secret.name} managed secret "{secret.managedSecret.name}" deleted in namespace {secret.managedSecret}')
+        log.info(f'PassSecret "{secret.name}" with managed secret "{secret.managedSecret.name}" deleted in namespace "{secret.managedSecret}"')
     except client.ApiException as e:
         log.error(e)
 
