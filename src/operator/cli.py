@@ -136,7 +136,6 @@ def create(body: kopf.Body, **_: Any) -> None:
         body [kopf.Body]: body of the create event.
     """
     try:
-        print(dict(body))
         secret = PassSecret.from_dict(manifest=dict(body))
 
         if not secret:
@@ -151,7 +150,6 @@ def create(body: kopf.Body, **_: Any) -> None:
 
     try:
         v1.create_namespaced_secret(
-            name=secret.managedSecret.name,
             namespace=secret.managedSecret.namespace,
             body=client.V1Secret(
                 **secret.managedSecret.to_client_dict()
