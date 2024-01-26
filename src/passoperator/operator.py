@@ -228,7 +228,7 @@ def reconciliation(**kwargs) -> None:
 
 
 @kopf.on.update('secrets.premiscale.com', 'v1alpha1', 'passsecret')
-def update(old: kopf.BodyEssence, new: kopf.BodyEssence, meta: kopf.Meta, **_: Any) -> None:
+def update(old: Any, new: Any, meta: kopf.Meta, **_: Any) -> None:
     """
     An update was received on the PassSecret object, so attempt to update the corresponding Secret.
 
