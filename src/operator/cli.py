@@ -136,11 +136,8 @@ def create(body: kopf.Body, **_: Any) -> None:
         body [kopf.Body]: body of the create event.
     """
     try:
-        secret = PassSecret.from_dict(
-            manifest={
-                **body.spec
-            }
-        )
+        print(dict(body))
+        secret = PassSecret.from_dict(manifest=dict(body))
 
         if not secret:
             raise kopf.PermanentError()
