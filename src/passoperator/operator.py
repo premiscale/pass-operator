@@ -2,17 +2,22 @@
 A kubernetes operator that syncs and decrypts secrets from Linux password store (https://www.passwordstore.org/) git repositories
 """
 
+
+from __future__ import annotations
+
 import logging
 import sys
 import kopf
 import os
+import base64
 
-from typing import Any
+from typing import Any, Dict
 from kubernetes import client, config
 from pathlib import Path
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from importlib import metadata as meta
 from ipaddress import IPv4Address
+from dataclasses import dataclass, field
 
 from src.passoperator.git import GitRepo
 from src.passoperator.utils import LogLevel
@@ -20,6 +25,7 @@ from src.passoperator.gpg import decrypt
 
 
 __version__ = meta.version('pass-operator')
+
 log = logging.getLogger(__name__)
 pass_git_repo: GitRepo
 config.load_incluster_config()
@@ -42,8 +48,160 @@ PASS_GIT_URL = os.getenv('PASS_GIT_URL')
 PASS_GIT_BRANCH = os.getenv('PASS_GIT_BRANCH', 'main')
 
 
+@dataclass
+class ManagedSecret:
+    name: str
+    namespace: str ='default'
+    data: Dict[str, str] =dict()
+    stringData: Dict[str, str] =dict()
+    immutable: bool =False
+    secretType: str ='Opaque'
+    kind: str ='Secret'
+    apiGroup: str =''
+    apiVersion: str ='v1'
+
+    def __post_init__(self) -> None:
+        if not self.data and not self.stringData:
+            raise RuntimeError('ManagedSecret type expects at least one of \'data\', \'stringData\', to be set.')
+
+        # Propagate one field to the other, if only one or the other is set.
+        if self.data and not self.stringData:
+            self.stringData = {
+                key: base64.b64decode(value).rstrip().decode() for key, value in self.data.items()
+            }
+
+        if self.stringData and not self.data:
+            self.data = {
+                key: base64.b64encode(bytes(value.rstrip().encode('utf-8'))).decode() for key, value in self.stringData.items()
+            }
+
+    def to_client_dict(self) -> Dict:
+        """
+        Output this secret to a dictionary with keys that match the arguments of kubernetes.client.V1Secret, for convenience.
+        """
+        return {
+            'api_version': f'{self.apiGroup}/{self.apiVersion}' if self.apiGroup else self.apiVersion,
+            'kind': self.kind,
+            'metadata': {
+                'name': self.name,
+                'namespace': self.namespace,
+            },
+            'string_data': self.stringData,
+            'type': self.secretType,
+            'immutable': self.immutable
+        }
+
+
+@dataclass
+class PassSecret:
+    name: str
+    managedSecretName: str
+    encryptedData: Dict[str, str]
+    namespace: str ='default'
+    kind: str ='PassSecret'
+    apiGroup: str ='secrets.premiscale.com'
+    apiVersion: str ='v1alpha1'
+    annotations: Dict[str, str] =dict()
+    labels: Dict[str, str] =dict()
+
+    managedSecret: ManagedSecret = field(init=False)
+    managedSecretNamespace: str ='default'
+    managedSecretType: str ='Opaque'
+    managedSecretImmutable: bool =False
+
+    def __post_init__(self) -> None:
+        if (decryptedData := self.decrypt()) is None:
+            raise ValueError(f'Could not decrypt data on PassSecret {self.name}')
+
+        self.managedSecret = ManagedSecret(
+            name=self.managedSecretName,
+            namespace=self.managedSecretNamespace,
+            stringData=decryptedData,
+            immutable=self.managedSecretImmutable,
+            secretType=self.managedSecretType
+        )
+
+    def to_dict(self) -> Dict:
+        """
+        Output this object as a K8s manifest as JSON.
+        """
+        return {
+            'apiVersion': f'{self.apiGroup}/{self.apiVersion}',
+            'kind': self.kind,
+            'metadata': {
+                'name': self.name,
+                'namespace': self.namespace,
+                'annotations': self.annotations,
+                'labels': self.labels
+            },
+            'spec': {
+                'encryptedData': self.encryptedData,
+                'managedSecret': {
+                    'name': self.managedSecret.name,
+                    'namespace': self.managedSecret.namespace,
+                    'type': self.managedSecret.secretType,
+                    'immutable': self.managedSecret.immutable
+                }
+            }
+        }
+
+    @classmethod
+    def from_dict(cls, manifest: Dict) -> PassSecret | None:
+        """
+        Parse a k8s manifest into a PassSecret dataclass.
+        """
+        try:
+            if 'annotations' in manifest and len(manifest['annotations']):
+                annotations = manifest['annotations']
+            else:
+                annotations = dict()
+
+            if 'labels' in manifest and len(manifest['labels']):
+                labels = manifest['labels']
+            else:
+                labels = dict()
+
+            return cls(
+                name=manifest['metadata']['name'],
+                namespace=manifest['metadata']['namespace'],
+                encryptedData=manifest['spec']['encryptedData'],
+                labels=labels,
+                annotations=annotations,
+                # Parse out managed secret fields into arguments.
+                managedSecretName=manifest['spec']['managedSecret']['name'],
+                managedSecretNamespace=manifest['spec']['managedSecret']['namespace'],
+                managedSecretType=manifest['spec']['managedSecret']['type'],
+                managedSecretImmutable=manifest['spec']['managedSecret']['immutable']
+            )
+        except (KeyError, ValueError) as e:
+            log.error(f'Could not parse PassSecret into dataclass: {e}')
+            return None
+
+    def decrypt(self) -> Dict[str, str] | None:
+        """
+        Decrypt the contents of this PassSecret's paths and store them on an attribute
+        """
+        stringData = dict()
+
+        for secretKey in self.encryptedData:
+            secretPath = self.encryptedData[secretKey]
+
+            decryptedSecret = decrypt(
+                Path(f'~/.password-store/{PASS_DIRECTORY}/{secretPath}').expanduser(),
+                passphrase=PASS_GPG_PASSPHRASE
+            )
+
+            if decryptedSecret:
+                stringData[secretKey] = decryptedSecret
+            else:
+                return None
+
+        return stringData
+
+
 @kopf.on.startup()
 def start(**kwargs: Any) -> None:
+
     """
     Perform initial repo clone and set up operator runtime.
     """
@@ -67,57 +225,62 @@ def reconciliation(**kwargs) -> None:
 
 
 @kopf.on.update('secrets.premiscale.com', 'v1alpha1', 'passsecret')
-def update(body: kopf.Body, **_: Any) -> None:
+def update(old: Dict, new: Dict, meta: Dict, **_: Any) -> None:
     """
     An update was received on the PassSecret object, so attempt to update the corresponding Secret.
 
     This method is pretty much identical to 'create'-type events.
 
     Args:
-        body [kopf.Body]: body of the create event.
+        body [kopf.Body]:
+        old [dict]: old body of the PassSecret.
+        new [dict]: new body of the PassSecret.
     """
-    print(body, _)
+    try:
+        oldPassSecret = PassSecret.from_dict(
+            manifest={
+                'metadata': {
+                    'name': meta['name'],
+                    'namespace': meta['namespace']
+                },
+                **old
+            }
+        )
 
-    managedSecret = body.spec['managedSecret']
-    passSecretName = body.metadata['name']
-    managedSecretName = managedSecret["name"]
-    encryptedData = body.spec['encryptedData']
+        if not oldPassSecret:
+            raise kopf.PermanentError()
+    except ValueError as e:
+        log.error(e)
+        raise kopf.PermanentError()
 
-    log.info(f'PassSecret "{passSecretName}" updated')
+    try:
+        newPassSecret = PassSecret.from_dict(
+            manifest={
+                'metadata': {
+                    'name': meta['name'],
+                    'namespace': meta['namespace']
+                },
+                **new
+            }
+        )
+
+        if not newPassSecret:
+            raise kopf.PermanentError()
+    except ValueError as e:
+        log.error(e)
+        raise kopf.PermanentError()
 
     v1 = client.CoreV1Api()
 
-    stringData = dict()
-
-    for secretKey in encryptedData:
-        secretPath = encryptedData[secretKey]
-        if (decryptedSecret := decrypt(
-                Path(f'~/.password-store/{PASS_DIRECTORY}/{secretPath}').expanduser(),
-                passphrase=PASS_GPG_PASSPHRASE
-            )):
-            stringData[secretKey] = decryptedSecret
-        else:
-            log.error(f'Could not decrypt contents of PassSecret {passSecretName} with path {secretPath}')
-            raise kopf.PermanentError()
-
-    body = client.V1Secret(
-        api_version='v1',
-        kind='Secret',
-        metadata={
-            'name': managedSecretName,
-            'namespace': managedSecret['namespace']
-        },
-        string_data=stringData,
-        type=managedSecret['type'],
-        immutable=managedSecret['immutable']
-    )
-
     try:
         v1.patch_namespaced_secret(
-            name=managedSecretName,
-            namespace=managedSecret['namespace'],
-            body=body
+            name=oldPassSecret.name,
+            namespace=oldPassSecret.namespace,
+            body=client.V1Secret(
+                **newPassSecret.managedSecret.to_client_dict()
+            )
         )
+        log.info(f'PassSecret "{oldPassSecret.name}" updated')
     except client.ApiException as e:
         log.error(e)
 
@@ -130,45 +293,32 @@ def create(body: kopf.Body, **_: Any) -> None:
     Args:
         body [kopf.Body]: body of the create event.
     """
-    managedSecret = body.spec['managedSecret']
-    passSecretName = body.metadata['name']
-    managedSecretName = managedSecret["name"]
-    encryptedData = body.spec['encryptedData']
+    try:
+        secret = PassSecret.from_dict(
+            manifest={
+                **body.spec
+            }
+        )
 
-    log.info(f'PassSecret "{passSecretName}" created')
+        if not secret:
+            raise kopf.PermanentError()
+    except ValueError as e:
+        log.error(e)
+        raise kopf.PermanentError()
+
+    log.info(f'PassSecret "{secret.name}" created')
 
     v1 = client.CoreV1Api()
 
-    stringData = dict()
-
-    for secretKey in encryptedData:
-        secretPath = encryptedData[secretKey]
-        if (decryptedSecret := decrypt(
-                Path(f'~/.password-store/{PASS_DIRECTORY}/{secretPath}').expanduser(),
-                passphrase=PASS_GPG_PASSPHRASE
-            )):
-            stringData[secretKey] = decryptedSecret
-        else:
-            log.error(f'Could not decrypt contents of PassSecret {passSecretName} with path {secretPath}')
-            raise kopf.PermanentError()
-
-    body = client.V1Secret(
-        api_version='v1',
-        kind='Secret',
-        metadata={
-            'name': managedSecretName,
-            'namespace': managedSecret['namespace']
-        },
-        string_data=stringData,
-        type=managedSecret['type'],
-        immutable=managedSecret['immutable']
-    )
-
     try:
         v1.create_namespaced_secret(
-            namespace=managedSecret['namespace'],
-            body=body
+            name=secret.managedSecret.name,
+            namespace=secret.managedSecret.namespace,
+            body=client.V1Secret(
+                **secret.managedSecret.to_client_dict()
+            )
         )
+        log.info(f'PassSecret {secret.name} managed secret {secret.managedSecret.name} created in namespace {secret.managedSecret.namespace}')
     except client.ApiException as e:
         log.error(e)
 
@@ -178,22 +328,29 @@ def delete(body: kopf.Body, **_: Any) -> None:
     """
     Remove the secret.
     """
+    try:
+        secret = PassSecret.from_dict(
+            manifest={
+                **body.spec
+            }
+        )
 
-    managedSecret = body.spec['managedSecret']
-    passSecretName = body.metadata['name']
-    managedSecretName = managedSecret["name"]
-    # encryptedData = body.spec['encryptedData']
+        if not secret:
+            raise kopf.PermanentError()
+    except ValueError as e:
+        log.error(e)
+        raise kopf.PermanentError()
 
-    log.info(f'PassSecret "{passSecretName}" deleted')
+    log.info(f'PassSecret "{secret.name}" deleted')
 
     v1 = client.CoreV1Api()
 
     try:
         v1.delete_namespaced_secret(
-            name=managedSecretName,
-            namespace=managedSecret['namespace']
+            name=secret.managedSecret.name,
+            namespace=secret.managedSecret.namespace
         )
-        log.info(f'Managed secret "{managedSecretName}" deleted')
+        log.info(f'PassSecret {secret.name} managed secret "{secret.managedSecret.name}" deleted in namespace {secret.managedSecret}')
     except client.ApiException as e:
         log.error(e)
 

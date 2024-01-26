@@ -1,0 +1,211 @@
+{
+    'apiVersion': 'secrets.premiscale.com/v1alpha1',
+    'kind': 'PassSecret',
+    'metadata': {
+        'annotations': {
+            'kopf.zalando.org/last-handled-configuration': '{"spec":{"encryptedData":{"singular_data":"premiscale/operator/singular-data"},"managedSecret":{"immutable":false,"name":"singular-data","namespace":"pass-operator-develop","type":"Opaque"}}}\n',
+            'kubectl.kubernetes.io/last-applied-configuration': '{"apiVersion":"secrets.premiscale.com/v1alpha1","kind":"PassSecret","metadata":{"annotations":{},"name":"singular-data","namespace":"pass-operator-develop"},"spec":{"encryptedData":{"singular_data":"premiscale/operator/singular-data"},"managedSecret":{"immutable":false,"name":"singular-data-2","namespace":"pass-operator-master","type":"Opaque"}}}\n'
+        },
+        'creationTimestamp': '2024-01-24T13:27:17Z',
+        'finalizers': [
+            'kopf.zalando.org/KopfFinalizerMarker'
+        ],
+        'generation': 2,
+        'managedFields': [
+            {
+                'apiVersion': 'secrets.premiscale.com/v1alpha1',
+                'fieldsType': 'FieldsV1',
+                'fieldsV1': {
+                    'f:metadata': {
+                        'f:annotations': {
+                            'f:kopf.zalando.org/last-handled-configuration': {}
+                        },
+                        'f:finalizers': {
+                            '.': {},
+                            'v:"kopf.zalando.org/KopfFinalizerMarker"': {}
+                        }
+                    }
+                },
+                'manager': 'kopf',
+                'operation': 'Update',
+                'time': '2024-01-24T13:27:24Z'
+            },
+            {
+                'apiVersion': 'secrets.premiscale.com/v1alpha1',
+                'fieldsType': 'FieldsV1',
+                'fieldsV1': {
+                    'f:metadata': {
+                        'f:annotations': {
+                            '.': {},
+                            'f:kubectl.kubernetes.io/last-applied-configuration': {}
+                        }
+                    },
+                    'f:spec': {
+                        '.': {},
+                        'f:encryptedData': {
+                            '.': {},
+                            'f:singular_data': {}
+                        },
+                        'f:managedSecret': {
+                            '.': {},
+                            'f:immutable': {},
+                            'f:name': {},
+                            'f:namespace': {},
+                            'f:type': {}
+                        }
+                    }
+                },
+                'manager': 'kubectl-client-side-apply',
+                'operation': 'Update',
+                'time': '2024-01-24T13:27:39Z'
+            }
+        ],
+        'name': 'singular-data',
+        'namespace': 'pass-operator-develop',
+        'resourceVersion': '76241128',
+        'uid': '716cdfea-ec7c-4406-9f9d-71bb6617fe25'
+    },
+    'spec': {
+        'encryptedData': {
+            'singular_data': 'premiscale/operator/singular-data'
+        },
+        'managedSecret': {
+            'immutable': False,
+            'name': 'singular-data-2',
+            'namespace': 'pass-operator-master',
+            'type': 'Opaque'
+        }
+    }
+}
+
+## everything else
+{
+    'param': None,
+    'retry': 0,
+    'started': datetime.datetime(2024, 1, 24, 13, 27, 39, 926577, tzinfo=datetime.timezone.utc),
+    'runtime': datetime.timedelta(microseconds=303),
+    'logger': <ObjectLogger kopf.objects (INFO)>,
+    'memo': {},
+    'resource': passsecrets.v1alpha1.secrets.premiscale.com,
+    'patch': {},
+    'reason': <Reason.UPDATE: 'update'>,
+    'diff': (
+        (
+            'change', (
+                'spec',
+                'managedSecret',
+                'name'
+            ),
+            'singular-data',
+            'singular-data-2'
+        ),
+        (
+            'change',
+            (
+                'spec',
+                'managedSecret',
+                'namespace'
+            ),
+            'pass-operator-develop',
+            'pass-operator-master'
+        )
+    ),
+    'old': {
+        'spec': {
+            'encryptedData': {
+                'singular_data': 'premiscale/operator/singular-data'
+            },
+            'managedSecret': {
+                'immutable': False,
+                'name': 'singular-data',
+                'namespace': 'pass-operator-develop',
+                'type': 'Opaque'
+            }
+        }
+    },
+    'new': {
+        'spec': {
+            'encryptedData': {
+                'singular_data': 'premiscale/operator/singular-data'
+            },
+            'managedSecret': {
+                'immutable': False,
+                'name': 'singular-data-2',
+                'namespace': 'pass-operator-master',
+                'type': 'Opaque'
+            }
+        }
+    },
+    'spec': {
+        'encryptedData': {
+            'singular_data': 'premiscale/operator/singular-data'
+        },
+        'managedSecret': {
+            'immutable': False,
+            'name': 'singular-data-2',
+            'namespace': 'pass-operator-master',
+            'type': 'Opaque'
+        }
+    },
+    'meta': {
+        'annotations': {
+            'kopf.zalando.org/last-handled-configuration': '{"spec":{"encryptedData":{"singular_data":"premiscale/operator/singular-data"},"managedSecret":{"immutable":false,"name":"singular-data","namespace":"pass-operator-develop","type":"Opaque"}}}\n',
+            'kubectl.kubernetes.io/last-applied-configuration': '{"apiVersion":"secrets.premiscale.com/v1alpha1","kind":"PassSecret","metadata":{"annotations":{},"name":"singular-data","namespace":"pass-operator-develop"},"spec":{"encryptedData":{"singular_data":"premiscale/operator/singular-data"},"managedSecret":{"immutable":false,"name":"singular-data-2","namespace":"pass-operator-master","type":"Opaque"}}}\n'
+        },
+        'creationTimestamp': '2024-01-24T13:27:17Z',
+        'finalizers': [
+            'kopf.zalando.org/KopfFinalizerMarker'
+        ],
+        'generation': 2,
+        'managedFields': [
+            {
+                'apiVersion': 'secrets.premiscale.com/v1alpha1',
+                'fieldsType': 'FieldsV1',
+                'fieldsV1': {
+                    'f:metadata': {
+                        'f:annotations': {
+                            'f:kopf.zalando.org/last-handled-configuration': {}
+                        },
+                        'f:finalizers': {
+                            '.': {},
+                            'v:"kopf.zalando.org/KopfFinalizerMarker"': {}
+                        }
+                    }
+                },
+                'manager': 'kopf',
+                'operation': 'Update',
+                'time': '2024-01-24T13:27:24Z'
+            },
+            {
+                'apiVersion': 'secrets.premiscale.com/v1alpha1',
+                'fieldsType': 'FieldsV1',
+                'fieldsV1': {
+                    'f:metadata': {
+                        'f:annotations': {
+                            '.': {},
+                            'f:kubectl.kubernetes.io/last-applied-configuration': {}
+                        }
+                    },
+                    'f:spec': {
+                        '.': {},
+                        'f:encryptedData': {
+                            '.': {},
+                            'f:singular_data': {}
+                        },
+                        'f:managedSecret': {
+                            '.': {},
+                            'f:immutable': {},
+                            'f:name': {},
+                            'f:namespace': {},
+                            'f:type': {}
+                        }
+                    }
+                },
+                'manager': 'kubectl-client-side-apply',
+                'operation': 'Update',
+                'time': '2024-01-24T13:27:39Z'
+            }
+        ],
+        'name': 'singular-data',
+        'namespace': 'pass-operator-develop',
+        'resourceVersion': '76241128', 'uid': '716cdfea-ec7c-4406-9f9d-71bb6617fe25'}, 'status': {}, 'uid': '716cdfea-ec7c-4406-9f9d-71bb6617fe25', 'name': 'singular-data', 'namespace': 'pass-operator-develop', 'labels': {}, 'annotations': {'kopf.zalando.org/last-handled-configuration': '{"spec":{"encryptedData":{"singular_data":"premiscale/operator/singular-data"},"managedSecret":{"immutable":false,"name":"singular-data","namespace":"pass-operator-develop","type":"Opaque"}}}\n', 'kubectl.kubernetes.io/last-applied-configuration': '{"apiVersion":"secrets.premiscale.com/v1alpha1","kind":"PassSecret","metadata":{"annotations":{},"name":"singular-data","namespace":"pass-operator-develop"},"spec":{"encryptedData":{"singular_data":"premiscale/operator/singular-data"},"managedSecret":{"immutable":false,"name":"singular-data-2","namespace":"pass-operator-master","type":"Opaque"}}}\n'}}

@@ -1,0 +1,14 @@
+# Intended to be applied over the top of 'test_singular_data_2.yaml' to test update events.
+apiVersion: secrets.premiscale.com/v1alpha1
+kind: PassSecret
+metadata:
+  name: singular-data
+  namespace: pass-operator-develop
+spec:
+  encryptedData:
+    singular_data: premiscale/operator/singular-data
+  managedSecret:
+    name: singular-data-2
+    namespace: pass-operator-master
+    type: Opaque
+    immutable: false

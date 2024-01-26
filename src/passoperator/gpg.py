@@ -4,7 +4,6 @@ Provide methods for interacting with GnuPG.
 
 import logging
 
-from typing import Optional
 from pathlib import Path
 from gnupg import GPG
 
@@ -12,7 +11,7 @@ from gnupg import GPG
 log = logging.getLogger(__name__)
 
 
-def decrypt(path: Path, home: Path = Path('~/.gnupg').expanduser(), passphrase: Optional[str] = None) -> Optional[str]:
+def decrypt(path: Path, home: Path = Path('~/.gnupg').expanduser(), passphrase: str | None = None) -> str | None:
     """
     Decrypt a path in the store to a string.
 
