@@ -2,10 +2,11 @@
 Provide methods for interacting with GnuPG.
 """
 
-import logging
 
 from pathlib import Path
 from gnupg import GPG
+
+import logging
 
 
 log = logging.getLogger(__name__)

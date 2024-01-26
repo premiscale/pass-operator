@@ -3,16 +3,19 @@ Utils for the operator.
 """
 
 
+from enum import Enum
+
 import logging
 import sys
-
-from enum import Enum
 
 
 log = logging.getLogger(__name__)
 
 
 class LogLevel(Enum):
+    """
+    Log level enums.
+    """
     info = logging.INFO
     error = logging.ERROR
     warn = logging.WARNING

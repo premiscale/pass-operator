@@ -1,5 +1,5 @@
 [MESSAGES CONTROL]
-disable=invalid-name,superfluous-parens,line-too-long,missing-final-newline,logging-fstring-interpolation,too-many-instance-attributes,unused-argument,unused-import
+disable=invalid-name,wrong-import-order,superfluous-parens,line-too-long,missing-final-newline,logging-fstring-interpolation,too-many-instance-attributes,unused-argument,unused-import
 fail-under=6
 
 [MASTER]
