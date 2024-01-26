@@ -166,11 +166,7 @@ def delete(body: kopf.Body, **_: Any) -> None:
     Remove the secret.
     """
     try:
-        secret = PassSecret.from_dict(
-            manifest={
-                **body.spec
-            }
-        )
+        secret = PassSecret.from_dict(manifest=dict(body.spec))
 
         if not secret:
             raise kopf.PermanentError()
