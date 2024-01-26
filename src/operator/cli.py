@@ -122,7 +122,7 @@ def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.
                 **newPassSecret.managedSecret.to_client_dict()
             )
         )
-        log.info(f'PassSecret "{oldPassSecret.name}" updated')
+        log.info(f'Updated PassSecret "{newPassSecret.name}"')
     except client.ApiException as e:
         log.error(e)
 
