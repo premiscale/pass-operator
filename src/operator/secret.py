@@ -68,7 +68,7 @@ class ManagedSecret:
             manifest (Dict): a Secret manifest.
 
         Returns:
-            ManagedSecret: _description_
+            ManagedSecret: a ManagedSecret created from parsing the contents of the manifest.
 
         Raises:
             KeyError, ValueError: if expected keys are not present during dictionary unpacking.

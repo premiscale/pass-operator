@@ -3,7 +3,7 @@ A kubernetes operator that syncs and decrypts secrets from Linux password store 
 """
 
 
-from typing import Any
+from typing import Any, Dict
 from pathlib import Path
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from importlib import metadata
@@ -25,21 +25,20 @@ __version__ = metadata.version('pass-operator')
 log = logging.getLogger(__name__)
 pass_git_repo: GitRepo
 
-# Environment variables to configure the operator's performance.
-env = {
-    'OPERATOR_INTERVAL': int(os.getenv('OPERATOR_INTERVAL', '60')),
-    'OPERATOR_INITIAL_DELAY': int(os.getenv('OPERATOR_INITIAL_DELAY', '3')),
-    'OPERATOR_PRIORITY': int(os.getenv('OPERATOR_PRIORITY', '100')),
+env: Dict[str, str] = {
+    'OPERATOR_INTERVAL': os.getenv('OPERATOR_INTERVAL', '60'),
+    'OPERATOR_INITIAL_DELAY': os.getenv('OPERATOR_INITIAL_DELAY', '3'),
+    'OPERATOR_PRIORITY': os.getenv('OPERATOR_PRIORITY', '100'),
     'OPERATOR_NAMESPACE': os.getenv('OPERATOR_NAMESPACE', 'default'),
-    'OPERATOR_POD_IP': IPv4Address(os.getenv('OPERATOR_POD_IP', '0.0.0.0')),
+    'OPERATOR_POD_IP': os.getenv('OPERATOR_POD_IP', '0.0.0.0'),
 
     # Environment variables to configure pass.
     'PASS_BINARY': os.getenv('PASS_BINARY', '/usr/bin/pass'),
     'PASS_DIRECTORY': os.getenv('PASS_DIRECTORY', ''),
-    'PASS_GPG_PASSPHRASE': os.getenv('PASS_GPG_PASSPHRASE'),
-    'PASS_GPG_KEY': os.getenv('PASS_GPG_KEY'),
-    'PASS_GPG_KEY_ID': os.getenv('PASS_GPG_KEY_ID'),
-    'PASS_GIT_URL': os.getenv('PASS_GIT_URL'),
+    'PASS_GPG_PASSPHRASE': os.getenv('PASS_GPG_PASSPHRASE', ''),
+    'PASS_GPG_KEY': os.getenv('PASS_GPG_KEY', ''),
+    'PASS_GPG_KEY_ID': os.getenv('PASS_GPG_KEY_ID', ''),
+    'PASS_GIT_URL': os.getenv('PASS_GIT_URL', ''),
     'PASS_GIT_BRANCH': os.getenv('PASS_GIT_BRANCH', 'main')
 }
 
@@ -54,7 +53,7 @@ def start(**_: Any) -> None:
     pass_git_repo.clone()
 
 
-@kopf.timer('secrets.premiscale.com', 'v1alpha1', 'passsecret', interval=env['OPERATOR_INTERVAL'], initial_delay=env['OPERATOR_INITIAL_DELAY'], sharp=True)
+@kopf.timer('secrets.premiscale.com', 'v1alpha1', 'passsecret', interval=float(env['OPERATOR_INTERVAL']), initial_delay=float(env['OPERATOR_INITIAL_DELAY']), sharp=True)
 def reconciliation(body: kopf.Body, **_: Any) -> None:
     """
     Reconcile state of a managed secret against the pass store. Update secrets' data if a mismatch
@@ -305,9 +304,9 @@ def main() -> None:
     # Set up our global git repository object.
     global pass_git_repo
     pass_git_repo = GitRepo(
-        repo_url=str(env['PASS_GIT_URL']),
-        branch=str(env['PASS_GIT_BRANCH']),
-        clone_location=str(env['PASS_DIRECTORY'])
+        repo_url=env['PASS_GIT_URL'],
+        branch=env['PASS_GIT_BRANCH'],
+        clone_location=env['PASS_DIRECTORY']
     )
 
     # Configure logger
@@ -338,9 +337,9 @@ def main() -> None:
 
     kopf.run(
         # https://kopf.readthedocs.io/en/stable/packages/kopf/#kopf.run
-        priority=env['OPERATOR_PRIORITY'],
+        priority=int(env['OPERATOR_PRIORITY']),
         standalone=True,
         namespace=env['OPERATOR_NAMESPACE'],
         clusterwide=False,
-        liveness_endpoint=f'http://{env["OPERATOR_POD_IP"]}:8080/healthz'
+        liveness_endpoint=f'http://{IPv4Address(env["OPERATOR_POD_IP"])}:8080/healthz'
     )
