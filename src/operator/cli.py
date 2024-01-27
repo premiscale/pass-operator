@@ -174,9 +174,14 @@ def create(body: kopf.Body, **_: Any) -> None:
                 **secret.managedSecret.to_client_dict()
             )
         )
-        log.info(f'Created PassSecret "{secret.name}" managed secret "{secret.managedSecret.name}" in namespace "{secret.managedSecret.namespace}"')
+        log.info(f'Created PassSecret "{secret.name}" managed secret "{secret.managedSecret.name}" in Namespace "{secret.managedSecret.namespace}"')
     except client.ApiException as e:
-        log.error(e)
+        if e.status == HTTPStatus.CONFLICT:
+            log.error(f'Duplicate PassSecret "{secret.name}" managed Secret "{secret.managedSecret.name}" in Namespace "{secret.managedSecret.namespace}". Skipping.')
+            raise kopf.TemporaryError()
+        else:
+            log.error(e)
+            raise kopf.PermanentError()
 
 
 @kopf.on.delete('secrets.premiscale.com', 'v1alpha1', 'passsecret')
@@ -202,10 +207,10 @@ def delete(body: kopf.Body, **_: Any) -> None:
             name=secret.managedSecret.name,
             namespace=secret.managedSecret.namespace
         )
-        log.info(f'Deleted PassSecret "{secret.name}" managed secret "{secret.managedSecret.name}" in namespace "{secret.managedSecret.namespace}"')
+        log.info(f'Deleted PassSecret "{secret.name}" managed Secret "{secret.managedSecret.name}" in Namespace "{secret.managedSecret.namespace}"')
     except client.ApiException as e:
         if e.status == HTTPStatus.NOT_FOUND:
-            log.error(f'PassSecret "{secret.name}" managed secret "{secret.managedSecret.name}" was not found. Skipping.')
+            log.error(f'PassSecret "{secret.name}" managed Secret "{secret.managedSecret.name}" was not found. Skipping.')
         else:
             log.error(e)
             raise kopf.PermanentError()
