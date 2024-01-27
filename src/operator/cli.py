@@ -12,13 +12,12 @@ from kubernetes import client, config
 from http import HTTPStatus
 from src.operator.git import GitRepo
 from src.operator.utils import LogLevel
-from src.operator.secret import PassSecret
+from src.operator.secret import PassSecret, ManagedSecret
 
 import logging
 import sys
 import kopf
 import os
-import json
 
 
 __version__ = metadata.version('pass-operator')
@@ -27,24 +26,26 @@ log = logging.getLogger(__name__)
 pass_git_repo: GitRepo
 
 # Environment variables to configure the operator's performance.
-OPERATOR_INTERVAL = int(os.getenv('OPERATOR_INTERVAL', '60'))
-OPERATOR_INITIAL_DELAY = int(os.getenv('OPERATOR_INITIAL_DELAY', '3'))
-OPERATOR_PRIORITY = int(os.getenv('OPERATOR_PRIORITY', '100'))
-OPERATOR_NAMESPACE = os.getenv('OPERATOR_NAMESPACE', 'default')
-OPERATOR_POD_IP = IPv4Address(os.getenv('OPERATOR_POD_IP', '0.0.0.0'))
+env = {
+    'OPERATOR_INTERVAL': int(os.getenv('OPERATOR_INTERVAL', '60')),
+    'OPERATOR_INITIAL_DELAY': int(os.getenv('OPERATOR_INITIAL_DELAY', '3')),
+    'OPERATOR_PRIORITY': int(os.getenv('OPERATOR_PRIORITY', '100')),
+    'OPERATOR_NAMESPACE': os.getenv('OPERATOR_NAMESPACE', 'default'),
+    'OPERATOR_POD_IP': IPv4Address(os.getenv('OPERATOR_POD_IP', '0.0.0.0')),
 
-# Environment variables to configure pass.
-PASS_BINARY = os.getenv('PASS_BINARY', '/usr/bin/pass')
-PASS_DIRECTORY = os.getenv('PASS_DIRECTORY', '')
-PASS_GPG_PASSPHRASE = os.getenv('PASS_GPG_PASSPHRASE')
-PASS_GPG_KEY = os.getenv('PASS_GPG_KEY')
-PASS_GPG_KEY_ID = os.getenv('PASS_GPG_KEY_ID')
-PASS_GIT_URL = os.getenv('PASS_GIT_URL')
-PASS_GIT_BRANCH = os.getenv('PASS_GIT_BRANCH', 'main')
+    # Environment variables to configure pass.
+    'PASS_BINARY': os.getenv('PASS_BINARY', '/usr/bin/pass'),
+    'PASS_DIRECTORY': os.getenv('PASS_DIRECTORY', ''),
+    'PASS_GPG_PASSPHRASE': os.getenv('PASS_GPG_PASSPHRASE'),
+    'PASS_GPG_KEY': os.getenv('PASS_GPG_KEY'),
+    'PASS_GPG_KEY_ID': os.getenv('PASS_GPG_KEY_ID'),
+    'PASS_GIT_URL': os.getenv('PASS_GIT_URL'),
+    'PASS_GIT_BRANCH': os.getenv('PASS_GIT_BRANCH', 'main')
+}
 
 
 @kopf.on.startup()
-def start(**kwargs: Any) -> None:
+def start(**_: Any) -> None:
 
     """
     Perform initial repo clone and set up operator runtime.
@@ -53,7 +54,7 @@ def start(**kwargs: Any) -> None:
     pass_git_repo.clone()
 
 
-@kopf.timer('secrets.premiscale.com', 'v1alpha1', 'passsecret', interval=OPERATOR_INTERVAL, initial_delay=OPERATOR_INITIAL_DELAY, sharp=True)
+@kopf.timer('secrets.premiscale.com', 'v1alpha1', 'passsecret', interval=env['OPERATOR_INTERVAL'], initial_delay=env['OPERATOR_INITIAL_DELAY'], sharp=True)
 def reconciliation(body: kopf.Body, **_: Any) -> None:
     """
     Reconcile state of a managed secret against the pass store. Update secrets' data if a mismatch
@@ -64,19 +65,36 @@ def reconciliation(body: kopf.Body, **_: Any) -> None:
     check_gpg_id()
 
     # Create a new PassSecret object with an up-to-date managedSecret decrypted value from the pass store.
-    passSecret = PassSecret.from_dict(manifest=dict(body))
+    passSecret = PassSecret.from_dict(
+        manifest=dict(body),
+        env=env
+    )
 
     log.info(f'Reconciling PassSecret "{passSecret.name}" managed Secret "{passSecret.managedSecret.name}" in Namespace "{passSecret.managedSecret.namespace}" against password store.')
 
     v1 = client.CoreV1Api()
 
     try:
-        _managedSecret = v1.read_namespaced_secret(
-            name=passSecret.managedSecret.name,
-            namespace=passSecret.managedSecret.namespace
+        _managedSecret = ManagedSecret.from_dict(
+            v1.read_namespaced_secret(
+                name=passSecret.managedSecret.name,
+                namespace=passSecret.managedSecret.namespace
+            )
         )
 
-        print(_managedSecret)
+        # If the managed secret data does not match what's in the newly-generated ManagedSecret object,
+        # submit a patch request to update it.
+        if not _managedSecret.data_equals(passSecret.managedSecret):
+            if _managedSecret.immutable:
+                raise kopf.TemporaryError(f'PassSecret "{passSecret.name}" managed secret "{PassSecret.managedSecret.name}" is immutable. Ignoring data patch.')
+
+            v1.patch_namespaced_secret(
+                name=passSecret.managedSecret.name,
+                namespace=passSecret.managedSecret.namespace,
+                body=client.V1Secret(
+                    **passSecret.managedSecret.to_client_dict()
+                )
+            )
     except client.ApiException as e:
         raise kopf.PermanentError(e)
 
@@ -107,7 +125,8 @@ def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.
                     'namespace': meta['namespace']
                 },
                 **old
-            }
+            },
+            env=env
         )
     except (ValueError, KeyError) as e:
         raise kopf.PermanentError(e)
@@ -121,7 +140,8 @@ def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.
                     'namespace': meta['namespace']
                 },
                 **new
-            }
+            },
+            env=env
         )
     except (ValueError, KeyError) as e:
         raise kopf.PermanentError(e)
@@ -166,7 +186,10 @@ def create(body: kopf.Body, **_: Any) -> None:
         body [kopf.Body]: raw body of the created PassSecret.
     """
     try:
-        secret = PassSecret.from_dict(manifest=dict(body))
+        secret = PassSecret.from_dict(
+            manifest=dict(body),
+            env=env
+        )
     except (ValueError, KeyError) as e:
         raise kopf.PermanentError(e)
 
@@ -185,8 +208,7 @@ def create(body: kopf.Body, **_: Any) -> None:
     except client.ApiException as e:
         if e.status == HTTPStatus.CONFLICT:
             raise kopf.TemporaryError(f'Duplicate PassSecret "{secret.name}" managed Secret "{secret.managedSecret.name}" in Namespace "{secret.managedSecret.namespace}". Skipping.')
-        else:
-            raise kopf.PermanentError(e)
+        raise kopf.PermanentError(e)
 
 
 @kopf.on.delete('secrets.premiscale.com', 'v1alpha1', 'passsecret')
@@ -198,7 +220,10 @@ def delete(body: kopf.Body, **_: Any) -> None:
         body [kopf.Body]: raw body of the deleted PassSecret.
     """
     try:
-        secret = PassSecret.from_dict(manifest=dict(body))
+        secret = PassSecret.from_dict(
+            manifest=dict(body),
+            env=env
+        )
     except (ValueError, KeyError) as e:
         raise kopf.PermanentError(e)
 
@@ -215,11 +240,10 @@ def delete(body: kopf.Body, **_: Any) -> None:
     except client.ApiException as e:
         if e.status == HTTPStatus.NOT_FOUND:
             log.warning(f'PassSecret "{secret.name}" managed Secret "{secret.managedSecret.name}" was not found. Skipping.')
-        else:
-            raise kopf.PermanentError(e)
+        raise kopf.PermanentError(e)
 
 
-def check_gpg_id(path: Path = Path(f'~/.password-store/{PASS_DIRECTORY}/.gpg-id').expanduser(), remove: bool =False) -> None:
+def check_gpg_id(path: Path = Path(f'~/.password-store/{env["PASS_DIRECTORY"]}/.gpg-id').expanduser(), remove: bool =False) -> None:
     """
     Ensure the gpg ID exists (leftover from 'pass init' in the entrypoint, or a git clone) and its contents match PASS_GPG_KEY_ID.
 
@@ -229,8 +253,8 @@ def check_gpg_id(path: Path = Path(f'~/.password-store/{PASS_DIRECTORY}/.gpg-id'
     """
     if path.exists():
         with open(path, mode='r', encoding='utf-8') as gpg_id_f:
-            if gpg_id_f.read().rstrip() != PASS_GPG_KEY_ID:
-                log.error(f'PASS_GPG_KEY_ID ({PASS_GPG_KEY_ID}) does not equal .gpg-id contained in {path}')
+            if gpg_id_f.read().rstrip() != env['PASS_GPG_KEY_ID']:
+                log.error(f'PASS_GPG_KEY_ID ({env["PASS_GPG_KEY_ID"]}) does not equal .gpg-id contained in {path}')
                 sys.exit(1)
 
         if remove:
@@ -274,16 +298,16 @@ def main() -> None:
 
     config.load_incluster_config()
 
-    if not PASS_GIT_URL:
+    if not env['PASS_GIT_URL']:
         log.error('Must provide a valid git URL (PASS_GIT_URL)')
         sys.exit(1)
 
     # Set up our global git repository object.
     global pass_git_repo
     pass_git_repo = GitRepo(
-        repo_url=PASS_GIT_URL,
-        branch=PASS_GIT_BRANCH,
-        clone_location=PASS_DIRECTORY
+        repo_url=str(env['PASS_GIT_URL']),
+        branch=str(env['PASS_GIT_BRANCH']),
+        clone_location=str(env['PASS_DIRECTORY'])
     )
 
     # Configure logger
@@ -314,9 +338,9 @@ def main() -> None:
 
     kopf.run(
         # https://kopf.readthedocs.io/en/stable/packages/kopf/#kopf.run
-        priority=OPERATOR_PRIORITY,
+        priority=env['OPERATOR_PRIORITY'],
         standalone=True,
-        namespace=OPERATOR_NAMESPACE,
+        namespace=env['OPERATOR_NAMESPACE'],
         clusterwide=False,
-        liveness_endpoint=f'http://{OPERATOR_POD_IP}:8080/healthz'
+        liveness_endpoint=f'http://{env["OPERATOR_POD_IP"]}:8080/healthz'
     )

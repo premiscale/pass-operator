@@ -8,16 +8,12 @@ from typing import Dict
 from dataclasses import dataclass, field
 from pathlib import Path
 from src.operator.gpg import decrypt
+from src.operator.utils import b64Dec, b64Enc
 
-import base64
 import logging
-import os
 
 
 log = logging.getLogger(__name__)
-
-PASS_DIRECTORY = os.getenv('PASS_DIRECTORY', '')
-PASS_GPG_PASSPHRASE = os.getenv('PASS_GPG_PASSPHRASE')
 
 
 @dataclass
@@ -39,16 +35,83 @@ class ManagedSecret:
         if not self.data and not self.stringData:
             raise RuntimeError('ManagedSecret type expects at least one of \'data\', \'stringData\', to be set.')
 
-        # Propagate one field to the other, if only one or the other is set.
-        if self.data and not self.stringData:
+        # Propagate one field to the other, make sure they match despite b64 conversion.
+        if self.stringData and self.data:
+            # Ensure stringData and data contain the same keys & values by iterating over both if both are set independently.
+            for key in self.stringData:
+                if key not in self.data:
+                    self.data[key] = b64Enc(self.stringData[key])
+                else:
+                    assert b64Dec(self.data[key]) == self.stringData[key]
+            for key in self.data:
+                if key not in self.stringData:
+                    self.stringData[key] = b64Dec(self.data[key])
+                else:
+                    assert b64Enc(self.stringData[key]) == self.data[key]
+
+        elif self.data and not self.stringData:
             self.stringData = {
-                key: base64.b64decode(value).rstrip().decode() for key, value in self.data.items()
+                key: b64Dec(value) for key, value in self.data.items()
             }
 
-        if self.stringData and not self.data:
+        elif self.stringData and not self.data:
             self.data = {
-                key: base64.b64encode(bytes(value.rstrip().encode('utf-8'))).decode() for key, value in self.stringData.items()
+                key: b64Enc(value) for key, value in self.stringData.items()
             }
+
+    @classmethod
+    def from_dict(cls, manifest: Dict) -> ManagedSecret:
+        """
+        Parse a k8s manifest into a ManagedSecret (Secret) dataclass.
+
+        Args:
+            manifest (Dict): a Secret manifest.
+
+        Returns:
+            ManagedSecret: _description_
+
+        Raises:
+            KeyError, ValueError: if expected keys are not present during dictionary unpacking.
+        """
+        # TODO: manage managed secrets' labels and annotations.
+        # if 'annotations' in manifest and len(manifest['annotations']):
+        #     annotations = manifest['annotations']
+        # else:
+        #     annotations = {}
+
+        # if 'labels' in manifest and len(manifest['labels']):
+        #     labels = manifest['labels']
+        # else:
+        #     labels = {}
+
+        return cls(
+            name=manifest['metadata']['name'],
+            namespace=manifest['metadata']['namespace'],
+            data=manifest['data'],
+            stringData=manifest['stringData'],
+            immutable=manifest['immutable'],
+            secretType=manifest['type']
+        )
+
+    def to_dict(self) -> Dict:
+        """
+        Output this object as a k8s manifest dictionary.
+
+        Returns:
+            Dict: this object as a dict.
+        """
+        return {
+            'apiVersion': f'{self.apiGroup}/{self.apiVersion}' if self.apiGroup else self.apiVersion,
+            'kind': self.kind,
+            'metadata': {
+                'name': self.name,
+                'namespace': self.namespace
+                # TODO: labels and annotations, at a future date.
+            },
+            'data': self.data,
+            'immutable': self.immutable,
+            'type': self.secretType
+        }
 
     def to_client_dict(self) -> Dict:
         """
@@ -66,12 +129,40 @@ class ManagedSecret:
             'immutable': self.immutable
         }
 
+    def __eq__(self, __value: object) -> bool:
+        """
+        Compare two ManagedSecrets.
+
+        Returns:
+            bool: whether or not the ManagedSecrets as dictionaries equal one another.
+        """
+        if isinstance(__value, ManagedSecret):
+            return self.to_dict() == __value.to_dict()
+        return False
+
+    def data_equals(self, __value: ManagedSecret) -> bool:
+        """
+        True iff the .data-contents are exactly the same.
+
+        Args:
+            __value (ManagedSecret): another ManagedSecret object to compare against.
+
+        Returns:
+            bool: whether or not the ManagedSecrets' contained data are equal.
+        """
+        return self.data == __value.data
+
+
 
 @dataclass
 class PassSecret:
     """
     Manage PassSecret data in a clean, interoperable way.
     """
+
+    # PassSecret objects require our set of environment variables because we need to decrypt the contents
+    # in order to instantiate a ManagedSecret object.
+    env: Dict
 
     name: str
     managedSecretName: str
@@ -102,7 +193,10 @@ class PassSecret:
 
     def to_dict(self) -> Dict:
         """
-        Output this object as a K8s manifest as JSON.
+        Output this object as a K8s manifest dictionary.
+
+        Returns:
+            Dict: this object as a dict.
         """
         return {
             'apiVersion': f'{self.apiGroup}/{self.apiVersion}',
@@ -125,12 +219,12 @@ class PassSecret:
         }
 
     @classmethod
-    def from_dict(cls, manifest: Dict) -> PassSecret:
+    def from_dict(cls, manifest: Dict, env: Dict) -> PassSecret:
         """
         Parse a k8s manifest into a PassSecret dataclass.
 
         Args:
-            manifest [Dict]: the PassSecret manifest dictionary to parse into the dataclass.
+            manifest (Dict): the PassSecret manifest dictionary to parse into the dataclass.
 
         Raises:
             KeyError, ValueError: if expected keys are not present during dictionary unpacking.
@@ -158,7 +252,8 @@ class PassSecret:
             managedSecretName=manifest['spec']['managedSecret']['name'],
             managedSecretNamespace=manifest['spec']['managedSecret']['namespace'],
             managedSecretType=manifest['spec']['managedSecret']['type'],
-            managedSecretImmutable=manifest['spec']['managedSecret']['immutable']
+            managedSecretImmutable=manifest['spec']['managedSecret']['immutable'],
+            env=env
         )
 
     def decrypt(self) -> Dict[str, str] | None:
@@ -174,8 +269,8 @@ class PassSecret:
             secretPath = self.encryptedData[secretKey]
 
             decryptedSecret = decrypt(
-                Path(f'~/.password-store/{PASS_DIRECTORY}/{secretPath}').expanduser(),
-                passphrase=PASS_GPG_PASSPHRASE
+                Path(f'~/.password-store/{self.env["PASS_DIRECTORY"]}/{secretPath}').expanduser(),
+                passphrase=self.env['PASS_GPG_PASSPHRASE']
             )
 
             if decryptedSecret:
