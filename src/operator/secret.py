@@ -16,7 +16,7 @@ import os
 
 log = logging.getLogger(__name__)
 
-PASS_DIRECTORY = os.getenv('PASS_DIRECTORY', 'repo')
+PASS_DIRECTORY = os.getenv('PASS_DIRECTORY', '')
 PASS_GPG_PASSPHRASE = os.getenv('PASS_GPG_PASSPHRASE')
 
 

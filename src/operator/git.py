@@ -23,7 +23,7 @@ class GitRepo:
        https://stackoverflow.com/questions/13166595/how-can-i-pull-a-remote-repository-with-gitpython
     """
 
-    def __init__(self, repo_url: str, branch: str, clone_location: Union[Path, str] ='repo') -> None:
+    def __init__(self, repo_url: str, branch: str, clone_location: Union[Path, str] ='') -> None:
         self.repo_url = repo_url
         self.branch = branch
         self.clone_location = (os.getenv('HOME') or '') + '/.password-store/' + str(clone_location)

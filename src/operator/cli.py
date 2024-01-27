@@ -34,7 +34,7 @@ OPERATOR_POD_IP = IPv4Address(os.getenv('OPERATOR_POD_IP', '0.0.0.0'))
 
 # Environment variables to configure pass.
 PASS_BINARY = os.getenv('PASS_BINARY', '/usr/bin/pass')
-PASS_DIRECTORY = os.getenv('PASS_DIRECTORY', 'repo')
+PASS_DIRECTORY = os.getenv('PASS_DIRECTORY', '')
 PASS_GPG_PASSPHRASE = os.getenv('PASS_GPG_PASSPHRASE')
 PASS_GPG_KEY = os.getenv('PASS_GPG_KEY')
 PASS_GPG_KEY_ID = os.getenv('PASS_GPG_KEY_ID')

@@ -35,6 +35,7 @@ mypy = "^1.0.1"
 pylint = "^3.0.3"
 pytest = "^7.4.4"
 coverage = "^7.4.1"
+deepdiff = "^6.7.1"
 
 [build-system]
 requires = ["poetry-core"]
@@ -53,3 +54,9 @@ ignore_missing_imports = "true"
 
 [tool.coverage.report]
 fail_under = 60
+
+[tool.pytest.ini_options]
+addopts = "--junitxml=./junit_test_results.xml"
+testpaths = [
+  "tests"
+]

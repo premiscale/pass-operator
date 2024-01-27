@@ -124,6 +124,7 @@ I will go more in-depth and explain these requirements in the following sections
       ```
 
       Copy this value and update your [Helm values](/helm/operator/).
+
 </details>
 
 ### Password store
@@ -175,6 +176,7 @@ I will go more in-depth and explain these requirements in the following sections
   4.0K drwxrwxr-x  7 emmadoyle emmadoyle 4.0K Jan 15 13:38 .git
   4.0K -rw-------  1 emmadoyle emmadoyle   41 Jan 15 13:36 .gpg-id
   ```
+
 </details>
 
 ### Private SSH key

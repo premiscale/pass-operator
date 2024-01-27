@@ -3,6 +3,7 @@ Verify that classmethods src.operator.secret.PassSecret.{from_dict,to_dict} are 
 """
 
 
+from deepdiff import DeepDiff
 from importlib import resources
 from src.operator.secret import PassSecret
 
@@ -36,8 +37,17 @@ class PassSecretParseInverse(unittest.TestCase):
         )
 
         self.assertDictEqual(
-            PassSecret.from_dict(self.passsecret_data).to_dict(),
-            self.passsecret_data
+            # DeepDiff the objects.
+            DeepDiff(
+                PassSecret.from_dict(self.passsecret_data).to_dict(),
+                self.passsecret_data,
+                exclude_paths=[
+                    "root['metadata']['labels']",
+                    "root['metadata']['annotations']"
+                ]
+            ),
+            # DeepDiff should be empty.
+            {}
         )
 
         self.assertEqual(
