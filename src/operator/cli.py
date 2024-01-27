@@ -9,6 +9,7 @@ from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from importlib import metadata
 from ipaddress import IPv4Address
 from kubernetes import client, config
+from http import HTTPStatus
 from src.operator.git import GitRepo
 from src.operator.utils import LogLevel
 from src.operator.secret import PassSecret
@@ -118,7 +119,7 @@ def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.
 
     try:
         if newPassSecret.managedSecret.namespace != oldPassSecret.managedSecret.namespace:
-            # Namespace is different. Delete the former secret and create a new one.
+            # Namespace is different. Delete the former secret and create a new one in the new namespace.
             v1.delete_namespaced_secret(
                 name=oldPassSecret.managedSecret.name,
                 namespace=oldPassSecret.managedSecret.namespace
@@ -203,7 +204,11 @@ def delete(body: kopf.Body, **_: Any) -> None:
         )
         log.info(f'Deleted PassSecret "{secret.name}" managed secret "{secret.managedSecret.name}" in namespace "{secret.managedSecret.namespace}"')
     except client.ApiException as e:
-        log.error(e)
+        if e.status == HTTPStatus.NOT_FOUND:
+            log.error(f'PassSecret "{secret.name}" managed secret "{secret.managedSecret.name}" was not found. Skipping.')
+        else:
+            log.error(e)
+            raise kopf.PermanentError()
 
 
 def check_gpg_id(path: Path = Path(f'~/.password-store/{PASS_DIRECTORY}/.gpg-id').expanduser(), remove: bool =False) -> None:
