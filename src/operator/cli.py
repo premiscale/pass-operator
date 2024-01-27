@@ -62,6 +62,18 @@ def reconciliation(**kwargs) -> None:
     pass_git_repo.pull()
     check_gpg_id()
 
+    print(**kwargs)
+
+    v1Api = client.CoreV1Api()
+    customApi = client.CustomObjectsApi()
+
+    passSecrets = customApi.list_cluster_custom_object(
+        group='secrets.premiscale.com',
+        version='v1alpha1'
+    )
+
+    print(passSecrets)
+
 
 # @kopf.on.cleanup()
 # def cleanup(**kwargs) -> None:
