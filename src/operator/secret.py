@@ -125,36 +125,35 @@ class PassSecret:
         }
 
     @classmethod
-    def from_dict(cls, manifest: Dict) -> PassSecret | None:
+    def from_dict(cls, manifest: Dict) -> PassSecret:
         """
         Parse a k8s manifest into a PassSecret dataclass.
         """
-        try:
-            if 'annotations' in manifest and len(manifest['annotations']):
-                annotations = manifest['annotations']
-            else:
-                annotations = {}
+        if 'annotations' in manifest and len(manifest['annotations']):
+            annotations = manifest['annotations']
+        else:
+            annotations = {}
 
-            if 'labels' in manifest and len(manifest['labels']):
-                labels = manifest['labels']
-            else:
-                labels = {}
+        if 'labels' in manifest and len(manifest['labels']):
+            labels = manifest['labels']
+        else:
+            labels = {}
 
-            return cls(
-                name=manifest['metadata']['name'],
-                namespace=manifest['metadata']['namespace'],
-                encryptedData=manifest['spec']['encryptedData'],
-                labels=labels,
-                annotations=annotations,
-                # Parse out managed secret fields into arguments.
-                managedSecretName=manifest['spec']['managedSecret']['name'],
-                managedSecretNamespace=manifest['spec']['managedSecret']['namespace'],
-                managedSecretType=manifest['spec']['managedSecret']['type'],
-                managedSecretImmutable=manifest['spec']['managedSecret']['immutable']
-            )
-        except (KeyError, ValueError) as e:
-            log.error(f'Could not parse PassSecret into dataclass: {e}')
-            return None
+        if 'immutable' not in manifest['spec']['managedSecret']:
+            manifest['spec']['managedSecret']['immutable'] = False
+
+        return cls(
+            name=manifest['metadata']['name'],
+            namespace=manifest['metadata']['namespace'],
+            encryptedData=manifest['spec']['encryptedData'],
+            labels=labels,
+            annotations=annotations,
+            # Parse out managed secret fields into arguments.
+            managedSecretName=manifest['spec']['managedSecret']['name'],
+            managedSecretNamespace=manifest['spec']['managedSecret']['namespace'],
+            managedSecretType=manifest['spec']['managedSecret']['type'],
+            managedSecretImmutable=manifest['spec']['managedSecret']['immutable']
+        )
 
     def decrypt(self) -> Dict[str, str] | None:
         """
@@ -179,3 +178,11 @@ class PassSecret:
                 return None
 
         return stringData
+
+    def __eq__(self, __value: object) -> bool:
+        """
+        Compare two PassSecrets.
+        """
+        if isinstance(__value, PassSecret):
+            return self.to_dict() == __value.to_dict()
+        return False

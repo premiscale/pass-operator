@@ -103,10 +103,7 @@ def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.
                 **old
             }
         )
-
-        if not oldPassSecret:
-            raise kopf.PermanentError()
-    except ValueError as e:
+    except (ValueError, KeyError) as e:
         log.error(e)
         raise kopf.PermanentError()
 
@@ -121,10 +118,7 @@ def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.
                 **new
             }
         )
-
-        if not newPassSecret:
-            raise kopf.PermanentError()
-    except ValueError as e:
+    except (ValueError, KeyError) as e:
         log.error(e)
         raise kopf.PermanentError()
 
@@ -169,10 +163,7 @@ def create(body: kopf.Body, **_: Any) -> None:
     """
     try:
         secret = PassSecret.from_dict(manifest=dict(body))
-
-        if not secret:
-            raise kopf.PermanentError()
-    except ValueError as e:
+    except (ValueError, KeyError) as e:
         log.error(e)
         raise kopf.PermanentError()
 
@@ -204,10 +195,7 @@ def delete(body: kopf.Body, **_: Any) -> None:
     """
     try:
         secret = PassSecret.from_dict(manifest=dict(body))
-
-        if not secret:
-            raise kopf.PermanentError()
-    except ValueError as e:
+    except (ValueError, KeyError) as e:
         log.error(e)
         raise kopf.PermanentError()
 

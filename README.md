@@ -184,3 +184,26 @@ I will go more in-depth and explain these requirements in the following sections
 
   Now add a remote git repository and watch as `pass insert`-commands create local commits automatically. Sync your local password store with the remote repo via `pass git push`.
 </details>
+
+## Development
+
+### Testing
+
+Run unit tests with
+
+```shell
+poetry run pytest tests/unit
+```
+
+e2e tests against a live environment with
+
+```shell
+poetry run pytest tests/e2e
+```
+
+And coverage against the codebase with
+
+```shell
+poetry run coverage run -m pytest
+poetry run coverage report -m pytest
+```

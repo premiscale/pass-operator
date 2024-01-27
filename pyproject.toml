@@ -10,6 +10,9 @@ packages = [{include = "src"}]
 include = [
   "LICENSE"
 ]
+exclude = [
+  "src/test"
+]
 keywords = [
     "python",
     "kubernetes",
@@ -30,6 +33,8 @@ pre-commit = "^3.3.2"
 poetry = "^1.5.1"
 mypy = "^1.0.1"
 pylint = "^3.0.3"
+pytest = "^7.4.4"
+coverage = "^7.4.1"
 
 [build-system]
 requires = ["poetry-core"]
@@ -42,3 +47,9 @@ passoperator = "src.operator.cli:main"
 python_version = "3.10"
 strict_optional = "true"
 ignore_missing_imports = "true"
+
+[tool.coverage.run]
+# omit = [".*", "*/site-packages/*"]
+
+[tool.coverage.report]
+fail_under = 60

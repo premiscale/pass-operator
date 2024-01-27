@@ -15,6 +15,7 @@ jobs:
     executor: python-3-10
     resource_class: small
     steps:
+      - checkout
       - run:
           name: Run tests
           command: |
