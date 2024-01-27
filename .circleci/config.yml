@@ -26,7 +26,7 @@ workflows:
               only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/
 
       - request-approval:
-          name: tagged pipeline hold
+          name: 'hold: tagged pipeline'
           requires:
             - 'slack: notify tagged pipeline hold'
           type: approval
@@ -42,7 +42,7 @@ workflows:
             - github
             - circleci
           requires:
-            - tagged pipeline hold
+            - 'hold: tagged pipeline'
           filters:
             branches:
               ignore: /.*/
@@ -54,7 +54,7 @@ workflows:
           context: nexus
           repository: python
           requires:
-            - tagged pipeline hold
+            - 'hold: tagged pipeline'
           filters:
             branches:
               ignore: /.*/
@@ -66,7 +66,7 @@ workflows:
           context: pypi
           repository: pypi
           requires:
-            - tagged pipeline hold
+            - 'hold: tagged pipeline'
           filters:
             branches:
               ignore: /.*/
@@ -140,6 +140,9 @@ workflows:
           repo: $HELM_REPOSITORY_URL
           path: helm/operator-crds
           version: $CIRCLE_TAG
+          requires:
+            - docker build [dockerhub]
+            - docker build [nexus]
           filters:
             branches:
               ignore: /.*/
@@ -159,7 +162,7 @@ workflows:
               only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/
 
       - request-approval:
-          name: release deployment hold
+          name: 'hold: release deployment'
           requires:
             - 'slack: notify release deployment hold'
           type: approval
@@ -175,7 +178,7 @@ workflows:
           namespace: pass-operator
           repo: $HELM_REPOSITORY_URL
           additional-values: >-
-            --set global.image.registry="$DOCKER_DEVELOP_DOMAIN"
+            --set global.image.registry="$DOCKER_DOMAIN"
             --set deployment.pullSecrets[0]=nexus-docker-registry
             --set operator.interval="$OPERATOR_INTERVAL"
             --set operator.initial_delay="$OPERATOR_INITIAL_DELAY"
@@ -192,7 +195,7 @@ workflows:
             --set operator.ssh.value="$PASS_SSH_PRIVATE_KEY"
           requires:
             - helm package [nexus]
-            - release deployment hold
+            - 'hold: release deployment'
           context:
             - password-store-operator
             - kubeconfig
