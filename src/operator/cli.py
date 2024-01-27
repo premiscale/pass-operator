@@ -18,6 +18,7 @@ import logging
 import sys
 import kopf
 import os
+import json
 
 
 __version__ = metadata.version('pass-operator')
@@ -52,7 +53,7 @@ def start(**kwargs: Any) -> None:
     pass_git_repo.clone()
 
 
-@kopf.timer('secrets.premiscale.com', 'v1alpha1', 'passsecret', interval=OPERATOR_INTERVAL, initial_delay=OPERATOR_INITIAL_DELAY, sharp=True)
+@kopf.timer('secrets.premiscale.com', 'v1alpha1', 'passsecret', interval=OPERATOR_INTERVAL, initial_delay=OPERATOR_INITIAL_DELAY) #, sharp=True)
 def reconciliation(**_) -> None:
     """
     Reconcile state of managed secrets against the pass store. Update secrets' data
@@ -65,14 +66,15 @@ def reconciliation(**_) -> None:
     v1Api = client.CoreV1Api()
     customApi = client.CustomObjectsApi()
 
-    passSecrets = customApi.list_namespaced_custom_object(
+    passSecretsList = customApi.list_namespaced_custom_object(
         namespace=OPERATOR_NAMESPACE,
         plural='passsecrets',
         group='secrets.premiscale.com',
         version='v1alpha1'
     )
 
-    print(passSecrets)
+    for item in passSecretsList['items']:
+        print(json.dumps(item))
 
 
 # @kopf.on.cleanup()
