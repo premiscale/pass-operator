@@ -62,7 +62,7 @@ def reconciliation(**kwargs) -> None:
     pass_git_repo.pull()
     check_gpg_id()
 
-    print(**kwargs)
+    print(kwargs)
 
     v1Api = client.CoreV1Api()
     customApi = client.CustomObjectsApi()
