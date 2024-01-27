@@ -52,7 +52,7 @@ def start(**kwargs: Any) -> None:
     pass_git_repo.clone()
 
 
-@kopf.timer(interval=OPERATOR_INTERVAL, initial_delay=OPERATOR_INITIAL_DELAY, sharp=True)
+@kopf.timer('secrets.premiscale.com', 'v1alpha1', 'passsecret', interval=OPERATOR_INTERVAL, initial_delay=OPERATOR_INITIAL_DELAY, sharp=True)
 def reconciliation(**kwargs) -> None:
     """
     Reconcile state of managed secrets against the pass store. Update secrets' data
