@@ -128,6 +128,12 @@ class PassSecret:
     def from_dict(cls, manifest: Dict) -> PassSecret:
         """
         Parse a k8s manifest into a PassSecret dataclass.
+
+        Args:
+            manifest [Dict]: the PassSecret manifest dictionary to parse into the dataclass.
+
+        Raises:
+            KeyError, ValueError: if expected keys are not present during dictionary unpacking.
         """
         if 'annotations' in manifest and len(manifest['annotations']):
             annotations = manifest['annotations']
