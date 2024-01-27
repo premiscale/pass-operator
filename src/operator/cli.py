@@ -53,28 +53,32 @@ def start(**kwargs: Any) -> None:
     pass_git_repo.clone()
 
 
-@kopf.timer('secrets.premiscale.com', interval=OPERATOR_INTERVAL, initial_delay=OPERATOR_INITIAL_DELAY) #, sharp=True)
-def reconciliation(**_) -> None:
+@kopf.timer('secrets.premiscale.com', 'v1alpha1', 'passsecret', interval=OPERATOR_INTERVAL, initial_delay=OPERATOR_INITIAL_DELAY, sharp=True)
+def reconciliation(body: kopf.Body, **_: Any) -> None:
     """
-    Reconcile state of managed secrets against the pass store. Update secrets' data
-    if a mismatch is found.
+    Reconcile state of a managed secret against the pass store. Update secrets' data if a mismatch
+    is found. Kopf timers are triggered on an object-by-object basis, so this method will
+    automatically revisit every PassSecret, iff it resides in the same namespace as the operator.
     """
-    log.info('Reconciling cluster state')
     pass_git_repo.pull()
     check_gpg_id()
 
-    v1Api = client.CoreV1Api()
-    customApi = client.CustomObjectsApi()
+    # Create a new PassSecret object with an up-to-date managedSecret decrypted value from the pass store.
+    passSecret = PassSecret.from_dict(manifest=dict(body))
 
-    passSecretsList = customApi.list_namespaced_custom_object(
-        namespace=OPERATOR_NAMESPACE,
-        plural='passsecrets',
-        group='secrets.premiscale.com',
-        version='v1alpha1'
-    )
+    log.info(f'Reconciling PassSecret "{passSecret.name}" managed Secret "{passSecret.managedSecret.name}" in Namespace "{passSecret.managedSecret.namespace}" against password store.')
 
-    for item in passSecretsList['items']:
-        print(json.dumps(item))
+    v1 = client.CoreV1Api()
+
+    try:
+        _managedSecret = v1.read_namespaced_secret(
+            name=passSecret.managedSecret.name,
+            namespace=passSecret.managedSecret.namespace
+        )
+
+        print(_managedSecret)
+    except client.ApiException as e:
+        raise kopf.PermanentError(e)
 
 
 # @kopf.on.cleanup()
@@ -90,7 +94,7 @@ def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.
     This method is pretty much identical to 'create'-type events.
 
     Args:
-        body [kopf.Body]:
+        body [kopf.Body]: raw body of the PassSecret.
         old [kopf.BodyEssence]: old body of the PassSecret.
         new [kopf.BodyEssence]: new body of the PassSecret.
     """
@@ -159,7 +163,7 @@ def create(body: kopf.Body, **_: Any) -> None:
     Create a new Secret with the spec of the newly-created PassSecret.
 
     Args:
-        body [kopf.Body]: body of the create event.
+        body [kopf.Body]: raw body of the created PassSecret.
     """
     try:
         secret = PassSecret.from_dict(manifest=dict(body))
@@ -177,7 +181,7 @@ def create(body: kopf.Body, **_: Any) -> None:
                 **secret.managedSecret.to_client_dict()
             )
         )
-        log.info(f'Created PassSecret "{secret.name}" managed secret "{secret.managedSecret.name}" in Namespace "{secret.managedSecret.namespace}"')
+        log.info(f'Created PassSecret "{secret.name}" managed Secret "{secret.managedSecret.name}" in Namespace "{secret.managedSecret.namespace}"')
     except client.ApiException as e:
         if e.status == HTTPStatus.CONFLICT:
             raise kopf.TemporaryError(f'Duplicate PassSecret "{secret.name}" managed Secret "{secret.managedSecret.name}" in Namespace "{secret.managedSecret.namespace}". Skipping.')
@@ -188,7 +192,10 @@ def create(body: kopf.Body, **_: Any) -> None:
 @kopf.on.delete('secrets.premiscale.com', 'v1alpha1', 'passsecret')
 def delete(body: kopf.Body, **_: Any) -> None:
     """
-    Remove the secret.
+    Remove a managed secret, as the managing PassSecret has been deleted.
+
+    Args:
+        body [kopf.Body]: raw body of the deleted PassSecret.
     """
     try:
         secret = PassSecret.from_dict(manifest=dict(body))
