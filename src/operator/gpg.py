@@ -23,7 +23,11 @@ def decrypt(path: Path, home: Path = Path('~/.gnupg').expanduser(), passphrase: 
     Returns:
         Optional[str]: the decrypted string if we could decrypt it; None, otherwise.
     """
-    gpg = GPG(gnupghome=home)
+    home.mkdir(parents=True, exist_ok=True)
+
+    gpg = GPG(
+        gnupghome=home
+    )
 
     try:
         # https://gnupg.readthedocs.io/en/latest/#decryption

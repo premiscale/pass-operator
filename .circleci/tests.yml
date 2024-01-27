@@ -35,4 +35,4 @@ workflows:
   tests:
     jobs:
       - python-tests-unit:
-          name: Python unit tests
+          name: python unit tests

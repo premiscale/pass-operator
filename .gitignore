@@ -531,3 +531,6 @@ MigrationBackup/
 .ionide/
 
 # End of https://www.toptal.com/developers/gitignore/api/python,helm,vs
+
+
+junit_test_results.xml
