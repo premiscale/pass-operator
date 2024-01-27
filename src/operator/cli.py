@@ -52,10 +52,11 @@ def start(**kwargs: Any) -> None:
     pass_git_repo.clone()
 
 
-@kopf.timer('secrets.premiscale.com', 'v1alpha1', 'passsecret', interval=OPERATOR_INTERVAL, initial_delay=OPERATOR_INITIAL_DELAY, sharp=True)
+@kopf.timer(interval=OPERATOR_INTERVAL, initial_delay=OPERATOR_INITIAL_DELAY, sharp=True)
 def reconciliation(**kwargs) -> None:
     """
-    Reconcile user-defined PassSecrets with the state of the cluster.
+    Reconcile state of managed secrets against the pass store. Update secrets' data
+    if a mismatch is found.
     """
     log.info('Reconciling cluster state')
     pass_git_repo.pull()
@@ -210,7 +211,7 @@ def delete(body: kopf.Body, **_: Any) -> None:
         log.info(f'Deleted PassSecret "{secret.name}" managed Secret "{secret.managedSecret.name}" in Namespace "{secret.managedSecret.namespace}"')
     except client.ApiException as e:
         if e.status == HTTPStatus.NOT_FOUND:
-            log.error(f'PassSecret "{secret.name}" managed Secret "{secret.managedSecret.name}" was not found. Skipping.')
+            log.warning(f'PassSecret "{secret.name}" managed Secret "{secret.managedSecret.name}" was not found. Skipping.')
         else:
             log.error(e)
             raise kopf.PermanentError()
