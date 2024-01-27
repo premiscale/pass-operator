@@ -2,48 +2,49 @@
 A kubernetes operator that syncs and decrypts secrets from Linux password store (https://www.passwordstore.org/) git repositories
 """
 
+
+from typing import Any
+from pathlib import Path
+from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
+from importlib import metadata
+from ipaddress import IPv4Address
+from kubernetes import client, config
+from http import HTTPStatus
+from src.operator.git import GitRepo
+from src.operator.utils import LogLevel
+from src.operator.secret import PassSecret
+
 import logging
 import sys
 import kopf
 import os
 
-from typing import Any
-from kubernetes import client, config
-from pathlib import Path
-from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
-from importlib import metadata as meta
-from ipaddress import IPv4Address
 
-from src.passoperator.git import GitRepo
-from src.passoperator.utils import LogLevel
-from src.passoperator.gpg import decrypt
+__version__ = metadata.version('pass-operator')
 
-
-__version__ = meta.version('pass-operator')
 log = logging.getLogger(__name__)
 pass_git_repo: GitRepo
-config.load_incluster_config()
-
 
 # Environment variables to configure the operator's performance.
-OPERATOR_INTERVAL = int(os.getenv('OPERATOR_INTERVAL', 60))
-OPERATOR_INITIAL_DELAY = int(os.getenv('OPERATOR_INITIAL_DELAY', 3))
-OPERATOR_PRIORITY = int(os.getenv('OPERATOR_PRIORITY', 100))
+OPERATOR_INTERVAL = int(os.getenv('OPERATOR_INTERVAL', '60'))
+OPERATOR_INITIAL_DELAY = int(os.getenv('OPERATOR_INITIAL_DELAY', '3'))
+OPERATOR_PRIORITY = int(os.getenv('OPERATOR_PRIORITY', '100'))
 OPERATOR_NAMESPACE = os.getenv('OPERATOR_NAMESPACE', 'default')
 OPERATOR_POD_IP = IPv4Address(os.getenv('OPERATOR_POD_IP', '0.0.0.0'))
 
 # Environment variables to configure pass.
 PASS_BINARY = os.getenv('PASS_BINARY', '/usr/bin/pass')
 PASS_DIRECTORY = os.getenv('PASS_DIRECTORY', 'repo')
+PASS_GPG_PASSPHRASE = os.getenv('PASS_GPG_PASSPHRASE')
 PASS_GPG_KEY = os.getenv('PASS_GPG_KEY')
 PASS_GPG_KEY_ID = os.getenv('PASS_GPG_KEY_ID')
-PASS_GPG_PASSPHRASE = os.getenv('PASS_GPG_PASSPHRASE')
 PASS_GIT_URL = os.getenv('PASS_GIT_URL')
 PASS_GIT_BRANCH = os.getenv('PASS_GIT_BRANCH', 'main')
 
 
 @kopf.on.startup()
 def start(**kwargs: Any) -> None:
+
     """
     Perform initial repo clone and set up operator runtime.
     """
@@ -54,9 +55,10 @@ def start(**kwargs: Any) -> None:
 @kopf.timer('secrets.premiscale.com', 'v1alpha1', 'passsecret', interval=OPERATOR_INTERVAL, initial_delay=OPERATOR_INITIAL_DELAY, sharp=True)
 def reconciliation(**kwargs) -> None:
     """
-    Reconcile user-defined PassSecrets with the state of the cluster.
+    Reconcile state of managed secrets against the pass store. Update secrets' data
+    if a mismatch is found.
     """
-    log.info(f'Reconciling cluster state')
+    log.info('Reconciling cluster state')
     pass_git_repo.pull()
     check_gpg_id()
 
@@ -67,55 +69,80 @@ def reconciliation(**kwargs) -> None:
 
 
 @kopf.on.update('secrets.premiscale.com', 'v1alpha1', 'passsecret')
-def update(body: kopf.Body, **_: Any) -> None:
+def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.Meta, **_: Any) -> None:
     """
     An update was received on the PassSecret object, so attempt to update the corresponding Secret.
 
     This method is pretty much identical to 'create'-type events.
 
     Args:
-        body [kopf.Body]: body of the create event.
+        body [kopf.Body]:
+        old [kopf.BodyEssence]: old body of the PassSecret.
+        new [kopf.BodyEssence]: new body of the PassSecret.
     """
-    managedSecret = body.spec['managedSecret']
-    passSecretName = body.metadata['name']
-    managedSecretName = managedSecret["name"]
-    encryptedData = body.spec['encryptedData']
+    # Parse the old PassSecret manifest.
+    try:
+        oldPassSecret = PassSecret.from_dict(
+            manifest={
+                'metadata': {
+                    'name': meta['name'],
+                    'namespace': meta['namespace']
+                },
+                **old
+            }
+        )
 
-    log.info(f'PassSecret "{passSecretName}" updated')
+        if not oldPassSecret:
+            raise kopf.PermanentError()
+    except ValueError as e:
+        log.error(e)
+        raise kopf.PermanentError()
+
+    # Parse the new PassSecret manifest.
+    try:
+        newPassSecret = PassSecret.from_dict(
+            manifest={
+                'metadata': {
+                    'name': meta['name'],
+                    'namespace': meta['namespace']
+                },
+                **new
+            }
+        )
+
+        if not newPassSecret:
+            raise kopf.PermanentError()
+    except ValueError as e:
+        log.error(e)
+        raise kopf.PermanentError()
 
     v1 = client.CoreV1Api()
 
-    stringData = dict()
-
-    for secretKey in encryptedData:
-        secretPath = encryptedData[secretKey]
-        if (decryptedSecret := decrypt(
-                Path(f'~/.password-store/{PASS_DIRECTORY}/{secretPath}').expanduser(),
-                passphrase=PASS_GPG_PASSPHRASE
-            )):
-            stringData[secretKey] = decryptedSecret
-        else:
-            log.error(f'Could not decrypt contents of PassSecret {passSecretName} with path {secretPath}')
-            raise kopf.PermanentError()
-
-    body = client.V1Secret(
-        api_version='v1',
-        kind='Secret',
-        metadata={
-            'name': managedSecretName,
-            'namespace': managedSecret['namespace']
-        },
-        string_data=stringData,
-        type=managedSecret['type'],
-        immutable=managedSecret['immutable']
-    )
-
     try:
-        v1.patch_namespaced_secret(
-            name=managedSecretName,
-            namespace=managedSecret['namespace'],
-            body=body
-        )
+        if newPassSecret.managedSecret.namespace != oldPassSecret.managedSecret.namespace:
+            # Namespace is different. Delete the former secret and create a new one in the new namespace.
+            v1.delete_namespaced_secret(
+                name=oldPassSecret.managedSecret.name,
+                namespace=oldPassSecret.managedSecret.namespace
+            )
+
+            v1.create_namespaced_secret(
+                namespace=newPassSecret.managedSecret.namespace,
+                body=client.V1Secret(
+                    **newPassSecret.managedSecret.to_client_dict()
+                )
+            )
+        else:
+            # Namespace is the same, secret's being updated in-place.
+            v1.patch_namespaced_secret(
+                name=oldPassSecret.name,
+                namespace=oldPassSecret.namespace,
+                body=client.V1Secret(
+                    **newPassSecret.managedSecret.to_client_dict()
+                )
+            )
+
+        log.info(f'Successfully updated PassSecret "{newPassSecret.name}" managed Secret {newPassSecret.managedSecret.name}.')
     except client.ApiException as e:
         log.error(e)
 
@@ -128,47 +155,34 @@ def create(body: kopf.Body, **_: Any) -> None:
     Args:
         body [kopf.Body]: body of the create event.
     """
-    managedSecret = body.spec['managedSecret']
-    passSecretName = body.metadata['name']
-    managedSecretName = managedSecret["name"]
-    encryptedData = body.spec['encryptedData']
+    try:
+        secret = PassSecret.from_dict(manifest=dict(body))
 
-    log.info(f'PassSecret "{passSecretName}" created')
+        if not secret:
+            raise kopf.PermanentError()
+    except ValueError as e:
+        log.error(e)
+        raise kopf.PermanentError()
+
+    log.info(f'PassSecret "{secret.name}" created')
 
     v1 = client.CoreV1Api()
 
-    stringData = dict()
-
-    for secretKey in encryptedData:
-        secretPath = encryptedData[secretKey]
-        if (decryptedSecret := decrypt(
-                Path(f'~/.password-store/{PASS_DIRECTORY}/{secretPath}').expanduser(),
-                passphrase=PASS_GPG_PASSPHRASE
-            )):
-            stringData[secretKey] = decryptedSecret
-        else:
-            log.error(f'Could not decrypt contents of PassSecret {passSecretName} with path {secretPath}')
-            raise kopf.PermanentError()
-
-    body = client.V1Secret(
-        api_version='v1',
-        kind='Secret',
-        metadata={
-            'name': managedSecretName,
-            'namespace': managedSecret['namespace']
-        },
-        string_data=stringData,
-        type=managedSecret['type'],
-        immutable=managedSecret['immutable']
-    )
-
     try:
         v1.create_namespaced_secret(
-            namespace=managedSecret['namespace'],
-            body=body
+            namespace=secret.managedSecret.namespace,
+            body=client.V1Secret(
+                **secret.managedSecret.to_client_dict()
+            )
         )
+        log.info(f'Created PassSecret "{secret.name}" managed secret "{secret.managedSecret.name}" in Namespace "{secret.managedSecret.namespace}"')
     except client.ApiException as e:
-        log.error(e)
+        if e.status == HTTPStatus.CONFLICT:
+            log.error(f'Duplicate PassSecret "{secret.name}" managed Secret "{secret.managedSecret.name}" in Namespace "{secret.managedSecret.namespace}". Skipping.')
+            raise kopf.TemporaryError()
+        else:
+            log.error(e)
+            raise kopf.PermanentError()
 
 
 @kopf.on.delete('secrets.premiscale.com', 'v1alpha1', 'passsecret')
@@ -176,24 +190,31 @@ def delete(body: kopf.Body, **_: Any) -> None:
     """
     Remove the secret.
     """
+    try:
+        secret = PassSecret.from_dict(manifest=dict(body))
 
-    managedSecret = body.spec['managedSecret']
-    passSecretName = body.metadata['name']
-    managedSecretName = managedSecret["name"]
-    # encryptedData = body.spec['encryptedData']
+        if not secret:
+            raise kopf.PermanentError()
+    except ValueError as e:
+        log.error(e)
+        raise kopf.PermanentError()
 
-    log.info(f'PassSecret "{passSecretName}" deleted')
+    log.info(f'PassSecret "{secret.name}" deleted')
 
     v1 = client.CoreV1Api()
 
     try:
         v1.delete_namespaced_secret(
-            name=managedSecretName,
-            namespace=managedSecret['namespace']
+            name=secret.managedSecret.name,
+            namespace=secret.managedSecret.namespace
         )
-        log.info(f'Managed secret "{managedSecretName}" deleted')
+        log.info(f'Deleted PassSecret "{secret.name}" managed Secret "{secret.managedSecret.name}" in Namespace "{secret.managedSecret.namespace}"')
     except client.ApiException as e:
-        log.error(e)
+        if e.status == HTTPStatus.NOT_FOUND:
+            log.warning(f'PassSecret "{secret.name}" managed Secret "{secret.managedSecret.name}" was not found. Skipping.')
+        else:
+            log.error(e)
+            raise kopf.PermanentError()
 
 
 def check_gpg_id(path: Path = Path(f'~/.password-store/{PASS_DIRECTORY}/.gpg-id').expanduser(), remove: bool =False) -> None:
@@ -201,11 +222,11 @@ def check_gpg_id(path: Path = Path(f'~/.password-store/{PASS_DIRECTORY}/.gpg-id'
     Ensure the gpg ID exists (leftover from 'pass init' in the entrypoint, or a git clone) and its contents match PASS_GPG_KEY_ID.
 
     Args:
-        path (Path): Path-like object to the .gpg-id file.
-        remove (bool): indicate whether or not to remove this file, should it exist.
+        path [Path]: Path-like object to the .gpg-id file.
+        remove [bool]: indicate whether or not to remove this file, should it exist.
     """
     if path.exists():
-        with open(path, mode='r') as gpg_id_f:
+        with open(path, mode='r', encoding='utf-8') as gpg_id_f:
             if gpg_id_f.read().rstrip() != PASS_GPG_KEY_ID:
                 log.error(f'PASS_GPG_KEY_ID ({PASS_GPG_KEY_ID}) does not equal .gpg-id contained in {path}')
                 sys.exit(1)
@@ -249,8 +270,10 @@ def main() -> None:
         print(f'passoperator v{__version__}')
         sys.exit(0)
 
+    config.load_incluster_config()
+
     if not PASS_GIT_URL:
-        log.error(f'Must provide a valid git URL (PASS_GIT_URL)')
+        log.error('Must provide a valid git URL (PASS_GIT_URL)')
         sys.exit(1)
 
     # Set up our global git repository object.
