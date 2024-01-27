@@ -77,8 +77,8 @@ def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.
 
     Args:
         body [kopf.Body]:
-        old [dict]: old body of the PassSecret.
-        new [dict]: new body of the PassSecret.
+        old [kopf.BodyEssence]: old body of the PassSecret.
+        new [kopf.BodyEssence]: new body of the PassSecret.
     """
     # Parse the old PassSecret manifest.
     try:
@@ -142,7 +142,7 @@ def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.
                 )
             )
 
-        log.info(f'Updated PassSecret "{newPassSecret.name}"')
+        log.info(f'Successfully updated PassSecret "{newPassSecret.name}" managed Secret {newPassSecret.managedSecret.name}.')
     except client.ApiException as e:
         log.error(e)
 
