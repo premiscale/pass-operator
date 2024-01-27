@@ -53,7 +53,7 @@ def start(**kwargs: Any) -> None:
 
 
 @kopf.timer('secrets.premiscale.com', 'v1alpha1', 'passsecret', interval=OPERATOR_INTERVAL, initial_delay=OPERATOR_INITIAL_DELAY, sharp=True)
-def reconciliation(**kwargs) -> None:
+def reconciliation(**_) -> None:
     """
     Reconcile state of managed secrets against the pass store. Update secrets' data
     if a mismatch is found.
@@ -62,15 +62,14 @@ def reconciliation(**kwargs) -> None:
     pass_git_repo.pull()
     check_gpg_id()
 
-    print(kwargs)
-
     v1Api = client.CoreV1Api()
     customApi = client.CustomObjectsApi()
 
-    passSecrets = customApi.list_cluster_custom_object(
+    passSecrets = customApi.list_namespaced_custom_object(
+        namespace=OPERATOR_NAMESPACE,
+        plural='passsecrets',
         group='secrets.premiscale.com',
-        version='v1alpha1',
-        plural='passsecrets'
+        version='v1alpha1'
     )
 
     print(passSecrets)
@@ -105,8 +104,7 @@ def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.
             }
         )
     except (ValueError, KeyError) as e:
-        log.error(e)
-        raise kopf.PermanentError()
+        raise kopf.PermanentError(e)
 
     # Parse the new PassSecret manifest.
     try:
@@ -120,8 +118,7 @@ def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.
             }
         )
     except (ValueError, KeyError) as e:
-        log.error(e)
-        raise kopf.PermanentError()
+        raise kopf.PermanentError(e)
 
     v1 = client.CoreV1Api()
 
@@ -151,7 +148,7 @@ def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.
 
         log.info(f'Successfully updated PassSecret "{newPassSecret.name}" managed Secret {newPassSecret.managedSecret.name}.')
     except client.ApiException as e:
-        log.error(e)
+        raise kopf.PermanentError(e)
 
 
 @kopf.on.create('secrets.premiscale.com', 'v1alpha1', 'passsecret')
@@ -165,8 +162,7 @@ def create(body: kopf.Body, **_: Any) -> None:
     try:
         secret = PassSecret.from_dict(manifest=dict(body))
     except (ValueError, KeyError) as e:
-        log.error(e)
-        raise kopf.PermanentError()
+        raise kopf.PermanentError(e)
 
     log.info(f'PassSecret "{secret.name}" created')
 
@@ -182,11 +178,9 @@ def create(body: kopf.Body, **_: Any) -> None:
         log.info(f'Created PassSecret "{secret.name}" managed secret "{secret.managedSecret.name}" in Namespace "{secret.managedSecret.namespace}"')
     except client.ApiException as e:
         if e.status == HTTPStatus.CONFLICT:
-            log.error(f'Duplicate PassSecret "{secret.name}" managed Secret "{secret.managedSecret.name}" in Namespace "{secret.managedSecret.namespace}". Skipping.')
-            raise kopf.TemporaryError()
+            raise kopf.TemporaryError(f'Duplicate PassSecret "{secret.name}" managed Secret "{secret.managedSecret.name}" in Namespace "{secret.managedSecret.namespace}". Skipping.')
         else:
-            log.error(e)
-            raise kopf.PermanentError()
+            raise kopf.PermanentError(e)
 
 
 @kopf.on.delete('secrets.premiscale.com', 'v1alpha1', 'passsecret')
@@ -197,8 +191,7 @@ def delete(body: kopf.Body, **_: Any) -> None:
     try:
         secret = PassSecret.from_dict(manifest=dict(body))
     except (ValueError, KeyError) as e:
-        log.error(e)
-        raise kopf.PermanentError()
+        raise kopf.PermanentError(e)
 
     log.info(f'PassSecret "{secret.name}" deleted')
 
@@ -214,8 +207,7 @@ def delete(body: kopf.Body, **_: Any) -> None:
         if e.status == HTTPStatus.NOT_FOUND:
             log.warning(f'PassSecret "{secret.name}" managed Secret "{secret.managedSecret.name}" was not found. Skipping.')
         else:
-            log.error(e)
-            raise kopf.PermanentError()
+            raise kopf.PermanentError(e)
 
 
 def check_gpg_id(path: Path = Path(f'~/.password-store/{PASS_DIRECTORY}/.gpg-id').expanduser(), remove: bool =False) -> None:
