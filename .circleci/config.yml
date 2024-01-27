@@ -17,6 +17,7 @@ workflows:
           context: circleci
 
       - slack/on-hold:
+          name: 'slack: notify tagged pipeline hold'
           context: slack
           filters:
             branches:
@@ -25,8 +26,9 @@ workflows:
               only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/
 
       - request-approval:
+          name: tagged pipeline hold
           requires:
-            - slack/on-hold
+            - 'slack: notify tagged pipeline hold'
           type: approval
           filters:
             branches:
@@ -40,7 +42,7 @@ workflows:
             - github
             - circleci
           requires:
-            - request-approval
+            - tagged pipeline hold
           filters:
             branches:
               ignore: /.*/
@@ -52,7 +54,7 @@ workflows:
           context: nexus
           repository: python
           requires:
-            - request-approval
+            - tagged pipeline hold
           filters:
             branches:
               ignore: /.*/
@@ -64,7 +66,7 @@ workflows:
           context: pypi
           repository: pypi
           requires:
-            - request-approval
+            - tagged pipeline hold
           filters:
             branches:
               ignore: /.*/
@@ -144,13 +146,36 @@ workflows:
             tags:
               only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/
 
+      - slack/on-hold:
+          name: 'slack: notify release deployment hold'
+          context: slack
+          requires:
+            - helm package crds [nexus]
+            - helm package [nexus]
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/
+
+      - request-approval:
+          name: release deployment hold
+          requires:
+            - 'slack: notify release deployment hold'
+          type: approval
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/
+
       - general/helm-upgrade:
           name: helm upgrade [nexus]
           cluster: $CHELSEA_CLUSTER
           namespace: pass-operator
           repo: $HELM_REPOSITORY_URL
           additional-values: >-
-            --set global.registry="$DOCKER_DOMAIN"
+            --set global.image.registry="$DOCKER_DEVELOP_DOMAIN"
             --set deployment.pullSecrets[0]=nexus-docker-registry
             --set operator.interval="$OPERATOR_INTERVAL"
             --set operator.initial_delay="$OPERATOR_INITIAL_DELAY"
@@ -167,6 +192,7 @@ workflows:
             --set operator.ssh.value="$PASS_SSH_PRIVATE_KEY"
           requires:
             - helm package [nexus]
+            - release deployment hold
           context:
             - password-store-operator
             - kubeconfig
