@@ -69,7 +69,8 @@ def reconciliation(**kwargs) -> None:
 
     passSecrets = customApi.list_cluster_custom_object(
         group='secrets.premiscale.com',
-        version='v1alpha1'
+        version='v1alpha1',
+        plural='passsecrets'
     )
 
     print(passSecrets)

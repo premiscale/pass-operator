@@ -5,13 +5,13 @@ Verify that classmethods src.operator.secret.PassSecret.{from_dict,to_dict} are 
 
 from deepdiff import DeepDiff
 from importlib import resources
+from unittest import TestCase
 from src.operator.secret import PassSecret
 
-import unittest
 import yaml
 
 
-class PassSecretParseInverse(unittest.TestCase):
+class PassSecretParseInverse(TestCase):
     """
     Test that from_dict and to_dict are inverse methods.
     """
