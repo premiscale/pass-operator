@@ -67,4 +67,5 @@ class GitRepo:
 
         log.info(f'Updating local password store at "{self.clone_location}"')
 
+        self.git.status()
         self.git.pull(rebase=True)
