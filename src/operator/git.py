@@ -17,11 +17,7 @@ log = logging.getLogger(__name__)
 
 class GitRepo:
     """
-    Abstract gitpython with some higher-level methods for cloning and pulling updates from a git project.
-
-    Referencing this to clean this up eventually ~
-
-       https://stackoverflow.com/questions/13166595/how-can-i-pull-a-remote-repository-with-gitpython
+    Provide high-level methods for interacting with and cloning down the pass store.
     """
 
     def __init__(self, repo_url: str, branch: str, clone_location: Union[Path, str] ='') -> None:
