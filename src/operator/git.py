@@ -36,7 +36,7 @@ class GitRepo:
             branch (str): Git branch to checkout.
             loc (str): Local file path to clone to.
         """
-        if self.repo:
+        if hasattr(self, 'repo'):
             log.warning(f'Repository at URL {self.repo_url} has already been cloned to location "{self.clone_location}". Skipping')
             return None
 
