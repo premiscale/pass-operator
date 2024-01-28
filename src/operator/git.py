@@ -6,6 +6,7 @@ Methods to interact minimally with a Git repository.
 from pathlib import Path
 from typing import Union
 from git import Repo
+from git.cmd import Git
 
 import logging
 import os
@@ -27,8 +28,8 @@ class GitRepo:
         self.repo_url = repo_url
         self.branch = branch
         self.clone_location = (os.getenv('HOME') or '') + '/.password-store/' + str(clone_location)
-        self.cloned = False
         self.repo: Repo
+        self.git: Git
 
     def clone(self) -> None:
         """
@@ -39,7 +40,7 @@ class GitRepo:
             branch (str): Git branch to checkout.
             loc (str): Local file path to clone to.
         """
-        if self.cloned:
+        if self.repo:
             log.warning(f'Repository at URL {self.repo_url} has already been cloned to location "{self.clone_location}". Skipping')
             return None
 
@@ -48,14 +49,14 @@ class GitRepo:
             to_path=self.clone_location
         )
 
+        self.git = self.repo.git
+
         # if self.branch not in self.repo.branches:
         #     log.error(f'Branch "{self.branch}" not found in project at URL "{self.repo_url}"')
         #     sys.exit(1)
 
         if str(self.repo.active_branch) != self.branch:
-            self.repo.git.checkout(self.branch)
-
-        self.cloned = True
+            self.git.checkout(self.branch)
 
         log.info(f'Successfully cloned repo {self.repo_url} to password store {self.clone_location}')
 
@@ -65,8 +66,9 @@ class GitRepo:
         """
         Run 'git pull' in the cloned repository. This method will be called repeatedly, on an interval.
         """
-        if not self.cloned:
+        if not self.repo:
             self.clone()
 
         log.info(f'Updating local password store at "{self.clone_location}"')
-        self.repo.remotes.origin.pull()
+
+        self.git.pull(rebase=True)
