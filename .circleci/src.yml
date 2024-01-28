@@ -8,7 +8,7 @@ orbs:
 executors:
   python-3-10:
     docker:
-      - image: cimg/python:3.10.11
+      - image: cimg/python:3.10.13
 
 
 workflows:
