@@ -25,6 +25,7 @@ log = logging.getLogger(__name__)
 pass_git_repo: GitRepo
 
 env: Dict[str, str] = {
+    # Environment variables to configure the operator (kopf).
     'OPERATOR_INTERVAL': os.getenv('OPERATOR_INTERVAL', '60'),
     'OPERATOR_INITIAL_DELAY': os.getenv('OPERATOR_INITIAL_DELAY', '3'),
     'OPERATOR_PRIORITY': os.getenv('OPERATOR_PRIORITY', '100'),
