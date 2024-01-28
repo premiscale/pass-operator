@@ -7,7 +7,6 @@ from typing import Any, Dict
 from pathlib import Path
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from importlib import metadata
-from ipaddress import IPv4Address
 from kubernetes import client, config
 from http import HTTPStatus
 from src.operator.git import GitRepo
@@ -74,12 +73,14 @@ def reconciliation(body: kopf.Body, **_: Any) -> None:
     v1 = client.CoreV1Api()
 
     try:
-        _managedSecret = ManagedSecret.from_dict(
-            v1.read_namespaced_secret(
-                name=passSecret.managedSecret.name,
-                namespace=passSecret.managedSecret.namespace
-            )
+        secret = v1.read_namespaced_secret(
+            name=passSecret.managedSecret.name,
+            namespace=passSecret.managedSecret.namespace
         )
+
+        print(type(secret), secret)
+
+        _managedSecret = ManagedSecret.from_dict(secret)
 
         # If the managed secret data does not match what's in the newly-generated ManagedSecret object,
         # submit a patch request to update it.
@@ -341,5 +342,5 @@ def main() -> None:
         standalone=True,
         namespace=env['OPERATOR_NAMESPACE'],
         clusterwide=False,
-        liveness_endpoint=f'http://{IPv4Address(env["OPERATOR_POD_IP"])}:8080/healthz'
+        liveness_endpoint=f'http://{env["OPERATOR_POD_IP"]}:8080/healthz'
     )
