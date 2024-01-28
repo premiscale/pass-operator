@@ -7,7 +7,7 @@ from typing import Any, Dict
 from pathlib import Path
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from importlib import metadata
-from kubernetes import client, config
+from kubernetes import client, config, deserialize
 from http import HTTPStatus
 from src.operator.git import GitRepo
 from src.operator.utils import LogLevel
@@ -16,6 +16,7 @@ from src.operator.secret import PassSecret, ManagedSecret
 import logging
 import sys
 import kopf
+import json
 import os
 
 
@@ -73,14 +74,16 @@ def reconciliation(body: kopf.Body, **_: Any) -> None:
     v1 = client.CoreV1Api()
 
     try:
-        secret = v1.read_namespaced_secret(
-            name=passSecret.managedSecret.name,
-            namespace=passSecret.managedSecret.namespace
+        secret = json.loads(
+            v1.read_namespaced_secret(
+                name=passSecret.managedSecret.name,
+                namespace=passSecret.managedSecret.namespace
+            )
         )
 
         print(type(secret), secret)
 
-        _managedSecret = ManagedSecret.from_dict(**secret)
+        _managedSecret = ManagedSecret.from_dict(secret)
 
         # If the managed secret data does not match what's in the newly-generated ManagedSecret object,
         # submit a patch request to update it.
