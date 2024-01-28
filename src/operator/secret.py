@@ -113,6 +113,41 @@ class ManagedSecret:
             'type': self.secretType
         }
 
+    @classmethod
+    def from_client_dict(cls, manifest: Dict) -> ManagedSecret:
+        """
+        Parse a k8s manifest from the kubernetes Python client package into a ManagedSecret (Secret)
+        dataclass. Primary difference is naming of the keys.
+
+        Args:
+            manifest (Dict): a Secret manifest.
+
+        Returns:
+            ManagedSecret: a ManagedSecret created from parsing the contents of the manifest.
+
+        Raises:
+            KeyError, ValueError: if expected keys are not present during dictionary unpacking.
+        """
+        # TODO: manage managed secrets' labels and annotations.
+        # if 'annotations' in manifest and len(manifest['annotations']):
+        #     annotations = manifest['annotations']
+        # else:
+        #     annotations = {}
+
+        # if 'labels' in manifest and len(manifest['labels']):
+        #     labels = manifest['labels']
+        # else:
+        #     labels = {}
+
+        return cls(
+            name=manifest['metadata']['name'],
+            namespace=manifest['metadata']['namespace'],
+            data=manifest['data'],
+            stringData=manifest['string_data'],
+            immutable=manifest['immutable'],
+            secretType=manifest['type']
+        )
+
     def to_client_dict(self) -> Dict:
         """
         Output this secret to a dictionary with keys that match the arguments of kubernetes.client.V1Secret, for convenience.
