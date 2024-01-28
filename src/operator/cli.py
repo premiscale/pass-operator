@@ -78,7 +78,7 @@ def reconciliation(body: kopf.Body, **_: Any) -> None:
             namespace=passSecret.managedSecret.namespace
         )
 
-        _managedSecret = ManagedSecret.from_dict(secret.to_dict())
+        _managedSecret = ManagedSecret.from_client_dict(secret.to_dict())
 
         # If the managed secret data does not match what's in the newly-generated ManagedSecret object,
         # submit a patch request to update it.

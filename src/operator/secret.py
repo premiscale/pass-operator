@@ -188,7 +188,6 @@ class ManagedSecret:
         return self.data == __value.data
 
 
-
 @dataclass
 class PassSecret:
     """
