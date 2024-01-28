@@ -67,7 +67,4 @@ class GitRepo:
 
         log.info(f'Updating local password store at "{self.clone_location}"')
 
-        self.git.pull(
-            self.repo_url,
-            f'refs/heads/{self.branch}:refs/heads/origin'
-        )
+        self.git.pull()
