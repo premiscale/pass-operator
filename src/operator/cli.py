@@ -74,16 +74,12 @@ def reconciliation(body: kopf.Body, **_: Any) -> None:
     v1 = client.CoreV1Api()
 
     try:
-        secret = json.loads(
-            v1.read_namespaced_secret(
-                name=passSecret.managedSecret.name,
-                namespace=passSecret.managedSecret.namespace
-            )
+        secret = v1.read_namespaced_secret(
+            name=passSecret.managedSecret.name,
+            namespace=passSecret.managedSecret.namespace
         )
 
-        print(type(secret), secret)
-
-        _managedSecret = ManagedSecret.from_dict(secret)
+        _managedSecret = ManagedSecret.from_dict(secret.to_dict())
 
         # If the managed secret data does not match what's in the newly-generated ManagedSecret object,
         # submit a patch request to update it.
@@ -323,7 +319,7 @@ def main() -> None:
     else:
         try:
             # Instantiate log path (when logging locally).
-            if not Path.exists(Path(args.log_file)):
+            if not Path(args.log_file).exists():
                 Path(args.log_file).parent.mkdir(parents=True, exist_ok=True)
 
             logging.basicConfig(
