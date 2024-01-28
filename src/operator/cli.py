@@ -7,7 +7,7 @@ from typing import Any, Dict
 from pathlib import Path
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from importlib import metadata
-from kubernetes import client, config, deserialize
+from kubernetes import client, config
 from http import HTTPStatus
 from src.operator.git import GitRepo
 from src.operator.utils import LogLevel
@@ -16,7 +16,6 @@ from src.operator.secret import PassSecret, ManagedSecret
 import logging
 import sys
 import kopf
-import json
 import os
 
 

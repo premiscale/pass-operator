@@ -101,7 +101,7 @@ class ManagedSecret:
             Dict: this object as a dict.
         """
         return {
-            'apiVersion': f'{self.apiGroup}/{self.apiVersion}' if self.apiGroup else self.apiVersion,
+            'apiVersion': self.apiVersion, # f'{self.apiGroup}/{self.apiVersion}' if self.apiGroup else self.apiVersion,
             'kind': self.kind,
             'metadata': {
                 'name': self.name,
