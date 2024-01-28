@@ -78,7 +78,7 @@ def reconciliation(body: kopf.Body, **_: Any) -> None:
             namespace=passSecret.managedSecret.namespace
         )
 
-        print(type(secret), secret)
+        print(type(secret), secret.items())
 
         _managedSecret = ManagedSecret.from_dict(secret)
 
