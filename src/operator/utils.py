@@ -86,7 +86,7 @@ def cmd(command: str, shell: bool =False) -> Generator[List[str], None, None]:
         stdout, stderr = proc.communicate()
 
     if stderr:
-        raise ValueError(f'Command exited with errors: {stderr.decode()}')
+        log.error(f'Command exited with errors: {stderr.decode()}')
 
     if stdout:
         _stdout = re.split(_newlines, stdout.decode())
@@ -95,6 +95,4 @@ def cmd(command: str, shell: bool =False) -> Generator[List[str], None, None]:
         if _stdout[-1] == '':
             _stdout = _stdout[:-1]
 
-        yield _stdout
-    else:
-        yield ['']
+    yield _stdout

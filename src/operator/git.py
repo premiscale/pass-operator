@@ -13,7 +13,7 @@ import logging
 log = logging.getLogger(__name__)
 
 
-def clone(url: str, branch: str ='main', path: Union[Path, str] =Path('~/.password-store').expanduser()) -> List[str]:
+def clone(url: str, branch: str ='main', path: Union[Path, str] =Path('~/.password-store').expanduser()) -> None:
     """
     Run git clone into a location.
 
@@ -28,11 +28,11 @@ def clone(url: str, branch: str ='main', path: Union[Path, str] =Path('~/.passwo
     if not Path(path).exists():
         Path(path).mkdir(parents=True, exist_ok=True)
 
-    with cmd(f'git clone --branch {branch} {url} {path}', shell=True) as s:
-        return s
+    with cmd(f'git clone --branch {branch} {url} {path}', shell=True) as stdout:
+        log.info(stdout)
 
 
-def pull(path: Union[Path, str] =Path('~/.password-store').expanduser(), branch: str ='main') -> List[str]:
+def pull(path: Union[Path, str] =Path('~/.password-store').expanduser(), branch: str ='main') -> None:
     """
     Run git pull at some location.
 
@@ -43,5 +43,5 @@ def pull(path: Union[Path, str] =Path('~/.password-store').expanduser(), branch:
     Returns:
         List[str]: stdout of the command.
     """
-    with cmd(f'cd {path} && git pull origin {branch}', shell=True) as s:
-        return s
+    with cmd(f'cd {path} && git pull origin {branch}', shell=True) as stdout:
+        log.info(stdout)
