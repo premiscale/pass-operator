@@ -52,9 +52,9 @@ def start(**_: Any) -> None:
 
     # Clone the pass repo into a particular local directory and checkout the specified branch.
     clone(
-        env['PASS_GIT_URL'],
-        env['PASS_GIT_BRANCH'],
-        env['PASS_DIRECTORY']
+        url=env['PASS_GIT_URL'],
+        branch=env['PASS_GIT_BRANCH'],
+        path=env['PASS_DIRECTORY']
     )
 
 
@@ -76,12 +76,14 @@ def reconciliation(body: kopf.Body, **_: Any) -> None:
 
     # Pull updates with rebase enabled.
     pull(
-        env['PASS_DIRECTORY'],
-        env['PASS_GIT_BRANCH']
+        path=env['PASS_DIRECTORY'],
+        branch=env['PASS_GIT_BRANCH']
     )
 
     # Ensure the GPG key ID in ~/.password-store/${PASS_DIRECTORY}/.gpg_id did not change with the git update.
-    check_gpg_id()
+    check_gpg_id(
+        path=env["PASS_DIRECTORY"]
+    )
 
     # Create a new PassSecret object with an up-to-date managedSecret decrypted value from the pass store.
     passSecret = PassSecret.from_dict(
@@ -262,7 +264,7 @@ def delete(body: kopf.Body, **_: Any) -> None:
         raise kopf.PermanentError(e)
 
 
-def check_gpg_id(path: Path = Path(f'~/.password-store/{env["PASS_DIRECTORY"]}/.gpg-id').expanduser(), remove: bool =False) -> None:
+def check_gpg_id(path: Path | str, remove: bool =False) -> None:
     """
     Ensure the gpg ID exists (leftover from 'pass init' in the entrypoint, or a git clone) and its contents match PASS_GPG_KEY_ID.
 
@@ -270,14 +272,14 @@ def check_gpg_id(path: Path = Path(f'~/.password-store/{env["PASS_DIRECTORY"]}/.
         path [Path]: Path-like object to the .gpg-id file.
         remove [bool]: indicate whether or not to remove this file, should it exist.
     """
-    if path.exists():
+    if Path(path).exists():
         with open(path, mode='r', encoding='utf-8') as gpg_id_f:
             if gpg_id_f.read().rstrip() != env['PASS_GPG_KEY_ID']:
                 log.error(f'PASS_GPG_KEY_ID ({env["PASS_GPG_KEY_ID"]}) does not equal .gpg-id contained in {path}')
                 sys.exit(1)
 
         if remove:
-            path.unlink(missing_ok=False)
+            Path(path).unlink(missing_ok=False)
     else:
         log.error(f'.gpg-id at "{path}" does not exist. pass init failure')
         sys.exit(1)
@@ -348,7 +350,10 @@ def main() -> None:
             sys.exit(1)
 
     # Reset the directory to be cloned into.
-    check_gpg_id(remove=True)
+    check_gpg_id(
+        path=env['PASS_DIRECTORY'],
+        remove=True
+    )
 
     kopf.run(
         # https://kopf.readthedocs.io/en/stable/packages/kopf/#kopf.run
