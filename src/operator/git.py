@@ -29,7 +29,7 @@ def clone(url: str, branch: str ='main', path: Union[Path, str] =Path('~/.passwo
         Path(path).mkdir(parents=True, exist_ok=True)
 
     with cmd(f'git clone --branch {branch} {url} {path}', shell=True) as (stdout, stderr):
-        log.info(stdout, stderr)
+        log.info(stdout + stderr)
 
 
 def pull(path: Union[Path, str] =Path('~/.password-store').expanduser(), branch: str ='main') -> None:
@@ -44,4 +44,4 @@ def pull(path: Union[Path, str] =Path('~/.password-store').expanduser(), branch:
         List[str]: stdout of the command.
     """
     with cmd(f'cd {path} && git pull origin {branch}', shell=True) as (stdout, stderr):
-        log.info(stdout, stderr)
+        log.info(stdout + stderr)
