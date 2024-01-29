@@ -25,11 +25,14 @@ def clone(url: str, branch: str ='main', path: Union[Path, str] =Path('~/.passwo
     Returns:
         List[s]: _description_
     """
+    if not Path(path).exists():
+        Path(path).mkdir(parents=True, exist_ok=True)
+
     with cmd(f'git clone --branch {branch} {url} {path}', shell=False) as s:
         return s
 
 
-def pull(path: Union[Path, str], branch: str ='main') -> List[str]:
+def pull(path: Union[Path, str] =Path('~/.password-store').expanduser(), branch: str ='main') -> List[str]:
     """
     Run git pull at some location.
 

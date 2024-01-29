@@ -54,11 +54,17 @@ def start(**_: Any) -> None:
     clone(
         env['PASS_GIT_URL'],
         env['PASS_GIT_BRANCH'],
-        env['PASS_DIRECTORY']
+        Path(f'~/.password-store/{env["PASS_DIRECTORY"]}').expanduser()
     )
 
 
-@kopf.timer('secrets.premiscale.com', 'v1alpha1', 'passsecret', interval=float(env['OPERATOR_INTERVAL']), initial_delay=float(env['OPERATOR_INITIAL_DELAY']), sharp=True)
+@kopf.timer(
+    # Target PassSecret.secrets.premiscale.com/v1alpha1
+    'secrets.premiscale.com', 'v1alpha1', 'passsecret',
+    # Interval to check every instance of a PassSecret.
+    interval=float(env['OPERATOR_INTERVAL']),
+    # Initial delay in seconds before reviewing all managed PassSecrets.
+    initial_delay=float(env['OPERATOR_INITIAL_DELAY']), sharp=True)
 def reconciliation(body: kopf.Body, **_: Any) -> None:
     """
     Reconcile state of a managed secret against the pass store. Update secrets' data if a mismatch
@@ -279,7 +285,10 @@ def main() -> None:
     """
     Set up this wrapping Python program with logging, etc.
     """
-    parser = ArgumentParser(description=__doc__, formatter_class=ArgumentDefaultsHelpFormatter)
+    parser = ArgumentParser(
+        description=__doc__,
+        formatter_class=ArgumentDefaultsHelpFormatter
+    )
 
     parser.add_argument(
         '--version', action='store_true', default=False,
