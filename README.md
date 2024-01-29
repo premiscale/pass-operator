@@ -58,12 +58,10 @@ I will go more in-depth and explain these requirements in the following sections
 
 ### Private GPG key
 
+The private GPG key is used by `pass` to decrypt your secrets that were encrypted on your local machine.
+
 <details>
-  <summary>Click for details</summary>
-
-  The private GPG key is used by `pass` to decrypt your secrets that were encrypted on your local machine.
-
-  #### Generating GPG keys
+  <summary><b>Generating GPG keys</b></summary>
 
   You can find a lot of explanation about how to generate keys with GPG online, but I'll write down my process below for generating keys to use with this operator.
 
@@ -129,63 +127,49 @@ I will go more in-depth and explain these requirements in the following sections
 
 ### Password store
 
-<details>
-  <summary>Click for details</summary>
+Install [`pass`](https://www.passwordstore.org/) and initialize a local store using the GPG keys you generated in the last step.
 
-  Install [`pass`](https://www.passwordstore.org/) and initialize a local store using the GPG keys you generated in the last step.
+```shell
+pass init "$GPG_KEY_ID" --path <subpath of ~/.password-store/>
+```
 
-  ```shell
-  pass init "$GPG_KEY_ID" --path <subpath of ~/.password-store/>
-  ```
+Now, on your local machine,
 
-  Now, on your local machine,
-
-  ```shell
-  $ ls -lash ~/.password-store/repo/
-  total 12K
-  4.0K drwx------  2 emmadoyle emmadoyle 4.0K Jan 15 13:36 .
-  4.0K drwxrwxr-x 13 emmadoyle emmadoyle 4.0K Jan 15 13:36 ..
-  4.0K -rw-------  1 emmadoyle emmadoyle   41 Jan 15 13:36 .gpg-id
-  ```
-
-</details>
+```shell
+$ ls -lash ~/.password-store/repo/
+total 12K
+4.0K drwx------  2 emmadoyle emmadoyle 4.0K Jan 15 13:36 .
+4.0K drwxrwxr-x 13 emmadoyle emmadoyle 4.0K Jan 15 13:36 ..
+4.0K -rw-------  1 emmadoyle emmadoyle   41 Jan 15 13:36 .gpg-id
+```
 
 ### Git repository
 
-<details>
-  <summary>Click for details</summary>
+From the `pass` [man page](https://git.zx2c4.com/password-store/about/),
 
-  From the `pass` [man page](https://git.zx2c4.com/password-store/about/),
+```text
+...
+pass git git-command-args...
+        If the password store is a git repository, execute a git command
+        specified by git-command-args.
+...
+```
 
-  ```text
-  ...
-  pass git git-command-args...
-          If the password store is a git repository, execute a git command
-          specified by git-command-args.
-  ...
-  ```
+we may easily link our local password store to a remote Git repository. This operator uses `git` alongside `pass` to pull secret updates.
 
-  we may easily link our local password store to a remote Git repository. This operator uses `git` alongside `pass` to pull secret updates.
-
-  ```shell
-  $ git init ~/.password-store/repo/
-  $ ls -lash ~/.password-store/repo/
-  total 16K
-  4.0K drwx------  3 emmadoyle emmadoyle 4.0K Jan 15 13:38 .
-  4.0K drwxrwxr-x 13 emmadoyle emmadoyle 4.0K Jan 15 13:36 ..
-  4.0K drwxrwxr-x  7 emmadoyle emmadoyle 4.0K Jan 15 13:38 .git
-  4.0K -rw-------  1 emmadoyle emmadoyle   41 Jan 15 13:36 .gpg-id
-  ```
-
-</details>
+```shell
+$ git init ~/.password-store/repo/
+$ ls -lash ~/.password-store/repo/
+total 16K
+4.0K drwx------  3 emmadoyle emmadoyle 4.0K Jan 15 13:38 .
+4.0K drwxrwxr-x 13 emmadoyle emmadoyle 4.0K Jan 15 13:36 ..
+4.0K drwxrwxr-x  7 emmadoyle emmadoyle 4.0K Jan 15 13:38 .git
+4.0K -rw-------  1 emmadoyle emmadoyle   41 Jan 15 13:36 .gpg-id
+```
 
 ### Private SSH key
 
-<details>
-  <summary>Click for details</summary>
-
-  Now add a remote git repository and watch as `pass insert`-commands create local commits automatically. Sync your local password store with the remote repo via `pass git push`.
-</details>
+Now add a remote git repository and watch as `pass insert`-commands create local commits automatically. Sync your local password store with the remote repo via `pass git push`.
 
 ## Development
 
