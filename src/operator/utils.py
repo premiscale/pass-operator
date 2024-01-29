@@ -85,18 +85,16 @@ def cmd(command: str, shell: bool =False) -> Generator[Tuple[List[str], List[str
     with Popen(command, shell=shell, stdout=PIPE, stderr=PIPE) as proc:
         stdout, stderr = proc.communicate()
 
-    if stderr:
-        _stderr = re.split(_newlines, stdout.decode())
+    _stderr = re.split(_newlines, stderr.decode())
 
-        # For some reason, `shell=True` likes to yield an empty string.
-        if _stderr[-1] == '':
-            _stderr = _stderr[:-1]
+    # For some reason, `shell=True` likes to yield an empty string.
+    if _stderr[-1] == '':
+        _stderr = _stderr[:-1]
 
-    if stdout:
-        _stdout = re.split(_newlines, stdout.decode())
+    _stdout = re.split(_newlines, stdout.decode())
 
-        # For some reason, `shell=True` likes to yield an empty string.
-        if _stdout[-1] == '':
-            _stdout = _stdout[:-1]
+    # For some reason, `shell=True` likes to yield an empty string.
+    if _stdout[-1] == '':
+        _stdout = _stdout[:-1]
 
     yield _stdout, _stderr
