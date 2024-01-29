@@ -28,7 +28,7 @@ def clone(url: str, branch: str ='main', path: Union[Path, str] =Path('~/.passwo
     if not Path(path).exists():
         Path(path).mkdir(parents=True, exist_ok=True)
 
-    with cmd(f'git clone --branch {branch} {url} {path}', shell=False) as s:
+    with cmd(f'git clone --branch {branch} {url} {path}', shell=True) as s:
         return s
 
 
