@@ -3,8 +3,13 @@ Utils for the operator.
 """
 
 
+from typing import Generator, List
 from enum import Enum
+from contextlib import contextmanager
+from subprocess import Popen, PIPE
 
+
+import re
 import logging
 import sys
 import base64
@@ -67,3 +72,29 @@ def b64Dec(value: str) -> str:
         str: the value b64-decoded.
     """
     return base64.b64decode(value).rstrip().decode()
+
+
+_newlines = re.compile(r'\n+')
+
+
+@contextmanager
+def cmd(command: str, shell: bool =False) -> Generator[List[str], None, None]:
+    """
+    Get results from terminal commands as lists of lines of text.
+    """
+    with Popen(command, shell=shell, stdout=PIPE, stderr=PIPE) as proc:
+        stdout, stderr = proc.communicate()
+
+    if stderr:
+        raise ValueError(f'Command exited with errors: {stderr.decode()}')
+
+    if stdout:
+        _stdout = re.split(_newlines, stdout.decode())
+
+        # For some reason, `shell=True` likes to yield an empty string.
+        if _stdout[-1] == '':
+            _stdout = _stdout[:-1]
+
+        yield _stdout
+    else:
+        yield ['']

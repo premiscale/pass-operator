@@ -24,7 +24,6 @@ keywords = [
 [tool.poetry.dependencies]
 python = "^3.10"
 kubernetes = "^29.0.0"
-gitpython = "^3.1.31"
 kopf = "^1.36.2"
 python-gnupg = "^0.5.2"
 
