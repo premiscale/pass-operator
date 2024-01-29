@@ -82,7 +82,7 @@ def reconciliation(body: kopf.Body, **_: Any) -> None:
 
     # Ensure the GPG key ID in ~/.password-store/${PASS_DIRECTORY}/.gpg_id did not change with the git update.
     check_gpg_id(
-        path=env["PASS_DIRECTORY"]
+        path=f'{env["PASS_DIRECTORY"]}/.gpg_id'
     )
 
     # Create a new PassSecret object with an up-to-date managedSecret decrypted value from the pass store.
@@ -351,7 +351,7 @@ def main() -> None:
 
     # Reset the directory to be cloned into.
     check_gpg_id(
-        path=env['PASS_DIRECTORY'],
+        path=f'{env["PASS_DIRECTORY"]}/.gpg_id',
         remove=True
     )
 
