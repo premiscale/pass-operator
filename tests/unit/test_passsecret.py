@@ -7,6 +7,7 @@ from deepdiff import DeepDiff
 from importlib import resources
 from unittest import TestCase
 from src.operator.secret import PassSecret
+from src.operator.cli import env
 
 import yaml
 
@@ -25,21 +26,21 @@ class PassSecretParseInverse(TestCase):
 
         return super().setUp()
 
-    def test_inverse(self) -> None:
+    def test_passsecret_export_import_inverse(self) -> None:
         """
-        Test that class creation and export are inverses of each other.
+        Test that class import and export are inverses of each other.
 
         PT(PT'(data)) == PT'(PT(data))
         """
 
         self.assertIsNotNone(
-            PassSecret.from_dict(self.passsecret_data)
+            PassSecret.from_dict(self.passsecret_data, env)
         )
 
         self.assertDictEqual(
             # DeepDiff the objects.
             DeepDiff(
-                PassSecret.from_dict(self.passsecret_data).to_dict(),
+                PassSecret.from_dict(self.passsecret_data, env).to_dict(),
                 self.passsecret_data,
                 exclude_paths=[
                     "root['metadata']['labels']",
@@ -51,6 +52,15 @@ class PassSecretParseInverse(TestCase):
         )
 
         self.assertEqual(
-            PassSecret.from_dict(PassSecret.from_dict(self.passsecret_data).to_dict()),
-            PassSecret.from_dict(self.passsecret_data)
+            PassSecret.from_dict(
+                PassSecret.from_dict(self.passsecret_data, env).to_dict(), env
+            ),
+            PassSecret.from_dict(self.passsecret_data, env)
         )
+
+    def test_managedsecret_export_import_inverse(self) -> None:
+        """
+        Test that ManagedSecret class import and export are inverses of one another.
+
+        MS(MS'(data)) == MS'(MS(data))
+        """
