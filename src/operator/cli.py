@@ -9,7 +9,7 @@ from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from importlib import metadata
 from kubernetes import client, config
 from http import HTTPStatus
-from src.operator.git import GitRepo
+from src.operator.git import pull, clone
 from src.operator.utils import LogLevel
 from src.operator.secret import PassSecret, ManagedSecret
 
@@ -22,7 +22,6 @@ import os
 __version__ = metadata.version('pass-operator')
 
 log = logging.getLogger(__name__)
-pass_git_repo: GitRepo
 
 env: Dict[str, str] = {
     # Environment variables to configure the operator (kopf).
@@ -50,7 +49,13 @@ def start(**_: Any) -> None:
     Perform initial repo clone and set up operator runtime.
     """
     log.info(f'Starting operator version {__version__}')
-    pass_git_repo.clone()
+
+    # Clone the pass repo into a particular local directory and checkout the specified branch.
+    clone(
+        env['PASS_GIT_URL'],
+        env['PASS_GIT_BRANCH'],
+        env['PASS_DIRECTORY']
+    )
 
 
 @kopf.timer('secrets.premiscale.com', 'v1alpha1', 'passsecret', interval=float(env['OPERATOR_INTERVAL']), initial_delay=float(env['OPERATOR_INITIAL_DELAY']), sharp=True)
@@ -60,7 +65,14 @@ def reconciliation(body: kopf.Body, **_: Any) -> None:
     is found. Kopf timers are triggered on an object-by-object basis, so this method will
     automatically revisit every PassSecret, iff it resides in the same namespace as the operator.
     """
-    pass_git_repo.pull()
+
+    # Pull updates with rebase enabled.
+    pull(
+        env['PASS_DIRECTORY'],
+        env['PASS_GIT_BRANCH']
+    )
+
+    # Ensure the GPG key ID in ~/.password-store/${PASS_DIRECTORY}/.gpg_id did not change with the git update.
     check_gpg_id()
 
     # Create a new PassSecret object with an up-to-date managedSecret decrypted value from the pass store.
@@ -297,17 +309,9 @@ def main() -> None:
 
     config.load_incluster_config()
 
-    if not env['PASS_GIT_URL']:
+    if not env['PASS_GIT_URL'] :
         log.error('Must provide a valid git URL (PASS_GIT_URL)')
         sys.exit(1)
-
-    # Set up our global git repository object.
-    global pass_git_repo
-    pass_git_repo = GitRepo(
-        repo_url=env['PASS_GIT_URL'],
-        branch=env['PASS_GIT_BRANCH'],
-        clone_location=env['PASS_DIRECTORY']
-    )
 
     # Configure logger
     if args.log_stdout:
