@@ -3,7 +3,7 @@ Utils for the operator.
 """
 
 
-from typing import Generator, List
+from typing import Generator, List, Tuple
 from enum import Enum
 from contextlib import contextmanager
 from subprocess import Popen, PIPE
@@ -78,7 +78,7 @@ _newlines = re.compile(r'\n+')
 
 
 @contextmanager
-def cmd(command: str, shell: bool =False) -> Generator[List[str], None, None]:
+def cmd(command: str, shell: bool =False) -> Generator[Tuple[List[str], List[str]], None, None]:
     """
     Get results from terminal commands as lists of lines of text.
     """
@@ -86,7 +86,11 @@ def cmd(command: str, shell: bool =False) -> Generator[List[str], None, None]:
         stdout, stderr = proc.communicate()
 
     if stderr:
-        log.error(f'Command exited with errors: {stderr.decode()}')
+        _stderr = re.split(_newlines, stdout.decode())
+
+        # For some reason, `shell=True` likes to yield an empty string.
+        if _stderr[-1] == '':
+            _stderr = _stderr[:-1]
 
     if stdout:
         _stdout = re.split(_newlines, stdout.decode())
@@ -95,4 +99,4 @@ def cmd(command: str, shell: bool =False) -> Generator[List[str], None, None]:
         if _stdout[-1] == '':
             _stdout = _stdout[:-1]
 
-    yield _stdout
+    yield _stdout, _stderr

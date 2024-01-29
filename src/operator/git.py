@@ -3,7 +3,7 @@ Methods to interact minimally with a Git repository.
 """
 
 
-from typing import Union, List
+from typing import Union
 from pathlib import Path
 from src.operator.utils import cmd
 
@@ -28,8 +28,8 @@ def clone(url: str, branch: str ='main', path: Union[Path, str] =Path('~/.passwo
     if not Path(path).exists():
         Path(path).mkdir(parents=True, exist_ok=True)
 
-    with cmd(f'git clone --branch {branch} {url} {path}', shell=True) as stdout:
-        log.info(stdout)
+    with cmd(f'git clone --branch {branch} {url} {path}', shell=True) as (stdout, stderr):
+        log.info(stdout, stderr)
 
 
 def pull(path: Union[Path, str] =Path('~/.password-store').expanduser(), branch: str ='main') -> None:
@@ -43,5 +43,5 @@ def pull(path: Union[Path, str] =Path('~/.password-store').expanduser(), branch:
     Returns:
         List[str]: stdout of the command.
     """
-    with cmd(f'cd {path} && git pull origin {branch}', shell=True) as stdout:
-        log.info(stdout)
+    with cmd(f'cd {path} && git pull origin {branch}', shell=True) as (stdout, stderr):
+        log.info(stdout, stderr)
