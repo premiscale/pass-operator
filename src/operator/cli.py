@@ -17,7 +17,6 @@ import logging
 import sys
 import kopf
 import os
-import dill
 
 
 __version__ = metadata.version('pass-operator')

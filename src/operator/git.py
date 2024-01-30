@@ -4,7 +4,6 @@ Methods to interact minimally with a Git repository.
 
 
 from pathlib import Path
-from time import sleep
 from src.operator.utils import cmd
 
 import logging
