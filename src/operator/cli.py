@@ -353,7 +353,7 @@ def main() -> None:
             namespace=env['OPERATOR_NAMESPACE'],
             clusterwide=False,
             liveness_endpoint=f'http://{env["OPERATOR_POD_IP"]}:8080/healthz',
-            quiet=True
+            # quiet=True
         )
     def run_pull() -> None:
         pull(
