@@ -28,13 +28,18 @@ def clone(url: str, branch: str ='main', path: Path | str =Path('~/.password-sto
         log.info(f'stdout: {stdout} | stderr: {stderr}')
 
 
-def pull(path: Path | str =Path('~/.password-store').expanduser(), branch: str ='main') -> None:
+def pull(path: Path | str =Path('~/.password-store').expanduser(), branch: str ='main', continuous: bool =False) -> None:
     """
     Run git pull at some location.
 
     Args:
         path (Union[Path, str]): path to the git repository.
         branch (str): branch to pull.
+        continuous (bool):
     """
-    with cmd(f'cd {path} && git gc --prune=now && git fetch && git merge origin/{branch}', shell=True) as (stdout, stderr):
-        log.info(f'stdout: {stdout} | stderr: {stderr}')
+    from time import sleep
+    if continuous:
+        while True:
+            with cmd(f'cd {path} && git gc --prune=now && git fetch && git merge origin/{branch}', shell=True) as (stdout, stderr):
+                log.info(f'stdout: {stdout} | stderr: {stderr}')
+            sleep(60)
