@@ -17,6 +17,7 @@ import logging
 import sys
 import kopf
 import os
+import dill
 
 
 __version__ = metadata.version('pass-operator')
@@ -362,6 +363,7 @@ def main() -> None:
             continuous=True
         )
 
+    print(dill.detect.baditems(run_kopf))
     with ProcessPoolExecutor(max_workers=2) as executor:
         processes = [
             executor.submit(
