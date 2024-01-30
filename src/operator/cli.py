@@ -74,6 +74,12 @@ def reconciliation(body: kopf.Body, **_: Any) -> None:
     is found. Kopf timers are triggered on an object-by-object basis, so this method will
     automatically revisit every PassSecret, iff it resides in the same namespace as the operator.
     """
+
+    # Ensure the GPG key ID in ~/.password-store/${PASS_DIRECTORY}/.gpg-id did not change with the git update.
+    check_gpg_id(
+        path=f'{env["PASS_DIRECTORY"]}/.gpg-id'
+    )
+
     # Create a new PassSecret object with an up-to-date managedSecret decrypted value from the pass store.
     passSecret = PassSecret.from_dict(
         manifest=dict(body),
@@ -338,50 +344,25 @@ def main() -> None:
             log.error(f'Failed to configure logging, received: {msg}')
             sys.exit(1)
 
-    # Reset the directory to be cloned into.
+    # Reset the directory to be cloned into following the 'pass init' of the entrypoint.
     check_gpg_id(
         path=f'{env["PASS_DIRECTORY"]}/.gpg-id',
         remove=True
     )
 
-
-    from concurrent.futures import ProcessPoolExecutor
-    def run_kopf() -> None:
-        kopf.run(
-            # https://kopf.readthedocs.io/en/stable/packages/kopf/#kopf.run
-            priority=int(env['OPERATOR_PRIORITY']),
-            standalone=True,
-            namespace=env['OPERATOR_NAMESPACE'],
-            clusterwide=False,
-            liveness_endpoint=f'http://{env["OPERATOR_POD_IP"]}:8080/healthz',
-            # quiet=True
-        )
-    def run_pull() -> None:
-        pull(
-            path=env['PASS_DIRECTORY'],
-            branch=env['PASS_GIT_BRANCH'],
-            continuous=True
-        )
-
-    print(dill.detect.baditems(run_kopf))
-    with ProcessPoolExecutor(max_workers=2) as executor:
-        processes = [
-            executor.submit(
-                run_kopf
-            ),
-            executor.submit(
-                # Pull updates with rebase enabled.
-                run_pull
-            )
-        ]
-
-        for process in processes:
-            if process is not None:
-                process.result()
-
-
-    # Ensure the GPG key ID in ~/.password-store/${PASS_DIRECTORY}/.gpg_id did not change with the git update.
-    check_gpg_id(
-        path=f'{env["PASS_DIRECTORY"]}/.gpg-id'
+    # Start the 'git pull' subprocess on the specified interval.
+    pull(
+        path=env['PASS_DIRECTORY'],
+        interval=int(env['OPERATOR_INTERVAL']),
+        block=False
     )
 
+    kopf.run(
+        # https://kopf.readthedocs.io/en/stable/packages/kopf/#kopf.run
+        priority=int(env['OPERATOR_PRIORITY']),
+        standalone=True,
+        namespace=env['OPERATOR_NAMESPACE'],
+        clusterwide=False,
+        liveness_endpoint=f'http://{env["OPERATOR_POD_IP"]}:8080/healthz',
+        # quiet=True
+    )

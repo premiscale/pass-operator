@@ -6,7 +6,7 @@ Utils for the operator.
 from typing import Generator, Tuple
 from enum import Enum
 from contextlib import contextmanager
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE, DEVNULL
 
 import logging
 import sys
@@ -73,11 +73,14 @@ def b64Dec(value: str) -> str:
 
 
 @contextmanager
-def cmd(command: str, shell: bool =False) -> Generator[Tuple[str, str], None, None]:
+def cmd(command: str, shell: bool =False, block: bool =True) -> Generator[Tuple[str, str] | Tuple[None, None], None, None]:
     """
     Get results from terminal commands as lists of lines of text.
     """
-    with Popen(command, shell=shell, stdout=PIPE, stderr=PIPE) as proc:
-        stdout, stderr = proc.communicate()
-
-    yield stdout.decode().rstrip(), stderr.decode().rstrip()
+    if block:
+        with Popen(command, shell=shell, stdout=PIPE, stderr=PIPE) as proc:
+            stdout, stderr = proc.communicate()  # blocking
+        yield stdout.decode().rstrip(), stderr.decode().rstrip()
+    else:
+        with Popen(command, shell=shell, stdout=DEVNULL, stderr=DEVNULL) as proc:
+            yield None, None

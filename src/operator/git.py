@@ -4,6 +4,7 @@ Methods to interact minimally with a Git repository.
 
 
 from pathlib import Path
+from time import sleep
 from src.operator.utils import cmd
 
 import logging
@@ -28,18 +29,17 @@ def clone(url: str, branch: str ='main', path: Path | str =Path('~/.password-sto
         log.info(f'stdout: {stdout} | stderr: {stderr}')
 
 
-def pull(path: Path | str =Path('~/.password-store').expanduser(), branch: str ='main', continuous: bool =False) -> None:
+def pull(path: Path | str =Path('~/.password-store').expanduser(), block: bool =True, interval: int =60) -> None:
     """
     Run git pull at some location.
 
     Args:
         path (Union[Path, str]): path to the git repository.
-        branch (str): branch to pull.
-        continuous (bool):
+        block (bool): whether or not to run a blocking git pull.
+        interval (int): interval over which the subprocess should iterate while running 'git pull'.
     """
-    from time import sleep
-    if continuous:
-        while True:
-            with cmd(f'cd {path} && git gc --prune=now && git fetch && git merge origin/{branch}', shell=True) as (stdout, stderr):
-                log.info(f'stdout: {stdout} | stderr: {stderr}')
-            sleep(60)
+    cmd(
+        f'cd {path} && while true; do git pull; sleep {interval}; done',
+        shell=True,
+        block=block
+    )
