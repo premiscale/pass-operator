@@ -303,7 +303,7 @@ class PassSecret:
             secretPath = self.encryptedData[secretKey]
 
             decryptedSecret = decrypt(
-                Path(f'~/.password-store/{self.env["PASS_DIRECTORY"]}/{secretPath}').expanduser(),
+                Path(f'{self.env["PASS_DIRECTORY"]}/{secretPath}'),
                 passphrase=self.env['PASS_GPG_PASSPHRASE']
             )
 
