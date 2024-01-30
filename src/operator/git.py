@@ -36,5 +36,5 @@ def pull(path: Path | str =Path('~/.password-store').expanduser(), branch: str =
         path (Union[Path, str]): path to the git repository.
         branch (str): branch to pull.
     """
-    with cmd(f'cd {path} && git fetch && git merge origin/{branch}', shell=True) as (stdout, stderr):
+    with cmd(f'cd {path} && git gc --prune=now && git fetch && git merge origin/{branch}', shell=True) as (stdout, stderr):
         log.info(f'stdout: {stdout} | stderr: {stderr}')
