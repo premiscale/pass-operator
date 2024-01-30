@@ -25,7 +25,7 @@ def clone(url: str, branch: str ='main', path: Path | str =Path('~/.password-sto
         Path(path).mkdir(parents=True, exist_ok=True)
 
     with cmd(f'git clone --branch {branch} {url} {path}', shell=True) as (stdout, stderr):
-        log.info(stdout + stderr)
+        log.info(f'stdout: {stdout} | stderr: {stderr}')
 
 
 def pull(path: Path | str =Path('~/.password-store').expanduser(), branch: str ='main') -> None:
@@ -36,5 +36,5 @@ def pull(path: Path | str =Path('~/.password-store').expanduser(), branch: str =
         path (Union[Path, str]): path to the git repository.
         branch (str): branch to pull.
     """
-    with cmd(f'cd {path} && git pull origin {branch}', shell=True) as (stdout, stderr):
-        log.info(stdout + stderr)
+    with cmd(f'cd {path} && git pull --rebase origin {branch}', shell=True) as (stdout, stderr):
+        log.info(f'stdout: {stdout} | stderr: {stderr}')
