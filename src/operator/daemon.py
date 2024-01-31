@@ -77,7 +77,7 @@ def reconciliation(body: kopf.Body, **_: Any) -> None:
         )
 
         _managedSecret = ManagedSecret.from_client_dict(secret.to_dict())
-        print(_managedSecret, passSecret.managedSecret, _managedSecret.data_equals(passSecret.managedSecret))
+        print(_managedSecret, passSecret.managedSecret, _managedSecret.data_equals(passSecret.managedSecret), sep='\n')
 
         # If the managed secret data does not match what's in the newly-generated ManagedSecret object,
         # submit a patch request to update it.
