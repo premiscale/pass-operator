@@ -137,7 +137,7 @@ def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.
     try:
         newPassSecret = PassSecret.from_dict(
             manifest={
-                **metadata
+                **metadata,
                 **new
             }
         )
