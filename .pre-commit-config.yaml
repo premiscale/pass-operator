@@ -22,15 +22,6 @@ repos:
       - id: check-shebang-scripts-are-executable
       - id: mixed-line-ending
 
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.8.0
-    hooks:
-      - id: mypy
-        args:
-          - --install-types
-          - --non-interactive
-          - --config-file=pyproject.toml
-
   - repo: https://github.com/jumanjihouse/pre-commit-hooks
     rev: 3.0.0
     hooks:
@@ -52,18 +43,19 @@ repos:
     hooks:
       - id: mypy
         language: script
-        name: pylint
+        name: mypy
         entry: /usr/bin/env poetry run mypy
-        args: []
-        files: '^.*.py$'
-  - repo: local
-    hooks:
+        args:
+          - --non-interactive
+          - --install-types
+          - --config-file=pyproject.toml
+        files: src/
       - id: pylint
         language: script
         name: pylint
         entry: /usr/bin/env poetry run pylint
         args: []
-        files: '^.*.py$'
+        files: src/
 
   - repo: https://github.com/abravalheri/validate-pyproject
     rev: v0.15
