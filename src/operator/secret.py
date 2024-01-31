@@ -213,8 +213,8 @@ class PassSecret:
     managedSecretImmutable: bool =False
 
     def __post_init__(self) -> None:
-        if (decryptedData := self.decrypt()) is None:
-            raise ValueError(f'Could not decrypt data on PassSecret {self.name}')
+        if (decryptedData := self._decrypt()) is None:
+            raise ValueError(f'Could not decrypt data on PassSecret {self.name}. Do you need to set a passphrase?')
 
         self.managedSecret = ManagedSecret(
             name=self.managedSecretName,
@@ -288,7 +288,7 @@ class PassSecret:
             managedSecretImmutable=manifest['spec']['managedSecret']['immutable'],
         )
 
-    def decrypt(self) -> Dict[str, str] | None:
+    def _decrypt(self) -> Dict[str, str] | None:
         """
         Decrypt the contents of this PassSecret's paths and store them on an attribute
 
