@@ -110,6 +110,8 @@ def reconciliation(body: kopf.Body, **_: Any) -> None:
                     **passSecret.managedSecret.to_client_dict()
                 )
             )
+
+            log.info(f'Reconciliation successfully updated Secret "{_managedSecret.name}".')
     except client.ApiException as e:
         raise kopf.PermanentError(e)
 
