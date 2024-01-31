@@ -134,13 +134,17 @@ def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.
         new [kopf.BodyEssence]: new body of the PassSecret.
     """
     # Parse the old PassSecret manifest.
+    metadata = {
+        'metadata': {
+            'name': meta['name'],
+            'namespace': meta['namespace']
+        }
+    }
+
     try:
         oldPassSecret = PassSecret.from_dict(
             manifest={
-                'metadata': {
-                    'name': meta['name'],
-                    'namespace': meta['namespace']
-                },
+                **metadata,
                 **old
             },
             env=env
@@ -152,10 +156,7 @@ def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.
     try:
         newPassSecret = PassSecret.from_dict(
             manifest={
-                'metadata': {
-                    'name': meta['name'],
-                    'namespace': meta['namespace']
-                },
+                **metadata
                 **new
             },
             env=env
