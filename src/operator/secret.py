@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from src.operator.gpg import decrypt
 from src.operator.utils import b64Dec, b64Enc
+from src.operator.environment import env
 
 import logging
 
@@ -143,7 +144,7 @@ class ManagedSecret:
             name=manifest['metadata']['name'],
             namespace=manifest['metadata']['namespace'],
             data=manifest['data'],
-            stringData=manifest['string_data'],
+            stringData=manifest['string_data'],  # This is the only change from the method above, unfortunately.
             immutable=manifest['immutable'],
             secretType=manifest['type']
         )
@@ -196,8 +197,6 @@ class PassSecret:
 
     # PassSecret objects require our set of environment variables because we need to decrypt the contents
     # in order to instantiate a ManagedSecret object.
-    env: Dict
-
     name: str
     managedSecretName: str
     encryptedData: Dict[str, str]
@@ -253,7 +252,7 @@ class PassSecret:
         }
 
     @classmethod
-    def from_dict(cls, manifest: Dict, env: Dict) -> PassSecret:
+    def from_dict(cls, manifest: Dict) -> PassSecret:
         """
         Parse a k8s manifest into a PassSecret dataclass.
 
@@ -287,7 +286,6 @@ class PassSecret:
             managedSecretNamespace=manifest['spec']['managedSecret']['namespace'],
             managedSecretType=manifest['spec']['managedSecret']['type'],
             managedSecretImmutable=manifest['spec']['managedSecret']['immutable'],
-            env=env
         )
 
     def decrypt(self) -> Dict[str, str] | None:
@@ -303,8 +301,8 @@ class PassSecret:
             secretPath = self.encryptedData[secretKey]
 
             decryptedSecret = decrypt(
-                Path(f'{self.env["PASS_DIRECTORY"]}/{secretPath}'),
-                passphrase=self.env['PASS_GPG_PASSPHRASE']
+                Path(f'{env["PASS_DIRECTORY"]}/{secretPath}'),
+                passphrase=env['PASS_GPG_PASSPHRASE']
             )
 
             if decryptedSecret:

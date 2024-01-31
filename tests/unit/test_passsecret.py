@@ -7,7 +7,6 @@ from deepdiff import DeepDiff
 from importlib import resources
 from unittest import TestCase
 from src.operator.secret import PassSecret
-from src.operator.cli import env
 
 import yaml
 
@@ -34,13 +33,13 @@ class PassSecretParseInverse(TestCase):
         """
 
         self.assertIsNotNone(
-            PassSecret.from_dict(self.passsecret_data, env)
+            PassSecret.from_dict(self.passsecret_data)
         )
 
         self.assertDictEqual(
             # DeepDiff the objects.
             DeepDiff(
-                PassSecret.from_dict(self.passsecret_data, env).to_dict(),
+                PassSecret.from_dict(self.passsecret_data).to_dict(),
                 self.passsecret_data,
                 exclude_paths=[
                     "root['metadata']['labels']",
@@ -52,10 +51,8 @@ class PassSecretParseInverse(TestCase):
         )
 
         self.assertEqual(
-            PassSecret.from_dict(
-                PassSecret.from_dict(self.passsecret_data, env).to_dict(), env
-            ),
-            PassSecret.from_dict(self.passsecret_data, env)
+            PassSecret.from_dict(PassSecret.from_dict(self.passsecret_data).to_dict()),
+            PassSecret.from_dict(self.passsecret_data)
         )
 
     def test_managedsecret_export_import_inverse(self) -> None:

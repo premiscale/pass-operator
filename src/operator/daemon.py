@@ -3,7 +3,7 @@ A kubernetes operator that syncs and decrypts secrets from Linux password store 
 """
 
 
-from typing import Any, Dict
+from typing import Any
 from pathlib import Path
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from importlib import metadata
@@ -12,34 +12,16 @@ from http import HTTPStatus
 from src.operator.git import pull, clone
 from src.operator.utils import LogLevel
 from src.operator.secret import PassSecret, ManagedSecret
+from src.operator.environment import env
 
 import logging
 import sys
 import kopf
-import os
 
 
 __version__ = metadata.version('pass-operator')
 
 log = logging.getLogger(__name__)
-
-env: Dict[str, str] = {
-    # Environment variables to configure the operator (kopf).
-    'OPERATOR_INTERVAL':      os.getenv('OPERATOR_INTERVAL', '60'),
-    'OPERATOR_INITIAL_DELAY': os.getenv('OPERATOR_INITIAL_DELAY', '3'),
-    'OPERATOR_PRIORITY':      os.getenv('OPERATOR_PRIORITY', '100'),
-    'OPERATOR_NAMESPACE':     os.getenv('OPERATOR_NAMESPACE', 'default'),
-    'OPERATOR_POD_IP':        os.getenv('OPERATOR_POD_IP', '0.0.0.0'),
-
-    # Environment variables to configure pass.
-    'PASS_BINARY':            os.getenv('PASS_BINARY', '/usr/bin/pass'),
-    'PASS_DIRECTORY':         str(Path(f'~/.password-store/{os.getenv("PASS_DIRECTORY", "")}').expanduser()),
-    'PASS_GPG_PASSPHRASE':    os.getenv('PASS_GPG_PASSPHRASE', ''),
-    'PASS_GPG_KEY':           os.getenv('PASS_GPG_KEY', ''),
-    'PASS_GPG_KEY_ID':        os.getenv('PASS_GPG_KEY_ID', ''),
-    'PASS_GIT_URL':           os.getenv('PASS_GIT_URL', ''),
-    'PASS_GIT_BRANCH':        os.getenv('PASS_GIT_BRANCH', 'main')
-}
 
 
 @kopf.on.startup()
@@ -81,8 +63,7 @@ def reconciliation(body: kopf.Body, **_: Any) -> None:
 
     # Create a new PassSecret object with an up-to-date managedSecret decrypted value from the pass store.
     passSecret = PassSecret.from_dict(
-        manifest=dict(body),
-        env=env
+        manifest=dict(body)
     )
 
     log.info(f'Reconciling PassSecret "{passSecret.name}" managed Secret "{passSecret.managedSecret.name}" in Namespace "{passSecret.managedSecret.namespace}" against password store.')
@@ -96,6 +77,7 @@ def reconciliation(body: kopf.Body, **_: Any) -> None:
         )
 
         _managedSecret = ManagedSecret.from_client_dict(secret.to_dict())
+        print(_managedSecret, passSecret.managedSecret, _managedSecret.data_equals(passSecret.managedSecret))
 
         # If the managed secret data does not match what's in the newly-generated ManagedSecret object,
         # submit a patch request to update it.
@@ -133,7 +115,6 @@ def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.
         old [kopf.BodyEssence]: old body of the PassSecret.
         new [kopf.BodyEssence]: new body of the PassSecret.
     """
-    # Parse the old PassSecret manifest.
     metadata = {
         'metadata': {
             'name': meta['name'],
@@ -141,13 +122,13 @@ def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.
         }
     }
 
+    # Parse the old PassSecret manifest.
     try:
         oldPassSecret = PassSecret.from_dict(
             manifest={
                 **metadata,
                 **old
-            },
-            env=env
+            }
         )
     except (ValueError, KeyError) as e:
         raise kopf.PermanentError(e)
@@ -158,8 +139,7 @@ def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.
             manifest={
                 **metadata
                 **new
-            },
-            env=env
+            }
         )
     except (ValueError, KeyError) as e:
         raise kopf.PermanentError(e)
@@ -205,8 +185,7 @@ def create(body: kopf.Body, **_: Any) -> None:
     """
     try:
         secret = PassSecret.from_dict(
-            manifest=dict(body),
-            env=env
+            manifest=dict(body)
         )
     except (ValueError, KeyError) as e:
         raise kopf.PermanentError(e)
@@ -239,8 +218,7 @@ def delete(body: kopf.Body, **_: Any) -> None:
     """
     try:
         secret = PassSecret.from_dict(
-            manifest=dict(body),
-            env=env
+            manifest=dict(body)
         )
     except (ValueError, KeyError) as e:
         raise kopf.PermanentError(e)
