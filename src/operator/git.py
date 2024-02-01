@@ -24,7 +24,7 @@ def clone(url: str, branch: str ='main', path: Path | str =Path('~/.password-sto
     if not Path(path).exists():
         Path(path).mkdir(parents=True, exist_ok=True)
 
-    with cmd(f'git clone --branch {branch} {url} {path}', shell=True) as (stdout, stderr):
+    with cmd(f'git clone --branch {branch} {url} {path}'.split(' '), shell=True) as (stdout, stderr):
         log.info(f'git clone | stdout: {stdout} | stderr: {stderr}')
 
 
@@ -37,7 +37,7 @@ def pull(path: Path | str =Path('~/.password-store').expanduser(), block: bool =
         block (bool): whether or not to run a blocking git pull.
         interval (int): interval over which the subprocess should iterate while running 'git pull'.
     """
-    with cmd(f'cd {path} && while true; do git pull; sleep {interval}; done', shell=True, block=block) as (stdout, stderr):
+    with cmd(f'cd {path} && while true; do git pull; sleep {interval}; done'.split(' '), shell=True, block=block) as (stdout, stderr):
         if block:
             return None
 

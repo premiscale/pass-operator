@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from src.operator.gpg import decrypt
 from src.operator.utils import b64Dec, b64Enc
-from src.operator.environment import env
+from src.operator import env
 
 import logging
 

@@ -3,7 +3,7 @@ Utils for the operator.
 """
 
 
-from typing import Generator, Tuple
+from typing import Generator, Tuple, List
 from enum import Enum
 from contextlib import contextmanager
 from subprocess import Popen, PIPE, DEVNULL
@@ -73,7 +73,7 @@ def b64Dec(value: str) -> str:
 
 
 @contextmanager
-def cmd(command: str, shell: bool =False, block: bool =True) -> Generator[Tuple[str, str] | Tuple[None, None], None, None]:
+def cmd(command: List[str], shell: bool =False, block: bool =True) -> Generator[Tuple[str, str] | Tuple[None, None], None, None]:
     """
     Get results from terminal commands as lists of lines of text.
     """

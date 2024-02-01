@@ -12,7 +12,7 @@ from http import HTTPStatus
 from src.operator.git import pull, clone
 from src.operator.utils import LogLevel
 from src.operator.secret import PassSecret, ManagedSecret
-from src.operator.environment import env
+from src.operator import env
 
 import logging
 import sys
