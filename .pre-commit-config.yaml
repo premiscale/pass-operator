@@ -7,7 +7,7 @@ repos:
       - id: hadolint
         args:
           - --config
-          - .hadolint.yaml
+          - .github/.hadolint.yaml
           - -t
           - error
           - Dockerfile
