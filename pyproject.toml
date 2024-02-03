@@ -26,6 +26,7 @@ python = "^3.10"
 kubernetes = "^29.0.0"
 kopf = "^1.36.2"
 python-gnupg = "^0.5.2"
+gitpython = "^3.1.41"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.3.2"

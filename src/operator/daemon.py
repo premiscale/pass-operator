@@ -9,11 +9,14 @@ from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from importlib import metadata
 from kubernetes import client, config
 from http import HTTPStatus
+from concurrent.futures import ThreadPoolExecutor
+from functools import partial
 from src.operator.git import pull, clone
 from src.operator.utils import LogLevel
 from src.operator.secret import PassSecret, ManagedSecret
 from src.operator import env
 
+import asyncio
 import logging
 import sys
 import kopf
@@ -26,18 +29,12 @@ log = logging.getLogger(__name__)
 
 @kopf.on.startup()
 def start(**_: Any) -> None:
-
     """
     Perform initial repo clone and set up operator runtime.
     """
     log.info(f'Starting operator version {__version__}')
 
-    # Clone the pass repo into a particular local directory and checkout the specified branch.
-    clone(
-        url=env['PASS_GIT_URL'],
-        branch=env['PASS_GIT_BRANCH'],
-        path=env['PASS_DIRECTORY']
-    )
+    clone()
 
 
 @kopf.timer(
@@ -260,9 +257,12 @@ def check_gpg_id(path: Path | str, remove: bool =False) -> None:
         sys.exit(1)
 
 
-def main() -> None:
+def main() -> int:
     """
     Set up this wrapping Python program with logging, etc.
+
+    Returns:
+        int: exit code.
     """
     parser = ArgumentParser(
         description=__doc__,
@@ -330,19 +330,30 @@ def main() -> None:
         remove=True
     )
 
-    # Start the 'git pull' subprocess on the specified interval.
-    pull(
-        path=env['PASS_DIRECTORY'],
-        interval=int(env['OPERATOR_INTERVAL']),
-        block=False
-    )
+    with ThreadPoolExecutor(max_workers=2, thread_name_prefix='operator') as executor:
+        threads = [
+            executor.submit(
+                partial(
+                    # Start kopf in its event loop in another thread on this process.
+                    lambda: asyncio.run(
+                        kopf.operator(
+                            # https://kopf.readthedocs.io/en/stable/packages/kopf/#kopf.run
+                            priority=int(env['OPERATOR_PRIORITY']),
+                            standalone=True,
+                            namespace=env['OPERATOR_NAMESPACE'],
+                            clusterwide=False,
+                            liveness_endpoint=f'http://{env["OPERATOR_POD_IP"]}:8080/healthz'
+                        )
+                    )
+                )
+            ),
+            executor.submit(
+                pull
+            )
+        ]
 
-    kopf.run(
-        # https://kopf.readthedocs.io/en/stable/packages/kopf/#kopf.run
-        priority=int(env['OPERATOR_PRIORITY']),
-        standalone=True,
-        namespace=env['OPERATOR_NAMESPACE'],
-        clusterwide=False,
-        liveness_endpoint=f'http://{env["OPERATOR_POD_IP"]}:8080/healthz',
-        # quiet=True
-    )
+        for thread in threads:
+            if thread is not None:
+                thread.result()
+
+    return 0

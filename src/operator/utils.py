@@ -73,14 +73,14 @@ def b64Dec(value: str) -> str:
 
 
 @contextmanager
-def cmd(command: List[str], shell: bool =False, block: bool =True) -> Generator[Tuple[str, str] | Tuple[None, None], None, None]:
+def cmd(command: str, sep: str =' ', shell: bool =False, block: bool =True) -> Generator[Tuple[str, str] | Tuple[None, None], None, None]:
     """
     Get results from terminal commands as lists of lines of text.
     """
     if block:
-        with Popen(command, shell=shell, stdout=PIPE, stderr=PIPE) as proc:
-            stdout, stderr = proc.communicate()  # blocking
+        with Popen(command.split(sep), shell=shell, stdout=PIPE, stderr=PIPE) as proc:
+            stdout, stderr = proc.communicate()
         yield stdout.decode().rstrip(), stderr.decode().rstrip()
     else:
-        with Popen(command, shell=shell, stdout=DEVNULL, stderr=DEVNULL) as proc:
+        with Popen(command.split(sep), shell=shell, stdout=DEVNULL, stderr=DEVNULL) as proc:
             yield None, None

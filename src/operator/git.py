@@ -3,42 +3,45 @@ Methods to interact minimally with a Git repository.
 """
 
 
-from pathlib import Path
-from src.operator.utils import cmd
+from git import Repo
+from src.operator import env
+from time import sleep
 
 import logging
+# import sys
 
 
 log = logging.getLogger(__name__)
 
 
-def clone(url: str, branch: str ='main', path: Path | str =Path('~/.password-store').expanduser()) -> None:
+def clone() -> None:
     """
-    Run git clone into a location.
-
-    Args:
-        url (str): Git repo URL.
-        path (Union[Path, str]): Local container repo path.
-        branch (str, optional): Branch to clone into from the remote repository. Defaults to 'main'.
+    Run git clone with configuration from environment variables using gitpython.
     """
-    if not Path(path).exists():
-        Path(path).mkdir(parents=True, exist_ok=True)
+    repo = Repo.clone_from(
+        url=env['PASS_GIT_URL'],
+        to_path=env['PASS_DIRECTORY']
+    )
 
-    with cmd(f'git clone --branch {branch} {url} {path}'.split(' '), shell=True) as (stdout, stderr):
-        log.info(f'git clone | stdout: {stdout} | stderr: {stderr}')
+    # if env['PASS_GIT_BRANCH'] not in repo.branches:
+    #     log.error(f'Branch "{env["PASS_GIT_BRANCH"]}" not found in project at URL "{env["PASS_GIT_URL"]}"')
+    #     sys.exit(1)
+
+    if str(repo.active_branch) != env['PASS_GIT_BRANCH']:
+        repo.git.checkout(env['PASS_GIT_BRANCH'])
+
+    log.info(f'Successfully cloned repo {env["PASS_GIT_URL"]} to password store {env["PASS_DIRECTORY"]}')
+
+    return None
 
 
-def pull(path: Path | str =Path('~/.password-store').expanduser(), block: bool =True, interval: int =60) -> None:
+def pull() -> None:
     """
-    Run git pull at some location.
-
-    Args:
-        path (Union[Path, str]): path to the git repository.
-        block (bool): whether or not to run a blocking git pull.
-        interval (int): interval over which the subprocess should iterate while running 'git pull'.
+    Run 'git pull' in the cloned repository.
     """
-    with cmd(f'cd {path} && while true; do git pull; sleep {interval}; done'.split(' '), shell=True, block=block) as (stdout, stderr):
-        if block:
-            return None
+    log.info(f'Updating local password store at "{env["PASS_DIRECTORY"]}"')
 
-        log.info(f'git pull | stdout: {stdout} | stderr: {stderr}')
+    while True:
+        repo = Repo(env['PASS_DIRECTORY'])
+        repo.remotes.origin.pull()
+        sleep(float(env['OPERATOR_INTERVAL']))
