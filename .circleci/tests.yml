@@ -8,7 +8,7 @@ executors:
 
 
 orbs:
-  general: premiscale/general@dev:ccee292526eb0c91b401c440214809efca9a19b3
+  general: premiscale/general@1.1.2
 
 
 jobs:
