@@ -56,13 +56,13 @@ flowchart TD
         threads --> kopf
         threads --> gitpull
     end
-    subgraph kopf
+    subgraph "Kopf Operator"
         startkopf --> reconcile[Reconcile PassSecrets] --> storevaluechanged{Password Store<br>value changed?} -->|Yes| update[Update managed Secret] --> reconcilewait([Wait 60s]) --> reconcile
         storevaluechanged -->|No| reconcilewait
         startkopf --> new[New PassSecret] --> create[Create PassSecret] --> createms[Create managed<br>secret]
         startkopf --> delete[Deleted PassSecret] --> deletems[Delete managed<br>secret]
     end
-    subgraph gitpull
+    subgraph "Git Pull Loop"
         pull --> wait([Wait 60s]) --> pull
     end
 ```
