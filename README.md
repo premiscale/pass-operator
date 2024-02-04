@@ -57,7 +57,7 @@ flowchart TD
         threads --> git
     end
     subgraph operator
-        startkopf --> reconcile[Reconcile PassSecrets] --> storevaluechanged{Password Store<br>value changed?} -->|Yes| update[Update managed Secret] --> reconcilewait([Wait 60s]) --> reconcile
+        startkopf --> reconcile[Reconcile PassSecrets] --> storevaluechanged{Store value<br>changed?} -->|Yes| update[Update managed Secret] --> reconcilewait([Wait 60s]) --> reconcile
         storevaluechanged -->|No| reconcilewait
         startkopf --> new[New PassSecret] --> create[Create PassSecret] --> createms[Create managed<br>secret]
         startkopf --> delete[Deleted PassSecret] --> deletems[Delete managed<br>secret]
