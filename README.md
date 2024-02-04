@@ -53,18 +53,23 @@ flowchart TD
     subgraph startup
         start[Operator start] --> clone[Clone Git repository]
         clone --> threads[Spawn threads]
-        threads --> operator
-        threads --> git
     end
+
     subgraph operator
+        direction LR
         startkopf --> reconcile[Reconcile PassSecrets] --> storevaluechanged{Store value<br>changed?} -->|Yes| update[Update managed Secret] --> reconcilewait([Wait 60s]) --> reconcile
         storevaluechanged -->|No| reconcilewait
         startkopf --> new[New PassSecret] --> create[Create PassSecret] --> createms[Create managed<br>secret]
         startkopf --> delete[Deleted PassSecret] --> deletems[Delete managed<br>secret]
     end
+
     subgraph git
+        direction LR
         pull --> wait([Wait 60s]) --> pull
     end
+
+    startup --> operator
+    startup --> git
 ```
 
 ## Use
