@@ -40,8 +40,5 @@ def pull() -> None:
     while True:
         log.info(f'Updating local password store at "{env["PASS_DIRECTORY"]}"')
         repo = Repo(env['PASS_DIRECTORY'])
-        print('here 1')
         repo.remotes.origin.pull()
-        print('here 2')
         sleep(float(env['OPERATOR_INTERVAL']))
-        print('here 3')

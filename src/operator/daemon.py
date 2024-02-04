@@ -71,7 +71,6 @@ def reconciliation(body: kopf.Body, **_: Any) -> None:
         )
 
         _managedSecret = ManagedSecret.from_client_dict(secret.to_dict())
-        print(_managedSecret, passSecret.managedSecret, _managedSecret.data_equals(passSecret.managedSecret), sep='\n')
 
         # If the managed secret data does not match what's in the newly-generated ManagedSecret object,
         # submit a patch request to update it.
@@ -329,7 +328,7 @@ def main() -> int:
 
     clone()
 
-    with ThreadPoolExecutor(thread_name_prefix='operator') as executor:
+    with ThreadPoolExecutor(max_workers=2, thread_name_prefix='operator') as executor:
         threads = [
             executor.submit(
                 # Start kopf in its event loop in another thread on this process.
