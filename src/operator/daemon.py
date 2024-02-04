@@ -329,7 +329,7 @@ def main() -> int:
         remove=True
     )
 
-    with ThreadPoolExecutor(max_workers=2, thread_name_prefix='operator') as executor:
+    with ThreadPoolExecutor(thread_name_prefix='operator') as executor:
         threads = [
             executor.submit(
                 # Start kopf in its event loop in another thread on this process.

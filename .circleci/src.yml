@@ -3,6 +3,7 @@ version: 2.1
 
 orbs:
   general: premiscale/general@1.1.1
+  slack: circleci/slack@4.12.6
 
 
 executors:
@@ -74,6 +75,26 @@ workflows:
               ignore:
                 - master
 
+      - slack/on-hold:
+          name: 'slack: notify release development deployment hold'
+          context: slack
+          requires:
+            - helm build and push [helm/operator] [develop]
+          filters:
+            branches:
+              ignore:
+                - master
+
+      - request-approval:
+          name: 'hold: release develop deployment'
+          requires:
+            - 'slack: notify release development deployment hold'
+          type: approval
+          filters:
+            branches:
+              ignore:
+                - master
+
       - general/helm-upgrade:
           name: helm upgrade install [helm/operator] [develop]
           cluster: $CHELSEA_CLUSTER
@@ -97,7 +118,7 @@ workflows:
             --set operator.git.branch="$PASS_GIT_BRANCH"
             --set operator.ssh.value="$PASS_SSH_PRIVATE_KEY"
           requires:
-            - helm build and push [helm/operator] [develop]
+            - 'hold: release develop deployment'
           context:
             - kubeconfig
             - nexus
@@ -156,6 +177,26 @@ workflows:
               only:
                 - master
 
+      - slack/on-hold:
+          name: 'slack: notify release master deployment hold'
+          context: slack
+          requires:
+            - helm build and push [helm/operator] [master]
+          filters:
+            branches:
+              ignore:
+                - master
+
+      - request-approval:
+          name: 'hold: release master deployment'
+          requires:
+            - 'slack: notify release master deployment hold'
+          type: approval
+          filters:
+            branches:
+              ignore:
+                - master
+
       - general/helm-upgrade:
           name: helm upgrade install [helm/operator] [master]
           cluster: $CHELSEA_CLUSTER
@@ -179,7 +220,7 @@ workflows:
             --set operator.git.branch="$PASS_GIT_BRANCH"
             --set operator.ssh.value="$PASS_SSH_PRIVATE_KEY"
           requires:
-            - helm build and push [helm/operator] [master]
+            - 'hold: release master deployment'
           context:
             - kubeconfig
             - nexus
