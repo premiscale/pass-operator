@@ -1,6 +1,6 @@
 # `pass` secrets operator
 
-This Kubernetes operator can be used to sync and decrypt secrets from a password store ([pass](https://www.passwordstore.org/)) Git repository. It is proposed as a proof-of-concept and shouldn't be used in any production capacity.
+A Kubernetes operator to sync and decrypt secrets from a password store ([pass](https://www.passwordstore.org/)) Git repository. This operator is proposed as a proof-of-concept and shouldn't be used in any production capacity.
 
 While this approach to secrets management on Kubernetes is more technically challenging, the advantage is that we don't have to rely on a 3rd party SaaS platform, such as Vault or Doppler, to hold our secrets (the obvious benefits these platforms do provide, however, are better user and access management). We may also use this operator in an airgapped environment with a self-hosted git repository.
 
