@@ -184,7 +184,7 @@ workflows:
             - helm build and push [helm/operator] [master]
           filters:
             branches:
-              ignore:
+              only:
                 - master
 
       - request-approval:
@@ -194,7 +194,7 @@ workflows:
           type: approval
           filters:
             branches:
-              ignore:
+              only:
                 - master
 
       - general/helm-upgrade:
