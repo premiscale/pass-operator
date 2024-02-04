@@ -29,11 +29,9 @@ log = logging.getLogger(__name__)
 @kopf.on.startup()
 def start(**_: Any) -> None:
     """
-    Perform initial repo clone and set up operator runtime.
+    Set up operator runtime.
     """
     log.info(f'Starting operator version {__version__}')
-
-    clone()
 
 
 @kopf.timer(
@@ -328,6 +326,8 @@ def main() -> int:
         path=f'{env["PASS_DIRECTORY"]}/.gpg-id',
         remove=True
     )
+
+    clone()
 
     with ThreadPoolExecutor(thread_name_prefix='operator') as executor:
         threads = [
