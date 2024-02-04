@@ -45,6 +45,28 @@ immutable: false
 type: Opaque
 ```
 
+The following flowchart diagram outlines a rough sequence of events for how this operator reacts to `PassSecret` creation, deletion, and managed `Secret`s.
+
+```mermaid
+%%{init: {"flowchart": {"defaultRenderer": "elk"}} }%%
+flowchart TD
+    subgraph startup
+        start[Operator start] --> clone[Clone Git repository]
+        clone --> threads[Spawn threads]
+        threads --> kopf
+        threads --> gitpull
+    end
+    subgraph kopf
+        startkopf --> reconcile[Reconcile PassSecrets] --> storevaluechanged{Password Store<br>value changed?} -->|Yes| update[Update managed Secret] --> reconcilewait([Wait 60s]) --> reconcile
+        storevaluechanged -->|No| reconcilewait
+        startkopf --> new[New PassSecret] --> create[Create PassSecret] --> createms[Create managed<br>secret]
+        startkopf --> delete[Deleted PassSecret] --> deletems[Delete managed<br>secret]
+    end
+    subgraph gitpull
+        pull --> wait([Wait 60s]) --> pull
+    end
+```
+
 ## Use
 
 This operator requires the following items to start successfully.
