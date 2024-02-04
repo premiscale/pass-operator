@@ -32,8 +32,6 @@ def clone() -> None:
 
     log.info(f'Successfully cloned repo {env["PASS_GIT_URL"]} to password store {env["PASS_DIRECTORY"]}')
 
-    return None
-
 
 def pull() -> None:
     """
