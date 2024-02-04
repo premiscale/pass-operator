@@ -333,6 +333,7 @@ def main() -> int:
         threads = [
             executor.submit(
                 # Start kopf in its event loop in another thread on this process.
+                # https://kopf.readthedocs.io/en/stable/embedding/
                 lambda: asyncio.run(
                     kopf.operator(
                         # https://kopf.readthedocs.io/en/stable/packages/kopf/#kopf.run
@@ -350,7 +351,6 @@ def main() -> int:
         ]
 
         for thread in threads:
-            if thread is not None:
-                thread.result()
+            thread.result()
 
     return 0

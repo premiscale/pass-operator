@@ -35,7 +35,7 @@ def clone() -> None:
 
 def pull() -> None:
     """
-    Run 'git pull' in the cloned repository.
+    Blocking function that runs 'git pull' in the cloned repository, repeatedly.
     """
     while True:
         log.info(f'Updating local password store at "{env["PASS_DIRECTORY"]}"')
