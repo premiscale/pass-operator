@@ -10,7 +10,6 @@ from importlib import metadata
 from kubernetes import client, config
 from http import HTTPStatus
 from concurrent.futures import ThreadPoolExecutor
-from functools import partial
 from src.operator.git import pull, clone
 from src.operator.utils import LogLevel
 from src.operator.secret import PassSecret, ManagedSecret
@@ -333,17 +332,15 @@ def main() -> int:
     with ThreadPoolExecutor(max_workers=2, thread_name_prefix='operator') as executor:
         threads = [
             executor.submit(
-                partial(
-                    # Start kopf in its event loop in another thread on this process.
-                    lambda: asyncio.run(
-                        kopf.operator(
-                            # https://kopf.readthedocs.io/en/stable/packages/kopf/#kopf.run
-                            priority=int(env['OPERATOR_PRIORITY']),
-                            standalone=True,
-                            namespace=env['OPERATOR_NAMESPACE'],
-                            clusterwide=False,
-                            liveness_endpoint=f'http://{env["OPERATOR_POD_IP"]}:8080/healthz'
-                        )
+                # Start kopf in its event loop in another thread on this process.
+                lambda: asyncio.run(
+                    kopf.operator(
+                        # https://kopf.readthedocs.io/en/stable/packages/kopf/#kopf.run
+                        priority=int(env['OPERATOR_PRIORITY']),
+                        standalone=True,
+                        namespace=env['OPERATOR_NAMESPACE'],
+                        clusterwide=False,
+                        liveness_endpoint=f'http://{env["OPERATOR_POD_IP"]}:8080/healthz'
                     )
                 )
             ),

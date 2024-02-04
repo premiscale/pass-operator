@@ -37,9 +37,8 @@ def pull() -> None:
     """
     Run 'git pull' in the cloned repository.
     """
-    log.info(f'Updating local password store at "{env["PASS_DIRECTORY"]}"')
-
     while True:
+        log.info(f'Updating local password store at "{env["PASS_DIRECTORY"]}"')
         repo = Repo(env['PASS_DIRECTORY'])
         repo.remotes.origin.pull()
         sleep(float(env['OPERATOR_INTERVAL']))
