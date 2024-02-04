@@ -49,7 +49,7 @@ The following flowchart diagram outlines a rough sequence of events for how this
 
 ```mermaid
 %%{init: {"flowchart": {"defaultRenderer": "elk"}} }%%
-flowchart TD
+flowchart LR
     subgraph startup
         start[Operator start] --> clone[Clone Git repository]
         clone --> threads[Spawn threads]
