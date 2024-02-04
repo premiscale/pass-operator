@@ -3,70 +3,42 @@ Methods to interact minimally with a Git repository.
 """
 
 
-from pathlib import Path
-from typing import Union
 from git import Repo
+from time import sleep
+from src.operator import env
 
 import logging
-import os
+# import sys
 
 
 log = logging.getLogger(__name__)
 
 
-class GitRepo:
+def clone() -> None:
     """
-    Abstract gitpython with some higher-level methods for cloning and pulling updates from a git project.
-
-    Referencing this to clean this up eventually ~
-
-       https://stackoverflow.com/questions/13166595/how-can-i-pull-a-remote-repository-with-gitpython
+    Run git clone with configuration from environment variables using gitpython.
     """
+    repo = Repo.clone_from(
+        url=env['PASS_GIT_URL'],
+        to_path=env['PASS_DIRECTORY']
+    )
 
-    def __init__(self, repo_url: str, branch: str, clone_location: Union[Path, str] ='repo') -> None:
-        self.repo_url = repo_url
-        self.branch = branch
-        self.clone_location = (os.getenv('HOME') or '') + '/.password-store/' + str(clone_location)
-        self.cloned = False
-        self.repo: Repo
+    # if env['PASS_GIT_BRANCH'] not in repo.branches:
+    #     log.error(f'Branch "{env["PASS_GIT_BRANCH"]}" not found in project at URL "{env["PASS_GIT_URL"]}"')
+    #     sys.exit(1)
 
-    def clone(self) -> None:
-        """
-        Clone a git repository. Should only be called once.
+    if str(repo.active_branch) != env['PASS_GIT_BRANCH']:
+        repo.git.checkout(env['PASS_GIT_BRANCH'])
 
-        Args:
-            repo_url (str): Location of the git repository.
-            branch (str): Git branch to checkout.
-            loc (str): Local file path to clone to.
-        """
-        if self.cloned:
-            log.warning(f'Repository at URL {self.repo_url} has already been cloned to location "{self.clone_location}". Skipping')
-            return None
+    log.info(f'Successfully cloned repo {env["PASS_GIT_URL"]} to password store {env["PASS_DIRECTORY"]}')
 
-        self.repo = Repo.clone_from(
-            url=self.repo_url,
-            to_path=self.clone_location
-        )
 
-        # if self.branch not in self.repo.branches:
-        #     log.error(f'Branch "{self.branch}" not found in project at URL "{self.repo_url}"')
-        #     sys.exit(1)
-
-        if str(self.repo.active_branch) != self.branch:
-            self.repo.git.checkout(self.branch)
-
-        self.cloned = True
-
-        log.info(f'Successfully cloned repo {self.repo_url} to password store {self.clone_location}')
-
-        return None
-
-    def pull(self) -> None:
-        """
-        Run 'git pull' in the cloned repository. This method will be called repeatedly, on an interval.
-        """
-        if not self.cloned:
-            self.clone()
-
-        log.info(f'Updating local password store at "{self.clone_location}"')
-        self.repo.remotes.origin.pull()
+def pull() -> None:
+    """
+    Blocking function that runs 'git pull' in the cloned repository, repeatedly.
+    """
+    while True:
+        log.info(f'Updating local password store at "{env["PASS_DIRECTORY"]}"')
+        repo = Repo(env['PASS_DIRECTORY'])
+        repo.remotes.origin.pull()
+        sleep(float(env['OPERATOR_INTERVAL']))

@@ -1,5 +1,5 @@
 ARG IMAGE=python
-ARG TAG=3.10.11
+ARG TAG=3.10.13
 
 FROM ${IMAGE}:${TAG}
 
@@ -18,7 +18,7 @@ ARG TINI_VERSION=v0.19.0
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
 RUN chmod +x /tini
 
-ARG PASS_VERSION=1.7.3-2
+ARG PASS_VERSION=1.7.4-6
 RUN apt update \
     && apt list -a pass \
     && apt install -y pass="$PASS_VERSION" \
@@ -43,6 +43,7 @@ ENV PATH=${PATH}:/opt/pass-operator/.local/bin
 
 # Set up SSH and install the pass-operator package from my private registry.
 RUN mkdir -p "$HOME"/.local/bin "$HOME"/.ssh "$HOME"/.gnupg \
+    && printf "[pull]\\n    rebase = true" > "$HOME"/.gitconfig \
     && chmod 700 "$HOME"/.gnupg \
     && pip install --upgrade pip \
     && pip install --no-cache-dir --no-input --extra-index-url="${PYTHON_INDEX}" pass-operator=="${PYTHON_PACKAGE_VERSION}"

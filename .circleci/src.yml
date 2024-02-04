@@ -2,13 +2,14 @@ version: 2.1
 
 
 orbs:
-  general: premiscale/general@1.1.1
+  general: premiscale/general@1.1.2
+  slack: circleci/slack@4.12.6
 
 
 executors:
   python-3-10:
     docker:
-      - image: cimg/python:3.10.11
+      - image: cimg/python:3.10.13
 
 
 workflows:
@@ -16,6 +17,7 @@ workflows:
     jobs:
       - general/python-pylint:
           name: pylint
+          configuration_file: pyproject.toml
           context: nexus
 
       - general/python-mypy:
@@ -73,6 +75,26 @@ workflows:
               ignore:
                 - master
 
+      - slack/on-hold:
+          name: 'slack: notify release development deployment hold'
+          context: slack
+          requires:
+            - helm build and push [helm/operator] [develop]
+          filters:
+            branches:
+              ignore:
+                - master
+
+      - request-approval:
+          name: 'hold: release develop deployment'
+          requires:
+            - 'slack: notify release development deployment hold'
+          type: approval
+          filters:
+            branches:
+              ignore:
+                - master
+
       - general/helm-upgrade:
           name: helm upgrade install [helm/operator] [develop]
           cluster: $CHELSEA_CLUSTER
@@ -87,7 +109,7 @@ workflows:
             --set operator.priority="$OPERATOR_PRIORITY"
             --set operator.ssh.createSecret="true"
             --set operator.pass.binary="$PASS_BINARY"
-            --set operator.pass.subdirectory="$PASS_DIRECTORY"
+            --set operator.pass.storeSubPath="$PASS_DIRECTORY"
             --set operator.gpg.createSecret="true"
             --set operator.gpg.value="$PASS_GPG_KEY"
             --set operator.gpg.key_id="$PASS_GPG_KEY_ID"
@@ -96,7 +118,7 @@ workflows:
             --set operator.git.branch="$PASS_GIT_BRANCH"
             --set operator.ssh.value="$PASS_SSH_PRIVATE_KEY"
           requires:
-            - helm build and push [helm/operator] [develop]
+            - 'hold: release develop deployment'
           context:
             - kubeconfig
             - nexus
@@ -155,6 +177,26 @@ workflows:
               only:
                 - master
 
+      - slack/on-hold:
+          name: 'slack: notify release master deployment hold'
+          context: slack
+          requires:
+            - helm build and push [helm/operator] [master]
+          filters:
+            branches:
+              ignore:
+                - master
+
+      - request-approval:
+          name: 'hold: release master deployment'
+          requires:
+            - 'slack: notify release master deployment hold'
+          type: approval
+          filters:
+            branches:
+              ignore:
+                - master
+
       - general/helm-upgrade:
           name: helm upgrade install [helm/operator] [master]
           cluster: $CHELSEA_CLUSTER
@@ -169,7 +211,7 @@ workflows:
             --set operator.priority="$OPERATOR_PRIORITY"
             --set operator.ssh.createSecret="true"
             --set operator.pass.binary="$PASS_BINARY"
-            --set operator.pass.subdirectory="$PASS_DIRECTORY"
+            --set operator.pass.storeSubPath="$PASS_DIRECTORY"
             --set operator.gpg.createSecret="true"
             --set operator.gpg.value="$PASS_GPG_KEY"
             --set operator.gpg.key_id="$PASS_GPG_KEY_ID"
@@ -178,7 +220,7 @@ workflows:
             --set operator.git.branch="$PASS_GIT_BRANCH"
             --set operator.ssh.value="$PASS_SSH_PRIVATE_KEY"
           requires:
-            - helm build and push [helm/operator] [master]
+            - 'hold: release master deployment'
           context:
             - kubeconfig
             - nexus

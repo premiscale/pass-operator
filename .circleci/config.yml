@@ -5,7 +5,7 @@ setup: true
 
 orbs:
   dynamic: bjd2385/dynamic-continuation@3.8.1
-  general: premiscale/general@1.1.1
+  general: premiscale/general@1.1.2
   slack: circleci/slack@4.12.6
 
 
@@ -185,7 +185,7 @@ workflows:
             --set operator.priority="$OPERATOR_PRIORITY"
             --set operator.ssh.createSecret="true"
             --set operator.pass.binary="$PASS_BINARY"
-            --set operator.pass.subdirectory="$PASS_DIRECTORY"
+            --set operator.pass.storeSubPath="$PASS_DIRECTORY"
             --set operator.gpg.createSecret="true"
             --set operator.gpg.value="$PASS_GPG_KEY"
             --set operator.gpg.key_id="$PASS_GPG_KEY_ID"

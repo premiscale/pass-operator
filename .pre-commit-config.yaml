@@ -7,7 +7,7 @@ repos:
       - id: hadolint
         args:
           - --config
-          - .hadolint.yaml
+          - .github/.hadolint.yaml
           - -t
           - error
           - Dockerfile
@@ -21,15 +21,6 @@ repos:
       - id: check-executables-have-shebangs
       - id: check-shebang-scripts-are-executable
       - id: mixed-line-ending
-
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.8.0
-    hooks:
-      - id: mypy
-        args:
-          - --install-types
-          - --non-interactive
-          - --config-file=pyproject.toml
 
   - repo: https://github.com/jumanjihouse/pre-commit-hooks
     rev: 3.0.0
@@ -48,6 +39,29 @@ repos:
     hooks:
       - id: helmlint
 
+  - repo: local
+    hooks:
+      - id: mypy
+        language: script
+        name: mypy
+        entry: /usr/bin/env poetry run mypy
+        args:
+          - --non-interactive
+          - --install-types
+          - --config-file=pyproject.toml
+        files: src/
+      - id: pylint
+        language: script
+        name: pylint
+        entry: /usr/bin/env poetry run pylint
+        args: []
+        files: src/
+
+  - repo: https://github.com/abravalheri/validate-pyproject
+    rev: v0.15
+    hooks:
+      - id: validate-pyproject
+
   - repo: https://github.com/python-poetry/poetry
     rev: 1.7.0
     hooks:
@@ -56,28 +70,7 @@ repos:
       - id: poetry-export
         args: ["-f", "requirements.txt", "-o", "requirements.txt"]
 
-  - repo: https://github.com/PyCQA/pylint
-    rev: v3.0.3
-    hooks:
-      - id: pylint
-        args:
-          - --rcfile=.pylintrc
-          - src/
-
-  - repo: https://github.com/abravalheri/validate-pyproject
-    rev: v0.15
-    hooks:
-      - id: validate-pyproject
-
   - repo: https://github.com/premiscale/pre-commit-hooks
     rev: v0.0.9
     hooks:
     -   id: msg-issue-prefix
-
-  # - repo: local
-  #   hooks:
-  #     - id: kubeconform
-  #       name: kubeconform
-  #       language: system
-  #       entry: kubeconform -exit-on-error -n 4 -output text -strict -summary -schema-location default -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' helm/operator/crds/
-  #       files: '.*.ya?ml'

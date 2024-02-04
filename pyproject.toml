@@ -10,6 +10,9 @@ packages = [{include = "src"}]
 include = [
   "LICENSE"
 ]
+exclude = [
+  "src/test"
+]
 keywords = [
     "python",
     "kubernetes",
@@ -21,24 +24,46 @@ keywords = [
 [tool.poetry.dependencies]
 python = "^3.10"
 kubernetes = "^29.0.0"
-gitpython = "^3.1.31"
 kopf = "^1.36.2"
 python-gnupg = "^0.5.2"
+gitpython = "^3.1.41"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.3.2"
 poetry = "^1.5.1"
 mypy = "^1.0.1"
 pylint = "^3.0.3"
+pytest = "^7.4.4"
+coverage = "^7.4.1"
+deepdiff = "^6.7.1"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-passoperator = "src.operator.cli:main"
+passoperator = "src.operator.daemon:main"
 
 [tool.mypy]
 python_version = "3.10"
 strict_optional = "true"
 ignore_missing_imports = "true"
+
+[tool.coverage.run]
+# omit = [".*", "*/site-packages/*"]
+
+[tool.coverage.report]
+fail_under = 60
+
+[tool.pytest.ini_options]
+addopts = "--junitxml=./junit_test_results.xml"
+testpaths = [
+  "tests"
+]
+
+[tool.pylint."MESSAGES CONTROL"]
+disable = "invalid-name,wrong-import-order,superfluous-parens,line-too-long,missing-final-newline,logging-fstring-interpolation,too-many-instance-attributes,unused-argument,unused-import"
+fail-under = 9
+
+[tool.pylint.MASTER]
+init-hook = "import sys; sys.path.append('.')"

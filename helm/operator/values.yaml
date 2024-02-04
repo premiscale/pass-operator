@@ -39,7 +39,7 @@ operator:
 
   pass:
     binary: /usr/bin/pass
-    subdirectory: repo
+    storeSubPath: ''
 
   log:
     level: info

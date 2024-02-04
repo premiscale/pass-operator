@@ -1,0 +1,5 @@
+apiVersion: v2
+name: pass-operator-e2e
+description: Password store operator ephemeral e2e testing deployment
+type: application
+version: 0.0.1

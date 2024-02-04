@@ -189,6 +189,7 @@ pyrightconfig.json
 *.user
 *.userosscache
 *.sln.docstates
+.vscode/settings.json
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
@@ -531,3 +532,7 @@ MigrationBackup/
 .ionide/
 
 # End of https://www.toptal.com/developers/gitignore/api/python,helm,vs
+
+
+*.xml
+tmp*

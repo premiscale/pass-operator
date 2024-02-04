@@ -4,24 +4,35 @@ version: 2.1
 executors:
   python-3-10:
     docker:
-      - image: cimg/python:3.10.11
+      - image: cimg/python:3.10.13
 
 
-orbs: {}
+orbs:
+  general: premiscale/general@1.1.2
 
 
 jobs:
-  run-tests:
+  python-tests-unit:
     executor: python-3-10
     resource_class: small
     steps:
+      - checkout
+      - general/python-install-poetry
       - run:
-          name: Run tests
-          command: |
-            echo
+          name: Poetry install
+          command: |+
+            poetry install
+      - run:
+          name: Python unit tests
+          command: |+
+            poetry run pytest tests/unit
+      - store_test_results:
+          path: ./junit_test_results.xml
+
 
 
 workflows:
   tests:
     jobs:
-      - run-tests
+      - python-tests-unit:
+          name: python unit tests
