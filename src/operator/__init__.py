@@ -4,9 +4,15 @@ Make the environment variables' values that we care about, portable.
 
 
 from typing import Dict
+from ipaddress import IPv4Address, AddressValueError
 from pathlib import Path
 
 import os
+import logging
+import sys
+
+
+log = logging.getLogger(__name__)
 
 
 # TODO: implement import
@@ -32,3 +38,14 @@ env: Dict[str, str] = {
     'PASS_GIT_URL':           os.getenv('PASS_GIT_URL', ''),
     'PASS_GIT_BRANCH':        os.getenv('PASS_GIT_BRANCH', 'main')
 }
+
+
+# Environment type validation.
+try:
+    float(env['OPERATOR_INTERVAL'])
+    float(env['OPERATOR_INITIAL_DELAY'])
+    int(env['OPERATOR_PRIORITY'])
+    IPv4Address(env['OPERATOR_POD_IP'])
+except (ValueError, AddressValueError) as e:
+    log.error(e)
+    sys.exit(1)
