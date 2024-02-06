@@ -48,7 +48,7 @@ type: Opaque
 The following flowchart diagram outlines a rough sequence of events for how this operator reacts to `PassSecret` creation, deletion, and managed `Secret`s.
 
 <p align="center" width="100%">
-  <img width="75%" src="img/pass-operator-flow.png" alt="pass operator flow diagram">
+  <img width="100%" src="img/pass-operator-flow.png" alt="pass operator flow diagram">
 </p>
 
 ## Use
