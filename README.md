@@ -11,9 +11,14 @@ in Git, a practice that is often discouraged and typically forbidden at most org
 
 ## How it works
 
+The following flowchart outlines how this operator reacts to `PassSecret`-related events and pass store updates.
+
+<p align="center" width="100%">
+  <img width="100%" src="img/pass-operator-flow.png" alt="pass operator flow diagram">
+</p>
+
 From a high level, this operator runs `git pull` on an interval to grab updates from a git repository populated with encrypted
-secrets by `pass`. It maps secrets' paths to key values through the application of a [`PassSecret`](helm/operator/crds/PassSecret.yaml), a [CRD](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/),
-such as the following.
+secrets by `pass`. It maps secrets' paths to data values through the application of a [`PassSecret`](helm/operator/crds/PassSecret.yaml), a [custom resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/), such as the following.
 
 ```yaml
 apiVersion: secrets.premiscale.com/v1alpha1
@@ -44,12 +49,6 @@ stringData:
 immutable: false
 type: Opaque
 ```
-
-The following flowchart diagram outlines a rough sequence of events for how this operator reacts to `PassSecret`-related events and pass store updates.
-
-<p align="center" width="100%">
-  <img width="100%" src="img/pass-operator-flow.png" alt="pass operator flow diagram">
-</p>
 
 ## Use
 
