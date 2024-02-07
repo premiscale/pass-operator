@@ -10,6 +10,7 @@ from importlib import metadata
 from kubernetes import client, config
 from http import HTTPStatus
 from concurrent.futures import ThreadPoolExecutor
+from functools import partial
 from src.operator.git import pull, clone
 from src.operator.utils import LogLevel
 from src.operator.secret import PassSecret, ManagedSecret
@@ -345,7 +346,10 @@ def main() -> int:
                 )
             ),
             executor.submit(
-                pull
+                partial(
+                    pull,
+                    daemon=True
+                )
             )
         ]
 
