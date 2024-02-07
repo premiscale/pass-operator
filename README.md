@@ -18,7 +18,7 @@ The following flowchart outlines how this operator reacts to `PassSecret`-relate
 </p>
 
 From a high level, this operator runs `git pull` on an interval to grab updates from a git repository populated with encrypted
-secrets by `pass`. It maps secrets' paths to key values through the application of a [`PassSecret`](helm/operator/crds/PassSecret.yaml), a [custom resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/), such as the following.
+secrets by `pass`. It maps secrets' paths to data values through the application of a [`PassSecret`](helm/operator/crds/PassSecret.yaml), a [custom resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/), such as the following.
 
 ```yaml
 apiVersion: secrets.premiscale.com/v1alpha1
