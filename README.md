@@ -107,7 +107,7 @@ The private GPG key is used by `pass` to decrypt your secrets that were encrypte
 
       ```
 
-      > **Important:** be sure not to specify a password to use your keys.
+      > **Important:** if you specify a password for your key, you'll need to specify this password in the Helm values.
 
       You'll now see your key on your keyring.
 
