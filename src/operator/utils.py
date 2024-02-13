@@ -3,7 +3,10 @@ Utils for the operator.
 """
 
 
+from typing import Generator, Tuple
 from enum import Enum
+from contextlib import contextmanager
+from subprocess import Popen, PIPE
 
 import logging
 import sys
@@ -67,3 +70,20 @@ def b64Dec(value: str) -> str:
         str: the value b64-decoded.
     """
     return base64.b64decode(value).rstrip().decode()
+
+
+@contextmanager
+def cmd(command: str, shell: bool =False) -> Generator[Tuple[str, str] | Tuple[None, None], None, None]:
+    """
+    Get results from terminal commands as lists of lines of text.
+
+    Args:
+        command (str): command to execute as a string.
+        shell (bool): whether or not to wrap the command in a shell (default: False).\
+
+    Yields:
+        Either a tuple of stdout, stderr, or None, None.
+    """
+    with Popen(command.split(), shell=shell, stdout=PIPE, stderr=PIPE) as proc:
+        stdout, stderr = proc.communicate()
+    yield stdout.decode().rstrip(), stderr.decode().rstrip()
