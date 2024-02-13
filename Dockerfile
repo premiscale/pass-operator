@@ -30,11 +30,9 @@ RUN useradd -rm -d /opt/pass-operator -s /bin/bash -g operator -u 10001 operator
 WORKDIR /opt/pass-operator
 
 RUN chown -R operator:operator . \
-    && printf "[pull]\\n    rebase = true\\n[core]\\n    hooksPath = /opt/pass-operator/hooks"  > .gitconfig \
-    && mkdir hooks \
-    && chmod 005 hooks \
-    && chmod 004 .gitconfig
-COPY --chown=root:root --chmod=555 bin/pre-push.sh hooks/pre-push
+    && mkdir /hooks \
+    && printf "[pull]\\n    rebase = true\\n[core]\\n    hooksPath = /hooks" > /etc/gitconfig
+COPY --chown=root:root --chmod=555 bin/pre-push.sh /hooks/pre-push
 
 USER 10001
 
