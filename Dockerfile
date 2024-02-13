@@ -31,7 +31,8 @@ WORKDIR /opt/pass-operator
 
 RUN chown -R operator:operator . \
     && printf "[pull]\\n    rebase = true\\n[core]\\n    hooksPath = %s/hooks" "$HOME" > "$HOME"/.gitconfig \
-    && chmod 005 "$HOME"/hooks "$HOME"/.gitconfig
+    && chmod 005 "$HOME"/hooks \
+    && chmod 004 "$HOME"/.gitconfig
 COPY --chown=root:root --chmod=555 bin/pre-push.sh hooks/pre-push
 
 USER 10001
