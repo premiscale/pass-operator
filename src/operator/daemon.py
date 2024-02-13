@@ -49,6 +49,9 @@ def reconciliation(body: kopf.Body, **_: Any) -> None:
     Reconcile state of a managed secret against the pass store. Update secrets' data if a mismatch
     is found. Kopf timers are triggered on an object-by-object basis, so this method will
     automatically revisit every PassSecret, iff it resides in the same namespace as the operator.
+
+    Args:
+        body [kopf.Body]: raw body of the PassSecret.
     """
 
     # Ensure the GPG key ID in ~/.password-store/${PASS_DIRECTORY}/.gpg-id did not change with the git update.
@@ -294,7 +297,7 @@ def main() -> int:
 
     config.load_incluster_config()
 
-    if not env['PASS_GIT_URL'] :
+    if not env['PASS_GIT_URL']:
         log.error('Must provide a valid git URL (PASS_GIT_URL)')
         sys.exit(1)
 
