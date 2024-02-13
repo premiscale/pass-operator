@@ -6,7 +6,6 @@ Methods to interact minimally with a Git repository.
 from git import Repo
 from time import sleep
 from src.operator import env
-from src.operator.utils import cmd
 
 import logging
 
@@ -29,8 +28,6 @@ def clone() -> None:
 
     if str(repo.active_branch) != env['PASS_GIT_BRANCH']:
         repo.git.checkout(env['PASS_GIT_BRANCH'])
-
-    cmd(f'ln -s /usr/bin/false $HOME/.password-store/{env["PASS_DIRECTORY"]}/.git/hooks/pre-push')
 
     log.info(f'Successfully cloned repo {env["PASS_GIT_URL"]} to password store {env["PASS_DIRECTORY"]}')
 

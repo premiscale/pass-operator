@@ -42,9 +42,10 @@ ARG PYTHON_PACKAGE_VERSION=0.0.1
 ENV PATH=${PATH}:/opt/pass-operator/.local/bin
 
 # Set up SSH and install the pass-operator package from my private registry.
-RUN mkdir -p "$HOME"/.local/bin "$HOME"/.ssh "$HOME"/.gnupg \
-    && printf "[pull]\\n    rebase = true" > "$HOME"/.gitconfig \
+RUN mkdir -p "$HOME"/.local/bin "$HOME"/.ssh "$HOME"/.gnupg "$HOME"/hooks \
+    && printf "[pull]\\n    rebase = true\\n[core]\\n    hooksPath = %s/hooks" "$HOME" > "$HOME"/.gitconfig \
     && chmod 700 "$HOME"/.gnupg \
+    && chmod 400 "$HOME"/hooks \
     && pip install --upgrade pip \
     && pip install --no-cache-dir --no-input --extra-index-url="${PYTHON_INDEX}" pass-operator=="${PYTHON_PACKAGE_VERSION}"
 
@@ -62,5 +63,6 @@ ENV OPERATOR_INTERVAL=60 \
     PASS_SSH_PRIVATE_KEY=""
 
 COPY bin/entrypoint.sh /entrypoint.sh
+COPY --chmod=100 bin/pre-push.sh hooks/pre-push
 
 ENTRYPOINT [ "/tini", "--", "/entrypoint.sh" ]
