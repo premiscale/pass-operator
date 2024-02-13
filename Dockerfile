@@ -45,7 +45,7 @@ ENV PATH=${PATH}:/opt/pass-operator/.local/bin
 RUN mkdir -p "$HOME"/.local/bin "$HOME"/.ssh "$HOME"/.gnupg "$HOME"/hooks \
     && printf "[pull]\\n    rebase = true\\n[core]\\n    hooksPath = %s/hooks" "$HOME" > "$HOME"/.gitconfig \
     && chmod 700 "$HOME"/.gnupg \
-    && chmod 400 "$HOME"/hooks \
+    && chmod 440 "$HOME"/hooks \
     && pip install --upgrade pip \
     && pip install --no-cache-dir --no-input --extra-index-url="${PYTHON_INDEX}" pass-operator=="${PYTHON_PACKAGE_VERSION}"
 
