@@ -29,7 +29,11 @@ RUN useradd -rm -d /opt/pass-operator -s /bin/bash -g operator -u 10001 operator
 
 WORKDIR /opt/pass-operator
 
-RUN chown -R operator:operator .
+RUN chown -R operator:operator . \
+    && mkdir /hooks \
+    && printf "[pull]\\n    rebase = true\\n[core]\\n    hooksPath = /hooks" > /etc/gitconfig
+COPY --chown=root:root --chmod=555 bin/pre-push.sh /hooks/pre-push
+
 USER 10001
 
 ARG PYTHON_USERNAME
@@ -43,7 +47,6 @@ ENV PATH=${PATH}:/opt/pass-operator/.local/bin
 
 # Set up SSH and install the pass-operator package from my private registry.
 RUN mkdir -p "$HOME"/.local/bin "$HOME"/.ssh "$HOME"/.gnupg \
-    && printf "[pull]\\n    rebase = true" > "$HOME"/.gitconfig \
     && chmod 700 "$HOME"/.gnupg \
     && pip install --upgrade pip \
     && pip install --no-cache-dir --no-input --extra-index-url="${PYTHON_INDEX}" pass-operator=="${PYTHON_PACKAGE_VERSION}"
@@ -61,6 +64,6 @@ ENV OPERATOR_INTERVAL=60 \
     PASS_GIT_BRANCH=main \
     PASS_SSH_PRIVATE_KEY=""
 
-COPY bin/entrypoint.sh /entrypoint.sh
+COPY --chown=operator:operator --chmod=550 bin/entrypoint.sh /entrypoint.sh
 
 ENTRYPOINT [ "/tini", "--", "/entrypoint.sh" ]

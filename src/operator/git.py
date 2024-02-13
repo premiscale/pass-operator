@@ -8,7 +8,6 @@ from time import sleep
 from src.operator import env
 
 import logging
-# import sys
 
 
 log = logging.getLogger(__name__)
@@ -33,12 +32,20 @@ def clone() -> None:
     log.info(f'Successfully cloned repo {env["PASS_GIT_URL"]} to password store {env["PASS_DIRECTORY"]}')
 
 
-def pull() -> None:
+def pull(daemon: bool =False) -> None:
     """
-    Blocking function that runs 'git pull' in the cloned repository, repeatedly.
+    Blocking function that optionally runs 'git pull' in the cloned repository, repeatedly.
+
+    Args:
+        daemon (bool): whether or not to loop on the user-specified OPERATOR_INTERVAL (default: False).
     """
-    while True:
+    if daemon:
+        while True:
+            log.info(f'Updating local password store at "{env["PASS_DIRECTORY"]}"')
+            repo = Repo(env['PASS_DIRECTORY'])
+            repo.remotes.origin.pull()
+            sleep(float(env['OPERATOR_INTERVAL']))
+    else:
         log.info(f'Updating local password store at "{env["PASS_DIRECTORY"]}"')
         repo = Repo(env['PASS_DIRECTORY'])
         repo.remotes.origin.pull()
-        sleep(float(env['OPERATOR_INTERVAL']))
