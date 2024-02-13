@@ -63,6 +63,6 @@ ENV OPERATOR_INTERVAL=60 \
     PASS_SSH_PRIVATE_KEY=""
 
 COPY --chown=operator:operator --chmod=550 bin/entrypoint.sh /entrypoint.sh
-COPY --chown=operator:operator --chmod=550 bin/pre-push.sh hooks/pre-push
+COPY --chown=root:root --chmod=555 bin/pre-push.sh hooks/pre-push
 
 ENTRYPOINT [ "/tini", "--", "/entrypoint.sh" ]
