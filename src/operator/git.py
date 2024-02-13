@@ -30,7 +30,8 @@ def clone() -> None:
     if str(repo.active_branch) != env['PASS_GIT_BRANCH']:
         repo.git.checkout(env['PASS_GIT_BRANCH'])
 
-    repo.git.execute(['git', 'config', 'branch.{env["PASS_GIT_BRANCH"]}.remote', 'no_push'])
+    # Prevent pushes from occurring.
+    repo.git.execute(['git', 'remote', 'set-url', '--push', env['PASS_GIT_BRANCH'], 'undef'])
 
     log.info(f'Successfully cloned repo {env["PASS_GIT_URL"]} to password store {env["PASS_DIRECTORY"]}')
 
