@@ -62,7 +62,7 @@ ENV OPERATOR_INTERVAL=60 \
     PASS_GIT_BRANCH=main \
     PASS_SSH_PRIVATE_KEY=""
 
-COPY bin/entrypoint.sh /entrypoint.sh
-COPY --chmod=550 bin/pre-push.sh hooks/pre-push
+COPY --chown=operator:operator --chmod=550 bin/entrypoint.sh /entrypoint.sh
+COPY --chown=operator:operator --chmod=550 bin/pre-push.sh hooks/pre-push
 
 ENTRYPOINT [ "/tini", "--", "/entrypoint.sh" ]
