@@ -41,6 +41,7 @@ def pull(daemon: bool =False, retry: bool =False) -> None:
 
     Args:
         daemon (bool): whether or not to loop on the user-specified OPERATOR_INTERVAL (default: False).
+        retry (bool): whether or not to retry the git pull indefinitely until it succeeds.
     """
     tries = 0
 
