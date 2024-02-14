@@ -3,6 +3,7 @@ Utils for the operator.
 """
 
 
+from __future__ import annotations
 from enum import Enum
 
 import logging
@@ -26,7 +27,7 @@ class LogLevel(Enum):
         return self.name
 
     @classmethod
-    def from_string(cls, s: str) -> 'LogLevel':
+    def from_string(cls, s: str) -> LogLevel:
         """
         Convert a string to the enum value.
 
