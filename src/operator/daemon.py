@@ -11,6 +11,8 @@ from kubernetes import client, config
 from http import HTTPStatus
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
+from dacite import from_dict
+from humps import camelize
 from src.operator.git import pull, clone
 from src.operator.utils import LogLevel
 from src.operator.secret import PassSecret, ManagedSecret
@@ -60,8 +62,9 @@ def reconciliation(body: kopf.Body, **_: Any) -> None:
     )
 
     # Create a new PassSecret object with an up-to-date managedSecret decrypted value from the pass store.
-    passSecret = PassSecret.from_dict(
-        manifest=dict(body)
+    passSecret = from_dict(
+        data_class=PassSecret,
+        data=camelize(dict(body))
     )
 
     log.info(f'Reconciling PassSecret "{passSecret.name}" managed Secret "{passSecret.managedSecret.name}" in Namespace "{passSecret.managedSecret.namespace}" against password store.')
@@ -74,7 +77,10 @@ def reconciliation(body: kopf.Body, **_: Any) -> None:
             namespace=passSecret.managedSecret.namespace
         )
 
-        _managedSecret = ManagedSecret.from_client_dict(secret.to_dict())
+        _managedSecret = from_dict(
+            data_class=ManagedSecret,
+            data=camelize(secret.to_dict())
+        )
 
         # If the managed secret data does not match what's in the newly-generated ManagedSecret object,
         # submit a patch request to update it.
@@ -121,8 +127,9 @@ def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.
 
     # Parse the old PassSecret manifest.
     try:
-        oldPassSecret = PassSecret.from_dict(
-            manifest={
+        oldPassSecret = from_dict(
+            data_class=PassSecret,
+            data={
                 **metadata,
                 **old
             }
@@ -132,11 +139,12 @@ def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.
 
     # Parse the new PassSecret manifest.
     try:
-        newPassSecret = PassSecret.from_dict(
-            manifest={
+        newPassSecret = from_dict(
+            data_class=PassSecret,
+            data=camelize({
                 **metadata,
                 **new
-            }
+            })
         )
     except (ValueError, KeyError) as e:
         raise kopf.PermanentError(e)
@@ -181,8 +189,9 @@ def create(body: kopf.Body, **_: Any) -> None:
         body [kopf.Body]: raw body of the created PassSecret.
     """
     try:
-        secret = PassSecret.from_dict(
-            manifest=dict(body)
+        secret = from_dict(
+            data_class=PassSecret,
+            data=camelize(dict(body))
         )
     except (ValueError, KeyError) as e:
         raise kopf.PermanentError(e)
@@ -214,8 +223,9 @@ def delete(body: kopf.Body, **_: Any) -> None:
         body [kopf.Body]: raw body of the deleted PassSecret.
     """
     try:
-        secret = PassSecret.from_dict(
-            manifest=dict(body)
+        secret = from_dict(
+            data_class=PassSecret,
+            data=camelize(dict(body))
         )
     except (ValueError, KeyError) as e:
         raise kopf.PermanentError(e)

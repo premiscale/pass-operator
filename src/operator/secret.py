@@ -25,6 +25,8 @@ class ManagedSecret:
     name: str
     data: Dict[str, str] | None = None
     stringData: Dict[str, str] | None = None
+    annotations: Dict[str, str] | None = {}
+    labels: Dict[str, str] | None = {}
     namespace: str ='default'
     immutable: bool =False
     secretType: str ='Opaque'
@@ -60,40 +62,6 @@ class ManagedSecret:
                 key: b64Enc(value) for key, value in self.stringData.items()
             }
 
-    @classmethod
-    def from_dict(cls, manifest: Dict) -> ManagedSecret:
-        """
-        Parse a k8s manifest into a ManagedSecret (Secret) dataclass.
-
-        Args:
-            manifest (Dict): a Secret manifest.
-
-        Returns:
-            ManagedSecret: a ManagedSecret created from parsing the contents of the manifest.
-
-        Raises:
-            KeyError, ValueError: if expected keys are not present during dictionary unpacking.
-        """
-        # TODO: manage managed secrets' labels and annotations.
-        # if 'annotations' in manifest and len(manifest['annotations']):
-        #     annotations = manifest['annotations']
-        # else:
-        #     annotations = {}
-
-        # if 'labels' in manifest and len(manifest['labels']):
-        #     labels = manifest['labels']
-        # else:
-        #     labels = {}
-
-        return cls(
-            name=manifest['metadata']['name'],
-            namespace=manifest['metadata']['namespace'],
-            data=manifest['data'],
-            stringData=manifest['stringData'],
-            immutable=manifest['immutable'],
-            secretType=manifest['type']
-        )
-
     def to_dict(self) -> Dict:
         """
         Output this object as a k8s manifest dictionary.
@@ -113,41 +81,6 @@ class ManagedSecret:
             'immutable': self.immutable,
             'type': self.secretType
         }
-
-    @classmethod
-    def from_client_dict(cls, manifest: Dict) -> ManagedSecret:
-        """
-        Parse a k8s manifest from the kubernetes Python client package into a ManagedSecret (Secret)
-        dataclass. Primary difference is naming of the keys.
-
-        Args:
-            manifest (Dict): a Secret manifest.
-
-        Returns:
-            ManagedSecret: a ManagedSecret created from parsing the contents of the manifest.
-
-        Raises:
-            KeyError, ValueError: if expected keys are not present during dictionary unpacking.
-        """
-        # TODO: manage managed secrets' labels and annotations.
-        # if 'annotations' in manifest and len(manifest['annotations']):
-        #     annotations = manifest['annotations']
-        # else:
-        #     annotations = {}
-
-        # if 'labels' in manifest and len(manifest['labels']):
-        #     labels = manifest['labels']
-        # else:
-        #     labels = {}
-
-        return cls(
-            name=manifest['metadata']['name'],
-            namespace=manifest['metadata']['namespace'],
-            data=manifest['data'],
-            stringData=manifest['string_data'],  # This is the only change from the method above, unfortunately.
-            immutable=manifest['immutable'],
-            secretType=manifest['type']
-        )
 
     def to_client_dict(self) -> Dict:
         """
@@ -200,8 +133,8 @@ class PassSecret:
     name: str
     managedSecretName: str
     encryptedData: Dict[str, str]
-    annotations: Dict[str, str] | None = None
-    labels: Dict[str, str] | None = None
+    annotations: Dict[str, str] | None = {}
+    labels: Dict[str, str] | None = {}
     namespace: str ='default'
     kind: str ='PassSecret'
     apiGroup: str ='secrets.premiscale.com'
@@ -250,43 +183,6 @@ class PassSecret:
                 }
             }
         }
-
-    @classmethod
-    def from_dict(cls, manifest: Dict) -> PassSecret:
-        """
-        Parse a k8s manifest into a PassSecret dataclass.
-
-        Args:
-            manifest (Dict): the PassSecret manifest dictionary to parse into the dataclass.
-
-        Raises:
-            KeyError, ValueError: if expected keys are not present during dictionary unpacking.
-        """
-        if 'annotations' in manifest and len(manifest['annotations']):
-            annotations = manifest['annotations']
-        else:
-            annotations = {}
-
-        if 'labels' in manifest and len(manifest['labels']):
-            labels = manifest['labels']
-        else:
-            labels = {}
-
-        if 'immutable' not in manifest['spec']['managedSecret']:
-            manifest['spec']['managedSecret']['immutable'] = False
-
-        return cls(
-            name=manifest['metadata']['name'],
-            namespace=manifest['metadata']['namespace'],
-            encryptedData=manifest['spec']['encryptedData'],
-            labels=labels,
-            annotations=annotations,
-            # Parse out managed secret fields into arguments.
-            managedSecretName=manifest['spec']['managedSecret']['name'],
-            managedSecretNamespace=manifest['spec']['managedSecret']['namespace'],
-            managedSecretType=manifest['spec']['managedSecret']['type'],
-            managedSecretImmutable=manifest['spec']['managedSecret']['immutable'],
-        )
 
     def _decrypt(self) -> Dict[str, str] | None:
         """
