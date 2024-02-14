@@ -205,3 +205,21 @@ workflows:
               ignore: /.*/
             tags:
               only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/
+
+      - general/helm-upgrade:
+          name: helm upgrade operator-crds [nexus]
+          cluster: $CHELSEA_CLUSTER
+          namespace: pass-operator
+          repo: $HELM_REPOSITORY_URL
+          install-name: pass-operator-crds
+          requires:
+            - helm package crds [nexus]
+            - 'hold: release deployment'
+          context:
+            - kubeconfig
+            - nexus
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/
