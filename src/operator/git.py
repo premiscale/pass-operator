@@ -40,8 +40,8 @@ def pull(daemon: bool =False, retry: bool =False) -> None:
     default behavior is to retry indefinitely until a 'git pull' succeeds.
 
     Args:
-        daemon (bool): whether or not to loop on the user-specified OPERATOR_INTERVAL (default: False).
-        retry (bool): whether or not to retry the git pull indefinitely until it succeeds.
+        daemon (bool): whether or not to loop on the user-specified OPERATOR_INTERVAL. (default: False)
+        retry (bool): whether or not to retry the git pull indefinitely until it succeeds. (default: False)
     """
     tries = 0
 
