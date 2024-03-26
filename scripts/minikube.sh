@@ -15,3 +15,7 @@ minikube start \
     --addons=metrics-server
 
 minikube kubectl -p pass-operator get nodes
+
+minikube stop -p pass-operator
+
+minikube delete -p pass-operator
