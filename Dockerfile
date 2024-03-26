@@ -43,7 +43,8 @@ ARG REPO_DOMAIN
 ARG PYTHON_INDEX=https://${PYTHON_USERNAME}:${PYTHON_PASSWORD}@${REPO_DOMAIN}/repository/${PYTHON_REPOSITORY}/simple
 ARG PYTHON_PACKAGE_VERSION=0.0.1
 
-ENV PATH=${PATH}:/opt/pass-operator/.local/bin
+ENV PATH=${PATH}:/opt/pass-operator/.local/bin \
+    PYTHONUNBUFFERED=1
 
 # Set up SSH and install the pass-operator package from my private registry.
 RUN mkdir -p "$HOME"/.local/bin "$HOME"/.ssh "$HOME"/.gnupg \
