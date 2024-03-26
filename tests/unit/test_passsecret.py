@@ -20,7 +20,7 @@ class PassSecretParseInverse(TestCase):
         """
         Create a PassSecret instance for use in testing.
         """
-        with resources.open_text('tests.e2e.crd.data', 'test_singular_data.yaml') as f:
+        with resources.open_text('tests.data.crd', 'test_singular_data.yaml') as f:
             self.passsecret_data = yaml.load(f, Loader=yaml.Loader)
 
         return super().setUp()
