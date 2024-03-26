@@ -36,20 +36,21 @@ COPY --chown=root:root --chmod=555 bin/pre-push.sh /hooks/pre-push
 
 USER 10001
 
-ARG PYTHON_USERNAME
-ARG PYTHON_PASSWORD
-ARG PYTHON_REPOSITORY
-ARG REPO_DOMAIN
-ARG PYTHON_INDEX=https://${PYTHON_USERNAME}:${PYTHON_PASSWORD}@${REPO_DOMAIN}/repository/${PYTHON_REPOSITORY}/simple
-ARG PYTHON_PACKAGE_VERSION=0.0.1
+ENV PATH=${PATH}:/opt/pass-operator/.local/bin \
+    PYTHONUNBUFFERED=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_DEFAULT_TIMEOUT=100 \
+    PIP_NO_CACHE_DIR=on \
+    POETRY_VIRTUALENVS_CREATE=false \
+    POETRY_NO_INTERACTION=1 \
+    POETRY_HOME=/opt/pass-operator    
 
-ENV PATH=${PATH}:/opt/pass-operator/.local/bin
-
-# Set up SSH and install the pass-operator package from my private registry.
+# Set up SSH and install the pass-operator package.
+COPY poetry.lock pyproject.toml src/ tests/ ./
 RUN mkdir -p "$HOME"/.local/bin "$HOME"/.ssh "$HOME"/.gnupg \
     && chmod 700 "$HOME"/.gnupg \
-    && pip install --upgrade pip \
-    && pip install --no-cache-dir --no-input --extra-index-url="${PYTHON_INDEX}" pass-operator=="${PYTHON_PACKAGE_VERSION}"
+    && pip install --upgrade poetry \
+    && poetry install --no-root --only main
 
 ENV OPERATOR_INTERVAL=60 \
     OPERATOR_INITIAL_DELAY=3 \
