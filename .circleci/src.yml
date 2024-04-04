@@ -10,20 +10,102 @@ executors:
   python-3-10:
     docker:
       - image: cimg/python:3.10.13
+  machine:
+    image: ubuntu-2022.04
 
 
 commands:
+  - minikube-install:
+      description: Install Minikube
+      steps:
+        - run:
+            name: Install Minikube
+            command: |+
+              curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+              sudo install minikube-linux-amd64 /usr/local/bin/minikube
   - minikube-start:
-
+      description: Start Minikube K8s cluster
+      steps:
+        - run:
+            name: Start minikube
+            command: ./scripts/minikube.sh start
   - minikube-stop:
-
+      description: Stop Minikube K8s cluster
+      steps:
+        - run:
+            name: Stop minikube
+            command: ./scripts/minikube.sh stop
   - minikube-delete:
+      description: Delete Minikube K8s cluster
+      steps:
+        - run:
+            name: Delete minikube
+            command: ./scripts/minikube.sh delete
+  - docker-ecr-login:
+      description: Login to AWS ECR
+      parameters:
+        aws-secret-access-key:
+          description: AWS secret access key
+          default: $AWS_SECRET_ACCESS_KEY
+          type: string
+        aws-account-id: 
+          description: AWS account ID
+          default: $AWS_ACCOUNT_ID
+          type: string
+        region:
+          description: AWS region
+          default: us-east-1
+          type: string
+      steps:
+        - run:
+            name: Install AWS CLI
+            command: |+
+              sudo apt-get install awscli -y
+        - run:
+            name: Login to AWS ECR
+            command: |+
+              aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin << parameters.aws-account-id >>.dkr.ecr.<< parameters.region >>.amazonaws.com
 
 
 jobs:
   - docker-ecr:
+      executor: machine
       parameters:
-
+        aws-secret-access-key:
+          description: AWS secret access key
+          default: $AWS_SECRET_ACCESS_KEY
+          type: string
+        aws-account-id: 
+          description: AWS account ID
+          default: $AWS_ACCOUNT_ID
+          type: string
+        region:
+          description: AWS region
+          default: us-east-1
+          type: string
+        image-name:
+          description: Docker image name
+          default: $CI_PROJECT_NAME
+          type: string
+        args:
+          description: Docker build arguments
+          default: ''
+          type: string
+        tag:
+          description: >-
+            Docker image tag. Default: 0.0.<< pipeline.number >>
+          default: 0.0.<< pipeline.number >>
+          type: string
+      steps:
+        - docker-ecr-login:
+            aws-secret-access-key: << parameters.aws-secret-access-key >>
+            aws-account-id: << parameters.aws-account-id >>
+            region: << parameters.region >>
+        - run:
+            name: Build and push Docker image
+            command: |+
+              docker build << parameters.args >> -t << parameters.image-name >>:<< parameters.tag >> .
+              docker push << parameters.image-name >>:0.0.<< pipeline.number >>
   - helm-upgrade-local:
       
 
