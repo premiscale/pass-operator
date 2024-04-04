@@ -12,6 +12,22 @@ executors:
       - image: cimg/python:3.10.13
 
 
+commands:
+  - minikube-start:
+
+  - minikube-stop:
+
+  - minikube-delete:
+
+
+jobs:
+  - docker-ecr:
+      parameters:
+
+  - helm-upgrade-local:
+      
+
+
 workflows:
   src:
     jobs:
