@@ -11,9 +11,14 @@ import subprocess
 import yaml
 
 
-class PassSecretParseInverse(TestCase):
+config.load_kube_config(
+    context='pass-operator'
+)
+
+
+class PassSecretE2E(TestCase):
     """
-    Test that from_dict and to_dict are inverse methods.
+
     """
 
     def setUp(self) -> None:
