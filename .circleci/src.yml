@@ -2,7 +2,7 @@ version: 2.1
 
 
 orbs:
-  general: premiscale/general@1.2.0
+  general: premiscale/general@dev:84f3c80360559a8a65d51d3eb71a26a7323feccd
   slack: circleci/slack@4.12.6
 
 
@@ -11,103 +11,7 @@ executors:
     docker:
       - image: cimg/python:3.10.13
   machine:
-    image: ubuntu-2022.04
-
-
-commands:
-  - minikube-install:
-      description: Install Minikube
-      steps:
-        - run:
-            name: Install Minikube
-            command: |+
-              curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
-              sudo install minikube-linux-amd64 /usr/local/bin/minikube
-  - minikube-start:
-      description: Start Minikube K8s cluster
-      steps:
-        - run:
-            name: Start minikube
-            command: ./scripts/minikube.sh start
-  - minikube-stop:
-      description: Stop Minikube K8s cluster
-      steps:
-        - run:
-            name: Stop minikube
-            command: ./scripts/minikube.sh stop
-  - minikube-delete:
-      description: Delete Minikube K8s cluster
-      steps:
-        - run:
-            name: Delete minikube
-            command: ./scripts/minikube.sh delete
-  - docker-ecr-login:
-      description: Login to AWS ECR
-      parameters:
-        aws-secret-access-key:
-          description: AWS secret access key
-          default: $AWS_SECRET_ACCESS_KEY
-          type: string
-        aws-account-id: 
-          description: AWS account ID
-          default: $AWS_ACCOUNT_ID
-          type: string
-        region:
-          description: AWS region
-          default: us-east-1
-          type: string
-      steps:
-        - run:
-            name: Install AWS CLI
-            command: |+
-              sudo apt-get install awscli -y
-        - run:
-            name: Login to AWS ECR
-            command: |+
-              aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin << parameters.aws-account-id >>.dkr.ecr.<< parameters.region >>.amazonaws.com
-
-
-jobs:
-  - docker-ecr:
-      executor: machine
-      parameters:
-        aws-secret-access-key:
-          description: AWS secret access key
-          default: $AWS_SECRET_ACCESS_KEY
-          type: string
-        aws-account-id: 
-          description: AWS account ID
-          default: $AWS_ACCOUNT_ID
-          type: string
-        region:
-          description: AWS region
-          default: us-east-1
-          type: string
-        image-name:
-          description: Docker image name
-          default: $CI_PROJECT_NAME
-          type: string
-        args:
-          description: Docker build arguments
-          default: ''
-          type: string
-        tag:
-          description: >-
-            Docker image tag. Default: 0.0.<< pipeline.number >>
-          default: 0.0.<< pipeline.number >>
-          type: string
-      steps:
-        - docker-ecr-login:
-            aws-secret-access-key: << parameters.aws-secret-access-key >>
-            aws-account-id: << parameters.aws-account-id >>
-            region: << parameters.region >>
-        - run:
-            name: Build and push Docker image
-            command: |+
-              docker build << parameters.args >> -t << parameters.image-name >>:<< parameters.tag >> .
-              docker push << parameters.image-name >>:0.0.<< pipeline.number >>
-  - helm-upgrade-local:
-      
+    machine: ubuntu-2022.04
 
 
 workflows:
@@ -139,15 +43,15 @@ workflows:
               ignore:
                 - master
 
-      - general/docker-nexus:
-          name: docker nexus [pass-operator] [develop]
+      - general/docker-ecr-python-codeartifact:
+          name: docker ecr [pass-operator] [develop]
           image-name: pass-operator
-          context: nexus
-          nexus-domain: $DOCKER_DEVELOP_DOMAIN
+          context:
+            - aws-development
+            - aws-codeartifact-development
           args: >-
             --build-arg=PYTHON_PACKAGE_VERSION=0.0.<< pipeline.number >>
-            --build-arg=PYTHON_USERNAME=$NEXUS_USERNAME
-            --build-arg=PYTHON_PASSWORD=$NEXUS_PASSWORD
+            --build-arg=PYTHON_USERNAME=$PYTHON_USERNAME
             --build-arg=PYTHON_REPOSITORY=python-develop
             --build-arg=REPO_DOMAIN=$REPO_DOMAIN
           tag: 0.0.<< pipeline.number >>
@@ -167,7 +71,7 @@ workflows:
           image-tag: 0.0.<< pipeline.number >>
           image-tag-path: .deployment.image.tag
           requires:
-            - docker nexus [pass-operator] [develop]
+            - docker ecr [pass-operator] [develop]
           filters:
             branches:
               ignore:
@@ -241,11 +145,10 @@ workflows:
               only:
                 - master
 
-      - general/docker-nexus:
-          name: docker nexus [pass-operator] [master]
+      - general/docker-ecr-python-codeartifact:
+          name: docker ecr [pass-operator] [master]
           image-name: pass-operator
           context: nexus
-          nexus-domain: $DOCKER_MASTER_DOMAIN
           args: >-
             --build-arg=PYTHON_PACKAGE_VERSION=0.0.<< pipeline.number >>
             --build-arg=PYTHON_USERNAME=$NEXUS_USERNAME
@@ -269,7 +172,7 @@ workflows:
           image-tag: 0.0.<< pipeline.number >>
           image-tag-path: .deployment.image.tag
           requires:
-            - docker nexus [pass-operator] [master]
+            - docker ecr [pass-operator] [master]
           filters:
             branches:
               only:

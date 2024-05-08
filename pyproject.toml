@@ -10,9 +10,6 @@ packages = [{include = "src"}]
 include = [
   "LICENSE"
 ]
-exclude = [
-  "src/test"
-]
 keywords = [
     "python",
     "kubernetes",
@@ -60,7 +57,8 @@ fail_under = 60
 [tool.pytest.ini_options]
 addopts = "--junitxml=./junit_test_results.xml"
 testpaths = [
-  "tests"
+  "tests/src",
+  "tests/e2e"
 ]
 
 [tool.pylint."MESSAGES CONTROL"]
