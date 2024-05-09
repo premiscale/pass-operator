@@ -2,7 +2,7 @@ apiVersion: secrets.premiscale.com/v1alpha1
 kind: PassSecret
 metadata:
   name: multiple-data
-  namespace: pass-operator-develop
+  namespace: pass-operator
 spec:
   encryptedData:
     tests.example1: premiscale/operator/multiple-data-1
@@ -11,5 +11,5 @@ spec:
     tests.example4: premiscale/operator/multiple-data-4
   managedSecret:
     name: multiple-data
-    namespace: pass-operator-develop
+    namespace: pass-operator
     type: Opaque

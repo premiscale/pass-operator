@@ -89,8 +89,19 @@ def build_operator_image(tag: str = '0.0.1') -> int:
     Returns:
         int: The return code of the docker build or push command that failed, or 0 if both succeeded.
     """
-    return run(f'docker build -t localhost/pass-operator:{tag} .').returnCode \
+    return run(f'docker build -t localhost/pass-operator:{tag} -f ./Dockerfile .').returnCode \
         or run(f'docker push localhost/pass-operator:{tag}').returnCode
+
+
+def build_e2e_image(tag: str = '0.0.1') -> int:
+    """
+    Build the e2e testing image for a local git server.
+
+    Returns:
+        int: The return code of the docker build or push command that failed, or 0 if both succeeded.
+    """
+    return run(f'docker build . -f ./Dockerfile.e2e -t pass-operator-e2e:{tag}').returnCode \
+        or run(f'docker push localhost/pass-operator-e2e:{tag}').returnCode
 
 
 def cleanup_operator_image(tag: str = '0.0.1') -> int:

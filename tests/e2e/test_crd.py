@@ -32,7 +32,7 @@ class PassSecretE2E(TestCase):
         Create a PassSecret instance for use in testing.
         """
         self.passsecret_data_singular = load_data('test_singular_data')
-        self.passsecret_data_singular_2 = load_data('test_singular_data_2')
+        self.passsecret_data_singular_immutable = load_data('test_singular_data_immutable')
         self.passsecret_data_singular_different_managed_secret_name = load_data('test_singular_data_different_managed_secret_name')
         self.passsecret_data_zero = load_data('test_zero_data')
         self.passsecret_data_multiple = load_data('test_multiple_data')
