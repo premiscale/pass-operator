@@ -36,15 +36,24 @@ RUN chown -R git:git .
 
 USER 10001
 
+ARG PASS_DIRECTORY=repo
+ARG PASS_GPG_KEY_ID
+ARG PASS_GPG_KEY
+ARG PASS_GPG_PASSPHRASE=""
+ARG PASS_GIT_BRANCH=main
+ARG SSH_PUBLIC_KEY
+
 ENV PASS_BINARY=/usr/bin/pass \
-    PASS_DIRECTORY=repo \
-    PASS_GPG_KEY_ID="" \
-    PASS_GPG_KEY="" \
-    PASS_GPG_PASSPHRASE="" \
-    PASS_GIT_URL="" \
-    PASS_GIT_BRANCH=main \
-    PASS_SSH_PRIVATE_KEY=""
+    PASS_DIRECTORY=${PASS_DIRECTORY}
+
+RUN mkdir .ssh \
+    && chmod 700 .sshtouch .ssh/authorized_keys \
+    && chmod 600 .ssh/authorized_keys \
+    && echo "${SSH_PUBLIC_KEY}" > .ssh/authorized_keys \
+    && ${PASS_BINARY} init --path "${PASS_DIRECTORY}" "${PASS_GPG_KEY_ID}" \
+    && cd ~/.password-store/"${PASS_DIRECTORY}" \
+    && git init --bare --initial-branch="${PASS_GIT_BRANCH}"
 
 ENTRYPOINT [ "/tini", "--" ]
 # CMD [ "sleep", "inf" ]
-CMD [ "/usr/bin/git daemon --reuseaddr --export-all --max-connections=32 --port=22 --listen=0.0.0.0 --base-path=/opt/git/ /opt/git/" ]
+CMD [ "/usr/bin/git", "daemon", "--reuseaddr", "--export-all", "--max-connections=32", "--port=22", "--listen=0.0.0.0", "--pid-file=/opt/git/git.pid", "--base-path=/opt/git/.password-store/", "/opt/git/.password-store/" ]
