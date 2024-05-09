@@ -114,6 +114,16 @@ def cleanup_operator_image(tag: str = '0.0.1') -> int:
     return run(f'docker rmi localhost/pass-operator:{tag}').returnCode
 
 
+def cleanup_e2e_image(tag: str = '0.0.1') -> int:
+    """
+    Remove the e2e image.
+
+    Returns:
+        int: The return code of the docker rmi command.
+    """
+    return run(f'docker rmi localhost/pass-operator-e2e:{tag}').returnCode
+
+
 def install_pass_operator_crds(namespace: str = 'default') -> int:
     """
     Install the operator CRDs in the cluster.
@@ -160,3 +170,13 @@ def install_pass_operator(
             --set operator.ssh.value="{ssh_value}"
         """
     ).returnCode
+
+
+def install_pass_operator_e2e(namespace: str = 'default') -> int:
+    """
+    Install the e2e testing image in the cluster.
+
+    Returns:
+        int: The return code of the helm upgrade command.
+    """
+    return run(f'helm upgrade install --namespace {namespace} pass-operator-e2e ./charts/operator-e2e').returnCode

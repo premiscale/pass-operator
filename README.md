@@ -178,21 +178,34 @@ Now add a remote git repository and watch as `pass insert`-commands create local
 
 ## Development
 
-### Testing
+### Unit tests
 
 Run unit tests with
 
 ```shell
-poetry run pytest tests/unit
+yarn test:unit
 ```
 
-e2e tests against a live environment with
+### End-to-end tests
+
+Run e2e tests against a live (local) environment with
 
 ```shell
-poetry run pytest tests/e2e
+yarn test:e2e
 ```
 
-And coverage against the codebase with
+This command will
+
+1. Stand up a local 2-node minikube cluster with 4 cores, 4GiB memory and 30GiB storage, each. Modify [./scripts/minikube.sh](./scripts/minikube.sh) if these resources are unsuitable for your local development environment.
+2. Create a localhost docker registry redirect container.
+3. Build both e2e (hosts a git repository with encrypted pass secrets that match paths found in [./tests/data/crd](./tests/data/crd/)) and operator container images, as well as push these images to the local redirect for minikube to access.
+4. Installs both e2e and pass-operator Helm charts.
+5. Run e2e tests.
+6. Tear down the cluster and local registry, as well as cleans up locally-built artifacts.
+
+### Coverage
+
+Test coverage against the codebase with
 
 ```shell
 poetry run coverage run -m pytest

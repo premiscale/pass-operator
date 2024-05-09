@@ -11,9 +11,12 @@ from tests.common import (
     # Docker
     build_operator_image,
     cleanup_operator_image,
+    build_e2e_image,
+    cleanup_e2e_image,
     # Helm
     install_pass_operator_crds,
-    install_pass_operator
+    install_pass_operator,
+    install_pass_operator_e2e
 )
 
 
@@ -54,6 +57,11 @@ class PassSecretE2E(TestCase):
             git_branch: str = 'main'
         )
 
+        build_e2e_image()
+        install_pass_operator_e2e(
+            namespace='pass-operator-e2e'
+        )
+
         return super().setUp()
 
     def test_cluster_state(self) -> None:
@@ -68,4 +76,5 @@ class PassSecretE2E(TestCase):
 
     def tearDown(self) -> None:
         cleanup_operator_image()
+        cleanup_e2e_image()
         return super().tearDown()

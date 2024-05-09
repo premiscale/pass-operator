@@ -43,5 +43,5 @@ elif [ "$1" == "stop" ]; then
     docker stop docker-registry-redirect
 elif [ "$1" == "delete" ]; then
     minikube delete -p pass-operator
-    docker rm docker-registry-redirect
+    docker stop docker-registry-redirect
 fi
