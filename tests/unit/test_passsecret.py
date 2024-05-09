@@ -1,12 +1,12 @@
 """
-Verify that classmethods src.operator.secret.PassSecret.{from_dict,to_dict} are indeed inverses of each other.
+Verify that classmethods passoperator.secret.PassSecret.{from_dict,to_dict} are indeed inverses of each other.
 """
 
 
 from deepdiff import DeepDiff
 from importlib import resources
 from unittest import TestCase
-from src.operator.secret import PassSecret
+from passoperator.secret import PassSecret
 
 import yaml
 

@@ -6,7 +6,9 @@ authors = ["Emma Doyle <emma@premiscale.com>"]
 maintainers = ["Emma Doyle <emma@premiscale.com>"]
 license = "GPL-3.0-or-later"
 readme = "README.md"
-packages = [{include = "src"}]
+packages = [
+  { include = "passoperator", from = "src" }
+]
 include = [
   "LICENSE"
 ]
@@ -25,11 +27,11 @@ kopf = "^1.36.2"
 python-gnupg = "^0.5.2"
 gitpython = "^3.1.41"
 dacite = "^1.8.1"
-humps = "^0.2.2"
+pyhumps = "^3.8.0"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.3.2"
-poetry = "^1.5.1"
+poetry = "^1.8.3"
 mypy = "^1.0.1"
 pylint = "^3.0.3"
 pytest = "^7.4.4"
@@ -41,7 +43,7 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-passoperator = "src.operator.daemon:main"
+passoperator = "passoperator.daemon:main"
 
 [tool.mypy]
 python_version = "3.10"

@@ -7,9 +7,9 @@ from __future__ import annotations
 from typing import Dict
 from dataclasses import dataclass, field
 from pathlib import Path
-from src.operator.gpg import decrypt
-from src.operator.utils import b64Dec, b64Enc
-from src.operator import env
+from passoperator.gpg import decrypt
+from passoperator.utils import b64Dec, b64Enc
+from passoperator import env
 
 import logging
 
@@ -25,8 +25,8 @@ class ManagedSecret:
     name: str
     data: Dict[str, str] | None = None
     stringData: Dict[str, str] | None = None
-    annotations: Dict[str, str] | None = {}
-    labels: Dict[str, str] | None = {}
+    annotations: Dict[str, str] | None = None
+    labels: Dict[str, str] | None = None
     namespace: str ='default'
     immutable: bool =False
     secretType: str ='Opaque'
@@ -133,8 +133,8 @@ class PassSecret:
     name: str
     managedSecretName: str
     encryptedData: Dict[str, str]
-    annotations: Dict[str, str] | None = {}
-    labels: Dict[str, str] | None = {}
+    annotations: Dict[str, str] | None = None
+    labels: Dict[str, str] | None = None
     namespace: str ='default'
     kind: str ='PassSecret'
     apiGroup: str ='secrets.premiscale.com'

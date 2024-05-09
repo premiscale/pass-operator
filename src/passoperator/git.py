@@ -6,7 +6,7 @@ Methods to interact minimally with a Git repository.
 from git import Repo
 from git.exc import CommandError
 from time import sleep
-from src.operator import env
+from passoperator import env
 
 import logging
 import sys

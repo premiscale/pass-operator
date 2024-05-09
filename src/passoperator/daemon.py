@@ -1,5 +1,5 @@
 """
-A kubernetes operator that syncs and decrypts secrets from Linux password store (https://www.passwordstore.org/) git repositories
+A kubernetes operator that syncs and decrypts secrets from Linux password store (https://www.passwordstore.org/) git repositories.
 """
 
 
@@ -13,10 +13,11 @@ from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 from dacite import from_dict
 from humps import camelize
-from src.operator.git import pull, clone
-from src.operator.utils import LogLevel
-from src.operator.secret import PassSecret, ManagedSecret
-from src.operator import env
+
+from passoperator.git import pull, clone
+from passoperator.utils import LogLevel
+from passoperator.secret import PassSecret, ManagedSecret
+from passoperator import env
 
 import asyncio
 import logging
