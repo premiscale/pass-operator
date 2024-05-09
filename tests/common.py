@@ -35,7 +35,7 @@ def run(command: str, split: str = ' ') -> CommandOutput:
         CommandOutput: output, error, and return code.
     """
     with Popen(dedent(command).split(split), stdout=PIPE, stderr=PIPE, text=True, shell=True, encoding='utf-8') as p:
-        stdout, stderr = p.communicate()
+        stdout, stderr = p.communicate() # blocking
         return CommandOutput(stdout.rstrip(), stderr.rstrip(), p.returncode)
 
 
