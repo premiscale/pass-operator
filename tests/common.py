@@ -8,7 +8,6 @@ from importlib import resources
 from subprocess import Popen, PIPE
 from kubernetes import client, config
 from gnupg import GPG
-from contextlib import contextmanager
 from dataclasses import dataclass
 
 import yaml
@@ -26,7 +25,6 @@ class CommandOutput:
     returnCode: int
 
 
-@contextmanager
 def run(command: str, split: str = ' ') -> CommandOutput:
     """
     Run a command and return the output, error, and return code.
@@ -37,7 +35,8 @@ def run(command: str, split: str = ' ') -> CommandOutput:
         CommandOutput: output, error, and return code.
     """
     with Popen(dedent(command).split(split), stdout=PIPE, stderr=PIPE, text=True, shell=True, encoding='utf-8') as p:
-        return CommandOutput(p.stdout.rstrip(), p.stderr.rstrip(), p.returncode)
+        stdout, stderr = p.communicate()
+        return CommandOutput(stdout.rstrip(), stderr.rstrip(), p.returncode)
 
 
 def load_data(file: str, dtype: str = 'crd') -> dict:

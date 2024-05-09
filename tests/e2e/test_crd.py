@@ -5,6 +5,7 @@ End-to-end tests of the operator that validate the lifecycle of a PassSecret and
 
 from unittest import TestCase
 from kubernetes import client, config
+from time import sleep
 
 from tests.common import (
     load_data,
@@ -19,10 +20,14 @@ from tests.common import (
     install_pass_operator_e2e
 )
 
+import logging
+
 
 config.load_kube_config(
     context='pass-operator'
 )
+
+log = logging.getLogger(__name__)
 
 
 class PassSecretE2E(TestCase):
@@ -45,16 +50,16 @@ class PassSecretE2E(TestCase):
         build_operator_image()
         install_pass_operator_crds()
         install_pass_operator(
-            ssh_value=,
-            gpg_value=,
-            gpg_key_id=,
+            ssh_value='1',
+            gpg_value='1',
+            gpg_key_id='1',
             namespace='pass-operator',
-            ssh_createSecret: bool = True,
-            pass_storeSubPath: str = 'repo',
-            gpg_createSecret: bool = True,
-            gpg_passphrase: str = '',
-            git_url: str = '',
-            git_branch: str = 'main'
+            ssh_createSecret=True,
+            pass_storeSubPath='repo',
+            gpg_createSecret=True,
+            gpg_passphrase='',
+            git_url='',
+            git_branch='main'
         )
 
         build_e2e_image()
@@ -64,10 +69,40 @@ class PassSecretE2E(TestCase):
 
         return super().setUp()
 
-    def test_cluster_state(self) -> None:
+    def test_initial_cluster_state(self) -> None:
         """
         Ensure the cluster's state is correct for e2e tests to proceed.
         """
+        v1 = client.CoreV1Api()
+        namespaces = v1.list_namespace().items
+
+        def _check_namespaced_pods(namespace: client.V1Namespace) -> bool:
+            """
+            If any pods in the given namespace are not running or completed, return False.
+
+            Args:
+                namespace (client.V1Namespace): The namespace to check for running or completed pods.
+
+            Returns:
+                bool: True if all pods are running or completed, False otherwise.
+            """
+            for pod in v1.list_namespaced_pod(namespace.metadata.name).items:
+                if pod.status.phase != 'Running' or pod.status.phase != 'Completed':
+                    log.info(f'Pod {pod.metadata.name} in namespace {namespace.metadata.name} is not running or completed. Pausing.')
+                    return False
+            else:
+                return True
+
+        # Ensure that all pods on the cluster are in a ready state.
+        while True:
+            for namespace in namespaces:
+                if not _check_namespaced_pods(namespace):
+                    break
+            else:
+                # We got through all namespaces and all pods are running. Exit the main loop.
+                break
+            sleep(5)
+
 
     def test_operator_initialized(self) -> None:
         """
