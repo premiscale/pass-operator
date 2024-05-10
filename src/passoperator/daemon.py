@@ -11,7 +11,7 @@ from kubernetes import client, config
 from http import HTTPStatus
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
-from dacite import from_dict
+from cattrs import structure as from_dict
 from humps import camelize
 
 from passoperator.git import pull, clone
@@ -64,40 +64,44 @@ def reconciliation(body: kopf.Body, **_: Any) -> None:
 
     # Create a new PassSecret object with an up-to-date managedSecret decrypted value from the pass store.
     passSecret = from_dict(
-        data_class=PassSecret,
-        data=camelize(dict(body))
+        camelize(dict(body)),
+        PassSecret,
     )
 
-    log.info(f'Reconciling PassSecret "{passSecret.name}" managed Secret "{passSecret.managedSecret.name}" in Namespace "{passSecret.managedSecret.namespace}" against password store.')
+    log.info(
+        f'Reconciling PassSecret "{passSecret.metadata.name}" managed Secret "{passSecret.spec.managedSecret.metadata.name}" in Namespace "{passSecret.spec.managedSecret.metadata.namespace}" against password store.'
+    )
 
     v1 = client.CoreV1Api()
 
     try:
         secret = v1.read_namespaced_secret(
-            name=passSecret.managedSecret.name,
-            namespace=passSecret.managedSecret.namespace
+            name=passSecret.spec.managedSecret.metadata.name,
+            namespace=passSecret.spec.managedSecret.metadata.namespace
         )
 
         _managedSecret = from_dict(
-            data_class=ManagedSecret,
-            data=camelize(secret.to_dict())
+            camelize(secret.to_dict()),
+            ManagedSecret
         )
 
         # If the managed secret data does not match what's in the newly-generated ManagedSecret object,
         # submit a patch request to update it.
-        if not _managedSecret.data_equals(passSecret.managedSecret):
+        if not _managedSecret.data_equals(passSecret.spec.managedSecret):
             if _managedSecret.immutable:
-                raise kopf.TemporaryError(f'PassSecret "{passSecret.name}" managed secret "{PassSecret.managedSecret.name}" is immutable. Ignoring data patch.')
+                raise kopf.TemporaryError(
+                    f'PassSecret "{passSecret.metadata.name}" managed secret "{passSecret.spec.managedSecret.metadata.name}" is immutable. Ignoring data patch.'
+                )
 
             v1.patch_namespaced_secret(
-                name=passSecret.managedSecret.name,
-                namespace=passSecret.managedSecret.namespace,
+                name=passSecret.spec.managedSecret.metadata.name,
+                namespace=passSecret.spec.managedSecret.metadata.namespace,
                 body=client.V1Secret(
-                    **passSecret.managedSecret.to_client_dict()
+                    **passSecret.spec.managedSecret.to_client_dict()
                 )
             )
 
-            log.info(f'Reconciliation successfully updated Secret "{_managedSecret.name}".')
+            log.info(f'Reconciliation successfully updated Secret "{_managedSecret.metadata.name}".')
     except client.ApiException as e:
         raise kopf.PermanentError(e)
 
@@ -129,11 +133,13 @@ def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.
     # Parse the old PassSecret manifest.
     try:
         oldPassSecret = from_dict(
-            data_class=PassSecret,
-            data={
-                **metadata,
-                **old
-            }
+            camelize(
+                {
+                    **metadata,
+                    **old
+                }
+            ),
+            PassSecret
         )
     except (ValueError, KeyError) as e:
         raise kopf.PermanentError(e)
@@ -141,11 +147,13 @@ def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.
     # Parse the new PassSecret manifest.
     try:
         newPassSecret = from_dict(
-            data_class=PassSecret,
-            data=camelize({
-                **metadata,
-                **new
-            })
+            camelize(
+                {
+                    **metadata,
+                    **new
+                }
+            ),
+            PassSecret
         )
     except (ValueError, KeyError) as e:
         raise kopf.PermanentError(e)
@@ -153,30 +161,32 @@ def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.
     v1 = client.CoreV1Api()
 
     try:
-        if newPassSecret.managedSecret.namespace != oldPassSecret.managedSecret.namespace:
+        if newPassSecret.spec.managedSecret.metadata.namespace != oldPassSecret.spec.managedSecret.metadata.namespace:
             # Namespace is different. Delete the former secret and create a new one in the new namespace.
             v1.delete_namespaced_secret(
-                name=oldPassSecret.managedSecret.name,
-                namespace=oldPassSecret.managedSecret.namespace
+                name=oldPassSecret.spec.managedSecret.metadata.name,
+                namespace=oldPassSecret.spec.managedSecret.metadata.namespace
             )
 
             v1.create_namespaced_secret(
-                namespace=newPassSecret.managedSecret.namespace,
+                namespace=newPassSecret.spec.managedSecret.metadata.namespace,
                 body=client.V1Secret(
-                    **newPassSecret.managedSecret.to_client_dict()
+                    **newPassSecret.spec.managedSecret.to_client_dict()
                 )
             )
         else:
             # Namespace is the same, secret's being updated in-place.
             v1.patch_namespaced_secret(
-                name=oldPassSecret.name,
-                namespace=oldPassSecret.namespace,
+                name=oldPassSecret.metadata.name,
+                namespace=oldPassSecret.metadata.namespace,
                 body=client.V1Secret(
-                    **newPassSecret.managedSecret.to_client_dict()
+                    **newPassSecret.spec.managedSecret.to_client_dict()
                 )
             )
 
-        log.info(f'Successfully updated PassSecret "{newPassSecret.name}" managed Secret {newPassSecret.managedSecret.name}.')
+        log.info(
+            f'Successfully updated PassSecret "{newPassSecret.metadata.name}" managed Secret {newPassSecret.spec.managedSecret.metadata.name}.'
+        )
     except client.ApiException as e:
         raise kopf.PermanentError(e)
 
@@ -191,27 +201,29 @@ def create(body: kopf.Body, **_: Any) -> None:
     """
     try:
         secret = from_dict(
-            data_class=PassSecret,
-            data=camelize(dict(body))
+            camelize(dict(body)),
+            PassSecret
         )
     except (ValueError, KeyError) as e:
         raise kopf.PermanentError(e)
 
-    log.info(f'PassSecret "{secret.name}" created')
+    log.info(f'PassSecret "{secret.metadata.name}" created')
 
     v1 = client.CoreV1Api()
 
     try:
         v1.create_namespaced_secret(
-            namespace=secret.managedSecret.namespace,
+            namespace=secret.spec.managedSecret.metadata.namespace,
             body=client.V1Secret(
-                **secret.managedSecret.to_client_dict()
+                **secret.spec.managedSecret.to_client_dict()
             )
         )
-        log.info(f'Created PassSecret "{secret.name}" managed Secret "{secret.managedSecret.name}" in Namespace "{secret.managedSecret.namespace}"')
+        log.info(
+            f'Created PassSecret "{secret.metadata.name}" managed Secret "{secret.spec.managedSecret.metadata.name}" in Namespace "{secret.spec.managedSecret.metadata.namespace}"'
+        )
     except client.ApiException as e:
         if e.status == HTTPStatus.CONFLICT:
-            raise kopf.TemporaryError(f'Duplicate PassSecret "{secret.name}" managed Secret "{secret.managedSecret.name}" in Namespace "{secret.managedSecret.namespace}". Skipping.')
+            raise kopf.TemporaryError(f'Duplicate PassSecret "{secret.metadata.name}" managed Secret "{secret.spec.managedSecret.metadata.name}" in Namespace "{secret.spec.managedSecret.metadata.namespace}". Skipping.')
         raise kopf.PermanentError(e)
 
 
@@ -225,25 +237,25 @@ def delete(body: kopf.Body, **_: Any) -> None:
     """
     try:
         secret = from_dict(
-            data_class=PassSecret,
-            data=camelize(dict(body))
+            camelize(dict(body)),
+            PassSecret
         )
     except (ValueError, KeyError) as e:
         raise kopf.PermanentError(e)
 
-    log.info(f'PassSecret "{secret.name}" deleted')
+    log.info(f'PassSecret "{secret.metadata.name}" deleted')
 
     v1 = client.CoreV1Api()
 
     try:
         v1.delete_namespaced_secret(
-            name=secret.managedSecret.name,
-            namespace=secret.managedSecret.namespace
+            name=secret.spec.managedSecret.metadata.name,
+            namespace=secret.spec.managedSecret.metadata.namespace
         )
-        log.info(f'Deleted PassSecret "{secret.name}" managed Secret "{secret.managedSecret.name}" in Namespace "{secret.managedSecret.namespace}"')
+        log.info(f'Deleted PassSecret "{secret.metadata.name}" managed Secret "{secret.spec.managedSecret.metadata.name}" in Namespace "{secret.spec.managedSecret.metadata.namespace}"')
     except client.ApiException as e:
         if e.status == HTTPStatus.NOT_FOUND:
-            log.warning(f'PassSecret "{secret.name}" managed Secret "{secret.managedSecret.name}" was not found. Skipping.')
+            log.warning(f'PassSecret "{secret.metadata.name}" managed Secret "{secret.spec.managedSecret.metadata.name}" was not found. Skipping.')
         raise kopf.PermanentError(e)
 
 

@@ -7,6 +7,7 @@ spec:
   encryptedData:
     singular_data: premiscale/operator/singular-data
   managedSecret:
-    name: singular-data
-    namespace: pass-operator
+    metadata:
+      name: singular-data
+      namespace: pass-operator
     type: Opaque

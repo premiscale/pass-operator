@@ -8,7 +8,8 @@ spec:
   encryptedData:
     singular_data: premiscale/operator/singular-data
   managedSecret:
-    name: singular-data-2
-    namespace: pass-operator-2
+    metadata:
+      name: singular-data-2
+      namespace: pass-operator-2
     type: Opaque
     immutable: true

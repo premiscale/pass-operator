@@ -4,9 +4,10 @@ Provide interfaces for interacting with PassSecret manifests and encrypted data 
 
 
 from __future__ import annotations
-from typing import Dict
-from dataclasses import dataclass, field
+from typing import Dict, Final
 from pathlib import Path
+from attrs import define, asdict as to_dict
+
 from passoperator.gpg import decrypt
 from passoperator.utils import b64Dec, b64Enc
 from passoperator import env
@@ -17,26 +18,39 @@ import logging
 log = logging.getLogger(__name__)
 
 
-@dataclass
+@define
+class Metadata:
+    name: str
+    namespace: str = 'default'
+    annotations: Dict[str, str] | None = None
+    labels: Dict[str, str] | None = None
+
+    def to_dict(self) -> Dict:
+        """
+        Output this object as a K8s manifest dictionary.
+
+        Returns:
+            Dict: this object as a dict.
+        """
+        return to_dict(self)
+
+
+@define
 class ManagedSecret:
     """
     Logic for interacting with managed Secret objects.
     """
-    name: str
+    metadata: Metadata
     data: Dict[str, str] | None = None
     stringData: Dict[str, str] | None = None
-    annotations: Dict[str, str] | None = None
-    labels: Dict[str, str] | None = None
-    namespace: str ='default'
-    immutable: bool =False
-    secretType: str ='Opaque'
-    kind: str ='Secret'
-    apiGroup: str =''
-    apiVersion: str ='v1'
+    immutable: bool = False
+    type: str = 'Opaque'
+    kind: Final[str] = 'Secret'
+    apiVersion: Final[str] = 'v1'
 
-    def __post_init__(self) -> None:
+    def __attrs_post_init__(self) -> None:
         if not self.data and not self.stringData:
-            raise RuntimeError('ManagedSecret type expects at least one of \'data\', \'stringData\', to be set.')
+            return None
 
         # Propagate one field to the other, make sure they match despite b64 conversion.
         if self.stringData and self.data:
@@ -45,12 +59,12 @@ class ManagedSecret:
                 if key not in self.data:
                     self.data[key] = b64Enc(self.stringData[key])
                 else:
-                    assert b64Dec(self.data[key]) == self.stringData[key]
+                    assert self.data[key] == b64Enc(self.stringData[key])
             for key in self.data:
                 if key not in self.stringData:
                     self.stringData[key] = b64Dec(self.data[key])
                 else:
-                    assert b64Enc(self.stringData[key]) == self.data[key]
+                    assert self.stringData[key] == b64Dec(self.data[key])
 
         elif self.data and not self.stringData:
             self.stringData = {
@@ -62,41 +76,31 @@ class ManagedSecret:
                 key: b64Enc(value) for key, value in self.stringData.items()
             }
 
-    def to_dict(self) -> Dict:
+    def to_dict(self, export: bool = False) -> Dict:
         """
         Output this object as a k8s manifest dictionary.
+
+        Args:
+            export (bool): if True, export the object as a dict without the apiGroup and duplicate data keys.
 
         Returns:
             Dict: this object as a dict.
         """
-        return {
-            'apiVersion': self.apiVersion, # f'{self.apiGroup}/{self.apiVersion}' if self.apiGroup else self.apiVersion,
-            'kind': self.kind,
-            'metadata': {
-                'name': self.name,
-                'namespace': self.namespace
-                # TODO: labels and annotations, at a future date.
-            },
-            'data': self.data,
-            'immutable': self.immutable,
-            'type': self.secretType
-        }
+        d = to_dict(self)
+
+        if export:
+            d.pop('stringData')
+
+        return d
 
     def to_client_dict(self) -> Dict:
         """
         Output this secret to a dictionary with keys that match the arguments of kubernetes.client.V1Secret, for convenience.
         """
-        return {
-            'api_version': f'{self.apiGroup}/{self.apiVersion}' if self.apiGroup else self.apiVersion,
-            'kind': self.kind,
-            'metadata': {
-                'name': self.name,
-                'namespace': self.namespace,
-            },
-            'string_data': self.stringData,
-            'type': self.secretType,
-            'immutable': self.immutable
-        }
+        d = self.to_dict(export=True)
+        d.pop('stringData')
+        d['string_data'] = self.stringData
+        return d
 
     def __eq__(self, __value: object) -> bool:
         """
@@ -122,39 +126,47 @@ class ManagedSecret:
         return self.data == __value.data
 
 
-@dataclass
-class PassSecret:
+@define
+class PassSecretSpec:
     """
-    Manage PassSecret data in a clean, interoperable way.
+    PassSecretSpec is the schema for the spec field of a PassSecret object. It also handles decrypting the encrypted data on
+    the PassSecret object.
     """
-
-    # PassSecret objects require our set of environment variables because we need to decrypt the contents
-    # in order to instantiate a ManagedSecret object.
-    name: str
-    managedSecretName: str
     encryptedData: Dict[str, str]
-    annotations: Dict[str, str] | None = None
-    labels: Dict[str, str] | None = None
-    namespace: str ='default'
-    kind: str ='PassSecret'
-    apiGroup: str ='secrets.premiscale.com'
-    apiVersion: str ='v1alpha1'
+    managedSecret: ManagedSecret
 
-    managedSecret: ManagedSecret = field(init=False)
-    managedSecretNamespace: str ='default'
-    managedSecretType: str ='Opaque'
-    managedSecretImmutable: bool =False
+    def __attrs_post_init__(self) -> None:
+        # Post-process the managedSecret field to decrypt the contents of the managedSecret.
+        self.managedSecret = self.decrypt(self.managedSecret, self.encryptedData)
 
-    def __post_init__(self) -> None:
-        if (decryptedData := self._decrypt()) is None:
-            raise ValueError(f'Could not decrypt data on PassSecret {self.name}. Do you need to set a passphrase?')
+    @staticmethod
+    def decrypt(cls: ManagedSecret, encryptedData: Dict[str, str]) -> ManagedSecret:
+        """
+        Decrypt the contents of this PassSecret's paths before returning the spec object.
+        """
+        stringData = {}
 
-        self.managedSecret = ManagedSecret(
-            name=self.managedSecretName,
-            namespace=self.managedSecretNamespace,
-            stringData=decryptedData,
-            immutable=self.managedSecretImmutable,
-            secretType=self.managedSecretType
+        for secretKey in encryptedData:
+            secretPath = encryptedData[secretKey]
+
+            decryptedSecret = decrypt(
+                Path(f'{env["PASS_DIRECTORY"]}/{secretPath}'),
+                passphrase=env['PASS_GPG_PASSPHRASE']
+            )
+
+            print(decryptedSecret)
+
+            if decryptedSecret:
+                stringData[secretKey] = decryptedSecret
+            else:
+                log.error(f'Failed to decrypt secret at path: {secretPath}')
+                stringData[secretKey] = ''
+
+        return ManagedSecret(
+            metadata=cls.metadata,
+            stringData=stringData,
+            immutable=cls.immutable,
+            type=cls.type
         )
 
     def to_dict(self) -> Dict:
@@ -165,48 +177,34 @@ class PassSecret:
             Dict: this object as a dict.
         """
         return {
-            'apiVersion': f'{self.apiGroup}/{self.apiVersion}',
-            'kind': self.kind,
-            'metadata': {
-                'name': self.name,
-                'namespace': self.namespace,
-                'annotations': self.annotations,
-                'labels': self.labels
-            },
-            'spec': {
-                'encryptedData': self.encryptedData,
-                'managedSecret': {
-                    'name': self.managedSecret.name,
-                    'namespace': self.managedSecret.namespace,
-                    'type': self.managedSecret.secretType,
-                    'immutable': self.managedSecret.immutable
-                }
-            }
+            'encryptedData': self.encryptedData,
+            'managedSecret': self.managedSecret.to_dict(export=True)
         }
 
-    def _decrypt(self) -> Dict[str, str] | None:
+
+@define
+class PassSecret:
+    """
+    Manage PassSecret data in a clean, interoperable way.
+    """
+    metadata: Metadata
+    spec: PassSecretSpec
+    kind: Final[str] = 'PassSecret'
+    apiVersion: Final[str] = 'secrets.premiscale.com/v1alpha1'
+
+    def to_dict(self) -> Dict:
         """
-        Decrypt the contents of this PassSecret's paths and store them on an attribute
+        Output this object as a K8s manifest dictionary.
 
         Returns:
-            Optional[Dict[str, str]]: a dictionary of data keys and decrypted paths' values. If decryption was not possible, None.
+            Dict: this object as a dict.
         """
-        stringData = {}
-
-        for secretKey in self.encryptedData:
-            secretPath = self.encryptedData[secretKey]
-
-            decryptedSecret = decrypt(
-                Path(f'{env["PASS_DIRECTORY"]}/{secretPath}'),
-                passphrase=env['PASS_GPG_PASSPHRASE']
-            )
-
-            if decryptedSecret:
-                stringData[secretKey] = decryptedSecret
-            else:
-                return None
-
-        return stringData
+        return {
+            'apiVersion': self.apiVersion,
+            'kind': self.kind,
+            'metadata': self.metadata.to_dict(),
+            'spec': self.spec.to_dict()
+        }
 
     def __eq__(self, __value: object) -> bool:
         """

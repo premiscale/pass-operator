@@ -13,11 +13,6 @@ from dataclasses import dataclass
 import yaml
 
 
-config.load_kube_config(
-    context='pass-operator'
-)
-
-
 @dataclass
 class CommandOutput:
     stdout: str

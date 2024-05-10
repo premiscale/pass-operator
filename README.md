@@ -30,8 +30,9 @@ spec:
   encryptedData:
     mykey: premiscale/mydata
   managedSecret:
-    name: mysecret
-    namespace: pass-operator-test
+    metadata:
+      name: mysecret
+      namespace: pass-operator-test
     type: Opaque
     immutable: false
 ```
