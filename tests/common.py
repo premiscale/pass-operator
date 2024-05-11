@@ -20,16 +20,17 @@ class CommandOutput:
     returnCode: int
 
 
-def run(command: str, split: str = ' ') -> CommandOutput:
+def run(command: str, split: str = ' ', shell=False) -> CommandOutput:
     """
     Run a command and return the output, error, and return code.
     Args:
         command (str): shell command to run as a string.
         split (str, optional): character to split the command by. Defaults to ' '.
+        shell (bool, optional): whether to run the command in a shell. Defaults to False.
     Returns:
         CommandOutput: output, error, and return code.
     """
-    with Popen(dedent(command).split(split), stdout=PIPE, stderr=PIPE, text=True, shell=True, encoding='utf-8') as p:
+    with Popen(dedent(command).lstrip().rstrip().split(split), stdout=PIPE, stderr=PIPE, text=True, shell=shell, encoding='utf-8') as p:
         stdout, stderr = p.communicate() # blocking
         return CommandOutput(stdout.rstrip(), stderr.rstrip(), p.returncode)
 
