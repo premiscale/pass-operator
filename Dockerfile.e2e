@@ -47,7 +47,8 @@ ENV PASS_BINARY=/usr/bin/pass \
     PASS_DIRECTORY=${PASS_DIRECTORY}
 
 RUN mkdir .ssh \
-    && chmod 700 .sshtouch .ssh/authorized_keys \
+    && chmod 700 .ssh \
+    && touch .ssh/authorized_keys \
     && chmod 600 .ssh/authorized_keys \
     && echo "${SSH_PUBLIC_KEY}" > .ssh/authorized_keys \
     && ${PASS_BINARY} init --path "${PASS_DIRECTORY}" "${PASS_GPG_KEY_ID}" \

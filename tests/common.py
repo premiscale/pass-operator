@@ -92,15 +92,37 @@ def build_operator_image(tag: str = '0.0.1') -> int:
         or run(f'docker push localhost/pass-operator:{tag}').returnCode
 
 
-def build_e2e_image(tag: str = '0.0.1') -> int:
+def build_e2e_image(
+    ssh_public_key: str,
+    gpg_key_id: str,
+    gpg_key: str,
+    tag: str = '0.0.1',
+    pass_version: str = '1.7.4-5',
+    tini_version: str = 'v0.19.0',
+    architecture: str = 'arm64',
+    pass_directory: str = 'repo',
+    gpg_passphrase: str = '',
+    git_branch: str = 'main',
+) -> int:
     """
     Build the e2e testing image for a local git server.
 
     Returns:
         int: The return code of the docker build or push command that failed, or 0 if both succeeded.
     """
-    return run(f'docker build . -f ./Dockerfile.e2e -t pass-operator-e2e:{tag}').returnCode \
-        or run(f'docker push localhost/pass-operator-e2e:{tag}').returnCode
+    return run(f"""
+        docker build . -f ./Dockerfile.e2e -t pass-operator-e2e:{tag}
+            --build-arg=PASS_VERSION={pass_version}
+            --build-arg=TINI_VERSION={tini_version}
+            --build-arg=ARCHITECTURE={architecture}
+            --build-arg=PASS_DIRECTORY={pass_directory}
+            --build-arg=PASS_GPG_KEY_ID={gpg_key_id}
+            --build-arg=PASS_GPG_KEY={gpg_key}
+            --build-arg=PASS_GPG_PASSPHRASE={gpg_passphrase}
+            --build-arg=PASS_GIT_BRANCH={git_branch}
+            --build-arg=SSH_PUBLIC_KEY={ssh_public_key}
+    """)
+    # or run(f'docker push localhost/pass-operator-e2e:{tag}').returnCode
 
 
 def cleanup_operator_image(tag: str = '0.0.1') -> int:
@@ -167,8 +189,7 @@ def install_pass_operator(
             --set operator.git.url="{git_url}"
             --set operator.git.branch="{git_branch}"
             --set operator.ssh.value="{ssh_value}"
-        """
-    ).returnCode
+    """).returnCode
 
 
 def install_pass_operator_e2e(namespace: str = 'default') -> int:

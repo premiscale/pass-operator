@@ -5,7 +5,6 @@ Verify that classmethods passoperator.secret.PassSecret.{from_dict,to_dict} are 
 
 from deepdiff import DeepDiff
 from unittest import TestCase
-from humps import camelize
 from cattrs import structure as from_dict
 
 from passoperator.secret import PassSecret, ManagedSecret, Metadata, PassSecretSpec
