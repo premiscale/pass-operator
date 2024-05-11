@@ -20,14 +20,20 @@ from tests.common import (
     install_pass_operator_e2e
 )
 
-# import logging
+import logging
+import sys
 
 
 config.load_kube_config(
     context='pass-operator'
 )
 
-# log = logging.getLogger(__name__)
+log = logging.getLogger(__name__)
+logging.basicConfig(
+    stream=sys.stdout,
+    format='%(asctime)s | %(levelname)s | %(name)s | %(message)s',
+    level=logging.INFO
+)
 
 
 class PassSecretE2E(TestCase):
@@ -87,8 +93,8 @@ class PassSecretE2E(TestCase):
                 bool: True if all pods are running or completed, False otherwise.
             """
             for pod in v1.list_namespaced_pod(namespace.metadata.name).items:
-                if pod.status.phase != 'Running' or pod.status.phase != 'Completed':
-                    log.info(f'Pod {pod.metadata.name} in namespace {namespace.metadata.namespace} is not running or completed. Pausing.')
+                if pod.status.phase not in ('Running', 'Completed') and (pod.status.phase == 'Running' and not all(c.ready for c in pod.status.container_statuses)):
+                    log.warning(f'Pod {pod.metadata.name} in namespace {namespace.metadata.name} is not running or completed or completely ready.')
                     return False
             else:
                 return True
@@ -98,7 +104,10 @@ class PassSecretE2E(TestCase):
             while True:
                 if _check_namespaced_pods(namespace):
                     break
+                log.warning(f'Namespace {namespace.metadata.name} has pods that are not running or completed or completely ready.')
                 sleep(3)
+
+        log.info('All pods in the cluster are running or completed or completely ready.')
 
     def test_operator_initialized(self) -> None:
         """
