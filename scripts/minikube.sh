@@ -28,7 +28,7 @@ if [ "$1" == "start" ]; then
         --addons=metrics-server \
         --addons=registry \
         --cpus 4 \
-        --nodes 2 \
+        --nodes 1 \
         --memory 4096 \
         --disk-size 30g
 

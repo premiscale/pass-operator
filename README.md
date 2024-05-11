@@ -197,7 +197,7 @@ yarn test:e2e
 
 This command will
 
-1. Stand up a local 2-node minikube cluster with 4 cores, 4GiB memory and 30GiB storage, each. Modify [./scripts/minikube.sh](./scripts/minikube.sh) if these resources are unsuitable for your local development environment.
+1. Stand up a local 1-node minikube cluster with 4 cores, 4GiB memory and 30GiB storage, each. Modify [./scripts/minikube.sh](./scripts/minikube.sh) if these resources are unsuitable for your local development environment.
 2. Create a localhost docker registry redirect container.
 3. Build both e2e (hosts a git repository with encrypted pass secrets that match paths found in [./tests/data/crd](./tests/data/crd/)) and operator container images, as well as push these images to the local redirect for minikube to access.
 4. Installs both e2e and pass-operator Helm charts.

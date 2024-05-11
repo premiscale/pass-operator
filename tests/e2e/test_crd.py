@@ -88,20 +88,17 @@ class PassSecretE2E(TestCase):
             """
             for pod in v1.list_namespaced_pod(namespace.metadata.name).items:
                 if pod.status.phase != 'Running' or pod.status.phase != 'Completed':
-                    log.info(f'Pod {pod.metadata.name} in namespace {namespace.metadata.name} is not running or completed. Pausing.')
+                    log.info(f'Pod {pod.metadata.name} in namespace {namespace.metadata.namespace} is not running or completed. Pausing.')
                     return False
             else:
                 return True
 
         # Ensure that all pods on the cluster are in a ready state.
-        while True:
-            for namespace in namespaces:
-                if not _check_namespaced_pods(namespace):
+        for namespace in namespaces:
+            while True:
+                if _check_namespaced_pods(namespace):
                     break
-            else:
-                # We got through all namespaces and all pods are running. Exit the main loop.
-                break
-            sleep(5)
+                sleep(5)
 
 
     def test_operator_initialized(self) -> None:
