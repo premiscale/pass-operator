@@ -1,12 +1,13 @@
 apiVersion: secrets.premiscale.com/v1alpha1
 kind: PassSecret
 metadata:
-  name: singular-data-collision-2
-  namespace: pass-operator-develop
+  name: singular-data-collision-1
+  namespace: pass-operator
 spec:
   encryptedData:
     singular_data: premiscale/operator/singular-data
   managedSecret:
-    name: singular-data
-    namespace: pass-operator-develop
+    metadata:
+      name: singular-data
+      namespace: pass-operator
     type: Opaque

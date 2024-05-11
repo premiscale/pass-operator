@@ -6,12 +6,11 @@ authors = ["Emma Doyle <emma@premiscale.com>"]
 maintainers = ["Emma Doyle <emma@premiscale.com>"]
 license = "GPL-3.0-or-later"
 readme = "README.md"
-packages = [{include = "src"}]
+packages = [
+  { include = "passoperator", from = "src" }
+]
 include = [
   "LICENSE"
-]
-exclude = [
-  "src/test"
 ]
 keywords = [
     "python",
@@ -27,10 +26,13 @@ kubernetes = "^29.0.0"
 kopf = "^1.36.2"
 python-gnupg = "^0.5.2"
 gitpython = "^3.1.41"
+pyhumps = "^3.8.0"
 
+attrs = "^23.2.0"
+cattrs = "^23.2.3"
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.3.2"
-poetry = "^1.5.1"
+poetry = "^1.8.3"
 mypy = "^1.0.1"
 pylint = "^3.0.3"
 pytest = "^7.4.4"
@@ -42,7 +44,7 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-passoperator = "src.operator.daemon:main"
+passoperator = "passoperator.daemon:main"
 
 [tool.mypy]
 python_version = "3.10"
@@ -58,7 +60,8 @@ fail_under = 60
 [tool.pytest.ini_options]
 addopts = "--junitxml=./junit_test_results.xml"
 testpaths = [
-  "tests"
+  "tests/src",
+  "tests/e2e"
 ]
 
 [tool.pylint."MESSAGES CONTROL"]

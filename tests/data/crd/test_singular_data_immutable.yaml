@@ -2,13 +2,14 @@
 apiVersion: secrets.premiscale.com/v1alpha1
 kind: PassSecret
 metadata:
-  name: singular-data
-  namespace: pass-operator-develop
+  name: singular-data-immutable
+  namespace: pass-operator
 spec:
   encryptedData:
     singular_data: premiscale/operator/singular-data
   managedSecret:
-    name: singular-data-2
-    namespace: pass-operator-master
+    metadata:
+      name: singular-data-2
+      namespace: pass-operator-2
     type: Opaque
-    immutable: false
+    immutable: true

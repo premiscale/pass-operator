@@ -1,11 +1,12 @@
 apiVersion: secrets.premiscale.com/v1alpha1
 kind: PassSecret
 metadata:
-  name: singular-data
-  namespace: pass-operator-develop
+  name: zero-data
+  namespace: pass-operator
 spec:
   encryptedData: {}
   managedSecret:
-    name: singular-data
-    namespace: pass-operator-develop
+    metadata:
+      name: zero-data
+      namespace: pass-operator
     type: Opaque

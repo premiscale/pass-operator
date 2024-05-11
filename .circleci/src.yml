@@ -2,7 +2,7 @@ version: 2.1
 
 
 orbs:
-  general: premiscale/general@1.2.0
+  general: premiscale/general@dev:84f3c80360559a8a65d51d3eb71a26a7323feccd
   slack: circleci/slack@4.12.6
 
 
@@ -10,6 +10,8 @@ executors:
   python-3-10:
     docker:
       - image: cimg/python:3.10.13
+  machine:
+    machine: ubuntu-2022.04
 
 
 workflows:
@@ -41,15 +43,15 @@ workflows:
               ignore:
                 - master
 
-      - general/docker-nexus:
-          name: docker nexus [pass-operator] [develop]
+      - general/docker-ecr-python-codeartifact:
+          name: docker ecr [pass-operator] [develop]
           image-name: pass-operator
-          context: nexus
-          nexus-domain: $DOCKER_DEVELOP_DOMAIN
+          context:
+            - aws-development
+            - aws-codeartifact-development
           args: >-
             --build-arg=PYTHON_PACKAGE_VERSION=0.0.<< pipeline.number >>
-            --build-arg=PYTHON_USERNAME=$NEXUS_USERNAME
-            --build-arg=PYTHON_PASSWORD=$NEXUS_PASSWORD
+            --build-arg=PYTHON_USERNAME=$PYTHON_USERNAME
             --build-arg=PYTHON_REPOSITORY=python-develop
             --build-arg=REPO_DOMAIN=$REPO_DOMAIN
           tag: 0.0.<< pipeline.number >>
@@ -69,7 +71,7 @@ workflows:
           image-tag: 0.0.<< pipeline.number >>
           image-tag-path: .deployment.image.tag
           requires:
-            - docker nexus [pass-operator] [develop]
+            - docker ecr [pass-operator] [develop]
           filters:
             branches:
               ignore:
@@ -143,11 +145,10 @@ workflows:
               only:
                 - master
 
-      - general/docker-nexus:
-          name: docker nexus [pass-operator] [master]
+      - general/docker-ecr-python-codeartifact:
+          name: docker ecr [pass-operator] [master]
           image-name: pass-operator
           context: nexus
-          nexus-domain: $DOCKER_MASTER_DOMAIN
           args: >-
             --build-arg=PYTHON_PACKAGE_VERSION=0.0.<< pipeline.number >>
             --build-arg=PYTHON_USERNAME=$NEXUS_USERNAME
@@ -171,7 +172,7 @@ workflows:
           image-tag: 0.0.<< pipeline.number >>
           image-tag-path: .deployment.image.tag
           requires:
-            - docker nexus [pass-operator] [master]
+            - docker ecr [pass-operator] [master]
           filters:
             branches:
               only:

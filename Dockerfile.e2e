@@ -1,0 +1,59 @@
+ARG IMAGE=ubuntu
+ARG TAG=22.04
+
+FROM ${IMAGE}:${TAG}
+
+SHELL [ "/bin/bash", "-c" ]
+
+# https://github.com/opencontainers/image-spec/blob/main/annotations.md#pre-defined-annotation-keys
+LABEL org.opencontainers.image.description "© PremiScale, Inc. 2024"
+LABEL org.opencontainers.image.licenses "GPLv3"
+LABEL org.opencontainers.image.authors "Emma Doyle <emma@premiscale.com>"
+LABEL org.opencontainers.image.documentation "https://premiscale.com"
+
+USER root
+
+ARG PASS_VERSION=1.7.4-5
+RUN apt update \
+    && apt list -a pass \
+    && apt install -y curl git pass="${PASS_VERSION}" \
+    && rm -rf /var/apt/lists/*
+
+# https://github.com/krallin/tini
+ARG TINI_VERSION=v0.19.0
+ARG ARCHITECTURE=arm64
+RUN curl -sL https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini-${ARCHITECTURE} -o /tini \
+    && chmod +x /tini
+
+# Add 'operator' user and group.
+RUN mkdir -p /opt/git \
+    && groupadd git \
+    && useradd -rm -d /opt/git -s /bin/bash -g git -u 10001 git
+
+WORKDIR /opt/git
+
+RUN chown -R git:git .
+
+USER 10001
+
+ARG PASS_DIRECTORY=repo
+ARG PASS_GPG_KEY_ID
+ARG PASS_GPG_KEY
+ARG PASS_GPG_PASSPHRASE=""
+ARG PASS_GIT_BRANCH=main
+ARG SSH_PUBLIC_KEY
+
+ENV PASS_BINARY=/usr/bin/pass \
+    PASS_DIRECTORY=${PASS_DIRECTORY}
+
+RUN mkdir .ssh \
+    && chmod 700 .sshtouch .ssh/authorized_keys \
+    && chmod 600 .ssh/authorized_keys \
+    && echo "${SSH_PUBLIC_KEY}" > .ssh/authorized_keys \
+    && ${PASS_BINARY} init --path "${PASS_DIRECTORY}" "${PASS_GPG_KEY_ID}" \
+    && cd ~/.password-store/"${PASS_DIRECTORY}" \
+    && git init --bare --initial-branch="${PASS_GIT_BRANCH}"
+
+ENTRYPOINT [ "/tini", "--" ]
+# CMD [ "sleep", "inf" ]
+CMD [ "/usr/bin/git", "daemon", "--reuseaddr", "--export-all", "--max-connections=32", "--port=22", "--listen=0.0.0.0", "--pid-file=/opt/git/git.pid", "--base-path=/opt/git/.password-store/", "/opt/git/.password-store/" ]

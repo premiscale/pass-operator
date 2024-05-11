@@ -1,27 +1,30 @@
 """
-Verify that classmethods src.operator.secret.PassSecret.{from_dict,to_dict} are indeed inverses of each other.
+Verify that classmethods passoperator.secret.PassSecret.{from_dict,to_dict} are indeed inverses of each other.
 """
 
 
 from deepdiff import DeepDiff
-from importlib import resources
 from unittest import TestCase
-from src.operator.secret import PassSecret
+from humps import camelize
+from cattrs import structure as from_dict
 
-import yaml
+from passoperator.secret import PassSecret, ManagedSecret, Metadata, PassSecretSpec
+
+from tests.common import (
+    load_data
+)
 
 
 class PassSecretParseInverse(TestCase):
     """
-    Test that from_dict and to_dict are inverse methods.
+    Test that from_dict and asdict are inverse methods.
     """
 
     def setUp(self) -> None:
         """
         Create a PassSecret instance for use in testing.
         """
-        with resources.open_text('tests.e2e.crd.data', 'test_singular_data.yaml') as f:
-            self.passsecret_data = yaml.load(f, Loader=yaml.Loader)
+        self.passsecret_data = camelize(load_data('test_singular_data'))
 
         return super().setUp()
 
@@ -32,32 +35,67 @@ class PassSecretParseInverse(TestCase):
         PT(PT'(data)) == PT'(PT(data))
         """
 
-        # self.assertIsNotNone(
-        #     PassSecret.from_dict(self.passsecret_data)
-        # )
+        self.assertIsNotNone(
+            from_dict(
+                self.passsecret_data,
+                PassSecret
+            )
+        )
 
-        # self.assertDictEqual(
-        #     # DeepDiff the objects.
-        #     DeepDiff(
-        #         PassSecret.from_dict(self.passsecret_data).to_dict(),
-        #         self.passsecret_data,
-        #         exclude_paths=[
-        #             "root['metadata']['labels']",
-        #             "root['metadata']['annotations']"
-        #         ]
-        #     ),
-        #     # DeepDiff should be empty.
-        #     {}
-        # )
+        # PT'(PT(data)) == data
+        self.assertDictEqual(
+            DeepDiff(
+                from_dict(
+                    self.passsecret_data,
+                    PassSecret
+                ).to_dict(),
+                self.passsecret_data,
+                exclude_paths=[
+                    "root['metadata']['labels']",
+                    "root['metadata']['annotations']",
+                    "root['spec']['managedSecret']['metadata']['labels']",
+                    "root['spec']['managedSecret']['metadata']['annotations']",
+                    "root['spec']['managedSecret']['kind']",
+                    "root['spec']['managedSecret']['data']",
+                    "root['spec']['managedSecret']['immutable']",
+                    "root['spec']['managedSecret']['apiVersion']"
+                ]
+            ),
+            {}
+        )
 
-        # self.assertEqual(
-        #     PassSecret.from_dict(PassSecret.from_dict(self.passsecret_data).to_dict()),
-        #     PassSecret.from_dict(self.passsecret_data)
-        # )
-
-    def test_managedsecret_export_import_inverse(self) -> None:
-        """
-        Test that ManagedSecret class import and export are inverses of one another.
-
-        MS(MS'(data)) == MS'(MS(data))
-        """
+        # PT(PT'(data)) == data
+        self.assertDictEqual(
+            DeepDiff(
+                PassSecret(
+                    metadata=Metadata(
+                        name='singular-data',
+                        namespace='pass-operator'
+                    ),
+                    spec=PassSecretSpec(
+                        encryptedData=camelize({
+                            'singular_data': 'premiscale/operator/singular-data'
+                        }),
+                        managedSecret=ManagedSecret(
+                            metadata=Metadata(
+                                name='singular-data',
+                                namespace='pass-operator'
+                            ),
+                            type='Opaque'
+                        )
+                    )
+                ).to_dict(),
+                self.passsecret_data,
+                exclude_paths=[
+                    "root['metadata']['labels']",
+                    "root['metadata']['annotations']",
+                    "root['spec']['managedSecret']['metadata']['labels']",
+                    "root['spec']['managedSecret']['metadata']['annotations']",
+                    "root['spec']['managedSecret']['kind']",
+                    "root['spec']['managedSecret']['data']",
+                    "root['spec']['managedSecret']['immutable']",
+                    "root['spec']['managedSecret']['apiVersion']"
+                ]
+            ),
+            {}
+        )

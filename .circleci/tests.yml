@@ -8,7 +8,7 @@ executors:
 
 
 orbs:
-  general: premiscale/general@1.2.0
+  general: premiscale/general@dev:84f3c80360559a8a65d51d3eb71a26a7323feccd
 
 
 jobs:
@@ -28,6 +28,8 @@ jobs:
             poetry run pytest tests/unit
       - store_test_results:
           path: ./junit_test_results.xml
+
+  # python-tests-e2e:
 
 
 
