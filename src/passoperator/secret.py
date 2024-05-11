@@ -32,7 +32,7 @@ class Metadata:
         Returns:
             Dict: this object as a dict.
         """
-        return to_dict(self)
+        return to_dict(self, filter=lambda a, v: v is not None)
 
 
 @define
@@ -86,7 +86,7 @@ class ManagedSecret:
         Returns:
             Dict: this object as a dict.
         """
-        d = to_dict(self)
+        d = to_dict(self, filter=lambda a, v: v is not None)
 
         if export:
             d.pop('stringData')
@@ -153,8 +153,6 @@ class PassSecretSpec:
                 Path(f'{env["PASS_DIRECTORY"]}/{secretPath}'),
                 passphrase=env['PASS_GPG_PASSPHRASE']
             )
-
-            print(decryptedSecret)
 
             if decryptedSecret:
                 stringData[secretKey] = decryptedSecret

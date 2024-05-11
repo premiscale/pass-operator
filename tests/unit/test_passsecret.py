@@ -8,7 +8,7 @@ from unittest import TestCase
 from humps import camelize
 from cattrs import structure as from_dict
 
-from passoperator.secret import PassSecret
+from passoperator.secret import PassSecret, ManagedSecret, Metadata, PassSecretSpec
 
 from tests.common import (
     load_data
@@ -24,7 +24,7 @@ class PassSecretParseInverse(TestCase):
         """
         Create a PassSecret instance for use in testing.
         """
-        self.passsecret_data = load_data('test_singular_data')
+        self.passsecret_data = camelize(load_data('test_singular_data'))
 
         return super().setUp()
 
@@ -37,25 +37,19 @@ class PassSecretParseInverse(TestCase):
 
         self.assertIsNotNone(
             from_dict(
-                camelize(self.passsecret_data),
+                self.passsecret_data,
                 PassSecret
             )
         )
 
-        print(from_dict(
-                    camelize(self.passsecret_data),
-                    PassSecret
-                ).to_dict())
-        print(camelize(self.passsecret_data))
-
+        # PT'(PT(data)) == data
         self.assertDictEqual(
-            # DeepDiff the objects.
             DeepDiff(
                 from_dict(
-                    camelize(self.passsecret_data),
+                    self.passsecret_data,
                     PassSecret
                 ).to_dict(),
-                camelize(self.passsecret_data),
+                self.passsecret_data,
                 exclude_paths=[
                     "root['metadata']['labels']",
                     "root['metadata']['annotations']",
@@ -64,22 +58,44 @@ class PassSecretParseInverse(TestCase):
                     "root['spec']['managedSecret']['kind']",
                     "root['spec']['managedSecret']['data']",
                     "root['spec']['managedSecret']['immutable']",
-                    "root['spec']['managedSecret']['apiVersion']",
-                    "root['spec']['managedSecret']['data']['singularData']",
+                    "root['spec']['managedSecret']['apiVersion']"
                 ]
             ),
-            # DeepDiff should be empty.
             {}
         )
 
-        # self.assertEqual(
-        #     from_dict(camelize(self.passsecret_data), PassSecret).spec.managedSecret.to_dict(),
-        #     camelize(self.passsecret_data)
-        # )
-
-    def test_managedsecret_export_import_inverse(self) -> None:
-        """
-        Test that ManagedSecret class import and export are inverses of one another.
-
-        MS(MS'(data)) == MS'(MS(data))
-        """
+        # PT(PT'(data)) == data
+        self.assertDictEqual(
+            DeepDiff(
+                PassSecret(
+                    metadata=Metadata(
+                        name='singular-data',
+                        namespace='pass-operator'
+                    ),
+                    spec=PassSecretSpec(
+                        encryptedData=camelize({
+                            'singular_data': 'premiscale/operator/singular-data'
+                        }),
+                        managedSecret=ManagedSecret(
+                            metadata=Metadata(
+                                name='singular-data',
+                                namespace='pass-operator'
+                            ),
+                            type='Opaque'
+                        )
+                    )
+                ).to_dict(),
+                self.passsecret_data,
+                exclude_paths=[
+                    "root['metadata']['labels']",
+                    "root['metadata']['annotations']",
+                    "root['spec']['managedSecret']['metadata']['labels']",
+                    "root['spec']['managedSecret']['metadata']['annotations']",
+                    "root['spec']['managedSecret']['kind']",
+                    "root['spec']['managedSecret']['data']",
+                    "root['spec']['managedSecret']['immutable']",
+                    "root['spec']['managedSecret']['apiVersion']"
+                ]
+            ),
+            {}
+        )
