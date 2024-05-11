@@ -63,21 +63,18 @@ def reconciliation(body: kopf.Body, **_: Any) -> None:
     )
 
     # Create a new PassSecret object with an up-to-date managedSecret decrypted value from the pass store.
-    passSecret = from_dict(
-        camelize(dict(body)),
-        PassSecret,
-    )
+    passSecretObj = PassSecret.from_kopf(body)
 
     log.info(
-        f'Reconciling PassSecret "{passSecret.metadata.name}" managed Secret "{passSecret.spec.managedSecret.metadata.name}" in Namespace "{passSecret.spec.managedSecret.metadata.namespace}" against password store.'
+        f'Reconciling PassSecret "{passSecretObj.metadata.name}" managed Secret "{passSecretObj.spec.managedSecret.metadata.name}" in Namespace "{passSecretObj.spec.managedSecret.metadata.namespace}" against password store.'
     )
 
     v1 = client.CoreV1Api()
 
     try:
         secret = v1.read_namespaced_secret(
-            name=passSecret.spec.managedSecret.metadata.name,
-            namespace=passSecret.spec.managedSecret.metadata.namespace
+            name=passSecretObj.spec.managedSecret.metadata.name,
+            namespace=passSecretObj.spec.managedSecret.metadata.namespace
         )
 
         _managedSecret = from_dict(
@@ -87,17 +84,17 @@ def reconciliation(body: kopf.Body, **_: Any) -> None:
 
         # If the managed secret data does not match what's in the newly-generated ManagedSecret object,
         # submit a patch request to update it.
-        if not _managedSecret.data_equals(passSecret.spec.managedSecret):
+        if not _managedSecret.data_equals(passSecretObj.spec.managedSecret):
             if _managedSecret.immutable:
                 raise kopf.TemporaryError(
-                    f'PassSecret "{passSecret.metadata.name}" managed secret "{passSecret.spec.managedSecret.metadata.name}" is immutable. Ignoring data patch.'
+                    f'PassSecret "{passSecretObj.metadata.name}" managed secret "{passSecretObj.spec.managedSecret.metadata.name}" is immutable. Ignoring data patch.'
                 )
 
             v1.patch_namespaced_secret(
-                name=passSecret.spec.managedSecret.metadata.name,
-                namespace=passSecret.spec.managedSecret.metadata.namespace,
+                name=passSecretObj.spec.managedSecret.metadata.name,
+                namespace=passSecretObj.spec.managedSecret.metadata.namespace,
                 body=client.V1Secret(
-                    **passSecret.spec.managedSecret.to_client_dict()
+                    **passSecretObj.spec.managedSecret.to_client_dict()
                 )
             )
 
@@ -132,28 +129,22 @@ def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.
 
     # Parse the old PassSecret manifest.
     try:
-        oldPassSecret = from_dict(
-            camelize(
-                {
-                    **metadata,
-                    **old
-                }
-            ),
-            PassSecret
+        oldPassSecret = PassSecret.from_kopf(
+            {
+                **metadata,
+                **old
+            }
         )
     except (ValueError, KeyError) as e:
         raise kopf.PermanentError(e)
 
     # Parse the new PassSecret manifest.
     try:
-        newPassSecret = from_dict(
-            camelize(
-                {
-                    **metadata,
-                    **new
-                }
-            ),
-            PassSecret
+        newPassSecret = PassSecret.from_kopf(
+            {
+                **metadata,
+                **new
+            }
         )
     except (ValueError, KeyError) as e:
         raise kopf.PermanentError(e)
@@ -200,10 +191,7 @@ def create(body: kopf.Body, **_: Any) -> None:
         body [kopf.Body]: raw body of the created PassSecret.
     """
     try:
-        secret = from_dict(
-            camelize(dict(body)),
-            PassSecret
-        )
+        secret = PassSecret.from_kopf(body)
     except (ValueError, KeyError) as e:
         raise kopf.PermanentError(e)
 
@@ -236,10 +224,7 @@ def delete(body: kopf.Body, **_: Any) -> None:
         body [kopf.Body]: raw body of the deleted PassSecret.
     """
     try:
-        secret = from_dict(
-            camelize(dict(body)),
-            PassSecret
-        )
+        secret = PassSecret.from_kopf(body)
     except (ValueError, KeyError) as e:
         raise kopf.PermanentError(e)
 

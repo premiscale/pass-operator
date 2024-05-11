@@ -7,11 +7,14 @@ from __future__ import annotations
 from typing import Dict, Final
 from pathlib import Path
 from attrs import define, asdict as to_dict
+from cattrs import structure as from_dict
+from humps import camelize
 
 from passoperator.gpg import decrypt
 from passoperator.utils import b64Dec, b64Enc
 from passoperator import env
 
+import kopf
 import logging
 
 
@@ -211,3 +214,23 @@ class PassSecret:
         if isinstance(__value, PassSecret):
             return self.to_dict() == __value.to_dict()
         return False
+
+    @classmethod
+    def from_kopf(cls, body: kopf.Body | Dict) -> PassSecret:
+        """
+        Create a PassSecret object from a K8s body dict.
+
+        Args:
+            body (kopf.Body | Dict): the body of a K8s object.
+
+        Returns:
+            PassSecret: the PassSecret object created from the body.
+        """
+        # Camelize the body to match the PassSecret object's fields, but keep the encryptedData field as-is.
+        camelized_body = camelize(dict(body))
+        camelized_body['spec']['encryptedData'] = dict(body)['spec']['encryptedData']
+
+        return from_dict(
+            camelized_body,
+            cls
+        )

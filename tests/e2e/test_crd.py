@@ -98,8 +98,7 @@ class PassSecretE2E(TestCase):
             while True:
                 if _check_namespaced_pods(namespace):
                     break
-                sleep(5)
-
+                sleep(3)
 
     def test_operator_initialized(self) -> None:
         """
