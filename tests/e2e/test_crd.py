@@ -93,7 +93,7 @@ class PassSecretE2E(TestCase):
                 bool: True if all pods are running or completed, False otherwise.
             """
             for pod in v1.list_namespaced_pod(namespace.metadata.name).items:
-                if pod.status.phase not in ('Running', 'Completed') and (pod.status.phase == 'Running' and not all(c.ready for c in pod.status.container_statuses)):
+                if pod.status.phase not in ('Running', 'Completed', 'Succeeded') or (pod.status.phase == 'Running' and any((not c.ready) for c in pod.status.container_statuses)):
                     log.warning(f'Pod {pod.metadata.name} in namespace {namespace.metadata.name} is not running or completed or completely ready.')
                     return False
             else:
