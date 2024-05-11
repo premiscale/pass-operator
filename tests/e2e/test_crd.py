@@ -114,6 +114,7 @@ class PassSecretE2E(TestCase):
         Test that the operator is running as intended in the cluster.
         """
 
+
     def tearDown(self) -> None:
         cleanup_operator_image()
         cleanup_e2e_image()

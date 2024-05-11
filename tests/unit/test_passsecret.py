@@ -24,7 +24,7 @@ class PassSecretParseInverse(TestCase):
         """
         Create a PassSecret instance for use in testing.
         """
-        self.passsecret_data = camelize(load_data('test_singular_data'))
+        self.passsecret_data = load_data('test_singular_data')
 
         return super().setUp()
 
@@ -73,9 +73,9 @@ class PassSecretParseInverse(TestCase):
                         namespace='pass-operator'
                     ),
                     spec=PassSecretSpec(
-                        encryptedData=camelize({
+                        encryptedData={
                             'singular_data': 'premiscale/operator/singular-data'
-                        }),
+                        },
                         managedSecret=ManagedSecret(
                             metadata=Metadata(
                                 name='singular-data',

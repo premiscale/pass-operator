@@ -9,6 +9,7 @@ from subprocess import Popen, PIPE
 from kubernetes import client, config
 from gnupg import GPG
 from dataclasses import dataclass
+from humps import camelize
 
 import yaml
 
@@ -47,7 +48,10 @@ def load_data(file: str, dtype: str = 'crd') -> dict:
         dict: The dictionary representation of the YAML file.
     """
     with resources.open_text(f'tests.data.{dtype}', f'{file}.yaml') as f:
-        return yaml.load(f, Loader=yaml.Loader)
+        manifest = yaml.load(f, Loader=yaml.Loader)
+        camelized_manifest = camelize(manifest)
+        camelized_manifest['spec']['encryptedData'] = manifest['spec']['encryptedData']
+        return camelized_manifest
 
 
 def generate_ssh_keypair() -> tuple:
