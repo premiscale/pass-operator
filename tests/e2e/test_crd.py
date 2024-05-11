@@ -20,14 +20,14 @@ from tests.common import (
     install_pass_operator_e2e
 )
 
-import logging
+# import logging
 
 
 config.load_kube_config(
     context='pass-operator'
 )
 
-log = logging.getLogger(__name__)
+# log = logging.getLogger(__name__)
 
 
 class PassSecretE2E(TestCase):

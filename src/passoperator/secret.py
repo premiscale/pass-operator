@@ -89,7 +89,7 @@ class ManagedSecret:
         Returns:
             Dict: this object as a dict.
         """
-        d = to_dict(self, filter=lambda a, v: v is not None)
+        d = to_dict(self, filter=lambda a, v: v is not None and v != False)
 
         if export:
             d.pop('stringData')

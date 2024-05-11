@@ -191,27 +191,27 @@ def create(body: kopf.Body, **_: Any) -> None:
         body [kopf.Body]: raw body of the created PassSecret.
     """
     try:
-        secret = PassSecret.from_kopf(body)
+        passSecretObj = PassSecret.from_kopf(body)
     except (ValueError, KeyError) as e:
         raise kopf.PermanentError(e)
 
-    log.info(f'PassSecret "{secret.metadata.name}" created')
+    log.info(f'PassSecret "{passSecretObj.metadata.name}" created')
 
     v1 = client.CoreV1Api()
 
     try:
         v1.create_namespaced_secret(
-            namespace=secret.spec.managedSecret.metadata.namespace,
+            namespace=passSecretObj.spec.managedSecret.metadata.namespace,
             body=client.V1Secret(
-                **secret.spec.managedSecret.to_client_dict()
+                **passSecretObj.spec.managedSecret.to_client_dict()
             )
         )
         log.info(
-            f'Created PassSecret "{secret.metadata.name}" managed Secret "{secret.spec.managedSecret.metadata.name}" in Namespace "{secret.spec.managedSecret.metadata.namespace}"'
+            f'Created PassSecret "{passSecretObj.metadata.name}" managed Secret "{passSecretObj.spec.managedSecret.metadata.name}" in Namespace "{passSecretObj.spec.managedSecret.metadata.namespace}"'
         )
     except client.ApiException as e:
         if e.status == HTTPStatus.CONFLICT:
-            raise kopf.TemporaryError(f'Duplicate PassSecret "{secret.metadata.name}" managed Secret "{secret.spec.managedSecret.metadata.name}" in Namespace "{secret.spec.managedSecret.metadata.namespace}". Skipping.')
+            raise kopf.TemporaryError(f'Duplicate PassSecret "{passSecretObj.metadata.name}" managed Secret "{passSecretObj.spec.managedSecret.metadata.name}" in Namespace "{passSecretObj.spec.managedSecret.metadata.namespace}". Skipping.')
         raise kopf.PermanentError(e)
 
 
@@ -224,23 +224,23 @@ def delete(body: kopf.Body, **_: Any) -> None:
         body [kopf.Body]: raw body of the deleted PassSecret.
     """
     try:
-        secret = PassSecret.from_kopf(body)
+        passSecretObj = PassSecret.from_kopf(body)
     except (ValueError, KeyError) as e:
         raise kopf.PermanentError(e)
 
-    log.info(f'PassSecret "{secret.metadata.name}" deleted')
+    log.info(f'PassSecret "{passSecretObj.metadata.name}" deleted')
 
     v1 = client.CoreV1Api()
 
     try:
         v1.delete_namespaced_secret(
-            name=secret.spec.managedSecret.metadata.name,
-            namespace=secret.spec.managedSecret.metadata.namespace
+            name=passSecretObj.spec.managedSecret.metadata.name,
+            namespace=passSecretObj.spec.managedSecret.metadata.namespace
         )
-        log.info(f'Deleted PassSecret "{secret.metadata.name}" managed Secret "{secret.spec.managedSecret.metadata.name}" in Namespace "{secret.spec.managedSecret.metadata.namespace}"')
+        log.info(f'Deleted PassSecret "{passSecretObj.metadata.name}" managed Secret "{passSecretObj.spec.managedSecret.metadata.name}" in Namespace "{passSecretObj.spec.managedSecret.metadata.namespace}"')
     except client.ApiException as e:
         if e.status == HTTPStatus.NOT_FOUND:
-            log.warning(f'PassSecret "{secret.metadata.name}" managed Secret "{secret.spec.managedSecret.metadata.name}" was not found. Skipping.')
+            log.warning(f'PassSecret "{passSecretObj.metadata.name}" managed Secret "{passSecretObj.spec.managedSecret.metadata.name}" was not found. Skipping.')
         raise kopf.PermanentError(e)
 
 
