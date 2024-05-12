@@ -31,6 +31,9 @@ def generate_gpg_keypair(passphrase: str) -> tuple:
     """
     Generate a test GPG keypair.
 
+    Args:
+        passphrase (str): The passphrase for the keypair.
+
     Returns:
         tuple: The public and private keys followed by the key ID.
 
@@ -56,6 +59,22 @@ def generate_gpg_keypair(passphrase: str) -> tuple:
         gpg.export_keys(key.fingerprint, passphrase=passphrase, secret=True),
         key.fingerprint
     )
+
+
+def delete_gpg_keypair(key_id: str, passphrase: str) -> None:
+    """
+    Delete a GPG keypair.
+
+    Args:
+        key_id (str): The key ID to delete.
+        passphrase (str): The passphrase for the key.
+    """
+    if len(passphrase) == 0:
+        raise ValueError('Passphrase must not be empty.')
+
+    gpg = GPG(gnupghome=os.path.expandvars('$HOME/.gnupg'))
+    gpg.delete_keys(key_id, secret=True, passphrase=passphrase)
+    gpg.delete_keys(key_id)
 
 
 def build_operator_image(tag: str = '0.0.1') -> int:
