@@ -8,7 +8,10 @@ from kubernetes import client, config
 from time import sleep
 
 from tests.common import (
-    load_data,
+    load_data
+)
+
+from tests.e2e.lib import (
     # Docker
     build_operator_image,
     cleanup_operator_image,
@@ -16,8 +19,11 @@ from tests.common import (
     cleanup_e2e_image,
     # Helm
     install_pass_operator_crds,
+    uninstall_pass_operator_crds,
     install_pass_operator,
-    install_pass_operator_e2e
+    uninstall_pass_operator,
+    install_pass_operator_e2e,
+    uninstall_pass_operator_e2e
 )
 
 import logging
@@ -53,22 +59,10 @@ class PassSecretE2E(TestCase):
         self.passsecret_singular_collision_1 = load_data('test_singular_data_collision_1')
         self.passsecret_singular_collision_2 = load_data('test_singular_data_collision_2')
 
+        # Initialize cluster and registry with operator-related resources that don't mutate for e2e tests.
         build_operator_image()
-        install_pass_operator_crds()
-        install_pass_operator(
-            ssh_value='1',
-            gpg_value='1',
-            gpg_key_id='1',
-            namespace='pass-operator',
-            ssh_createSecret=True,
-            pass_storeSubPath='repo',
-            gpg_createSecret=True,
-            gpg_passphrase='',
-            git_url='',
-            git_branch='main'
-        )
-
         build_e2e_image()
+        install_pass_operator_crds()
         install_pass_operator_e2e(
             namespace='pass-operator-e2e'
         )
@@ -113,7 +107,19 @@ class PassSecretE2E(TestCase):
         """
         Test that the operator is running as intended in the cluster.
         """
-
+        install_pass_operator(
+            ssh_value='1',
+            gpg_value='1',
+            gpg_key_id='1',
+            namespace='pass-operator',
+            ssh_createSecret=True,
+            pass_storeSubPath='repo',
+            gpg_createSecret=True,
+            gpg_passphrase='',
+            git_url='',
+            git_branch='main'
+        )
+        uninstall_pass_operator()
 
     def tearDown(self) -> None:
         cleanup_operator_image()
