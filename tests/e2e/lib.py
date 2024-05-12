@@ -83,7 +83,7 @@ def delete_gpg_keypair(key_id: str, passphrase: str) -> None:
 
 def build_operator_image(tag: str = '0.0.1') -> int:
     """
-    Build the operator image.
+    Build the local operator image.
 
     Returns:
         int: The return code of the docker build or push command that failed, or 0 if both succeeded.

@@ -12,6 +12,9 @@ from tests.common import (
 )
 
 from tests.e2e.lib import (
+    # Tools
+    generate_gpg_keypair,
+    generate_ssh_keypair,
     # Docker
     build_operator_image,
     cleanup_operator_image,
@@ -59,10 +62,29 @@ class PassSecretE2E(TestCase):
         self.passsecret_singular_collision_1 = load_data('test_singular_data_collision_1')
         self.passsecret_singular_collision_2 = load_data('test_singular_data_collision_2')
 
+        # Generate GPG and SSH keypairs for use in testing.
+        self.gpg_public, self.gpg_private, self.gpg_fingerprint = generate_gpg_keypair(
+            passphrase='1234',
+            delete_from_keyring=True
+        )
+        self.ssh_public, self.ssh_private = generate_ssh_keypair()
+
         # Initialize cluster and registry with operator-related resources that don't mutate for e2e tests.
         build_operator_image()
-        build_e2e_image()
+        install_pass_operator(
+            ssh_value=self.ssh_private,
+            gpg_value=self.gpg_private,
+            gpg_key_id=self.gpg_fingerprint,
+            namespace='pass-operator',
+            ssh_createSecret=True,
+            pass_storeSubPath='repo',
+            gpg_createSecret=True,
+            gpg_passphrase='',
+            git_url='',
+            git_branch='main'
+        )
         install_pass_operator_crds()
+        build_e2e_image()
         install_pass_operator_e2e(
             namespace='pass-operator-e2e'
         )
@@ -107,21 +129,11 @@ class PassSecretE2E(TestCase):
         """
         Test that the operator is running as intended in the cluster.
         """
-        install_pass_operator(
-            ssh_value='1',
-            gpg_value='1',
-            gpg_key_id='1',
-            namespace='pass-operator',
-            ssh_createSecret=True,
-            pass_storeSubPath='repo',
-            gpg_createSecret=True,
-            gpg_passphrase='',
-            git_url='',
-            git_branch='main'
-        )
-        uninstall_pass_operator()
 
     def tearDown(self) -> None:
         cleanup_operator_image()
         cleanup_e2e_image()
+        uninstall_pass_operator()
+        uninstall_pass_operator_crds()
+        uninstall_pass_operator_e2e()
         return super().tearDown()
