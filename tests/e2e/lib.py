@@ -27,7 +27,7 @@ def generate_ssh_keypair() -> tuple:
             os.remove('/tmp/id_rsa.pub')
 
 
-def generate_gpg_keypair(passphrase: str) -> tuple:
+def generate_gpg_keypair(passphrase: str, delete_from_keyring: bool = False) -> tuple:
     """
     Generate a test GPG keypair.
 
@@ -43,22 +43,26 @@ def generate_gpg_keypair(passphrase: str) -> tuple:
     if len(passphrase) == 0:
         raise ValueError('Passphrase must not be empty.')
 
-    gpg = GPG(gnupghome=os.path.expandvars('$HOME/.gnupg'))
-    key = gpg.gen_key(
-        gpg.gen_key_input(
-            key_type='RSA',
-            key_length=4096,
-            name_real='Emma Test',
-            name_email='emmatest@premiscale.com',
-            passphrase=passphrase
+    try:
+        gpg = GPG(gnupghome=os.path.expandvars('$HOME/.gnupg'))
+        key = gpg.gen_key(
+            gpg.gen_key_input(
+                key_type='RSA',
+                key_length=4096,
+                name_real='Emma Test',
+                name_email='emmatest@premiscale.com',
+                passphrase=passphrase
+            )
         )
-    )
 
-    return (
-        gpg.export_keys(key.fingerprint, passphrase=passphrase),
-        gpg.export_keys(key.fingerprint, passphrase=passphrase, secret=True),
-        key.fingerprint
-    )
+        return (
+            gpg.export_keys(key.fingerprint, passphrase=passphrase),
+            gpg.export_keys(key.fingerprint, passphrase=passphrase, secret=True),
+            key.fingerprint
+        )
+    finally:
+        if delete_from_keyring:
+            delete_gpg_keypair(key.fingerprint, passphrase)
 
 
 def delete_gpg_keypair(key_id: str, passphrase: str) -> None:
