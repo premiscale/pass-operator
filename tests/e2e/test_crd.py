@@ -63,13 +63,14 @@ class PassSecretE2E(TestCase):
         self.passsecret_singular_collision_2 = load_data('test_singular_data_collision_2')
 
         # Generate GPG and SSH keypairs for use in testing.
+        self.gpg_passphrase = '1234'
         self.gpg_public, self.gpg_private, self.gpg_fingerprint = generate_gpg_keypair(
-            passphrase='1234',
+            passphrase=self.gpg_passphrase,
             delete_from_keyring=True
         )
         self.ssh_public, self.ssh_private = generate_ssh_keypair()
 
-        # Initialize cluster and registry with operator-related resources that don't mutate for e2e tests.
+        # Operator artifacts.
         build_operator_image()
         install_pass_operator(
             ssh_value=self.ssh_private,
@@ -84,7 +85,14 @@ class PassSecretE2E(TestCase):
             git_branch='main'
         )
         install_pass_operator_crds()
-        build_e2e_image()
+
+        # e2e artifacts.
+        build_e2e_image(
+            ssh_public_key=self.ssh_public,
+            gpg_key_id=self.gpg_fingerprint,
+            gpg_key=self.gpg_public,
+            gpg_passphrase=self.gpg_passphrase,
+        )
         install_pass_operator_e2e(
             namespace='pass-operator-e2e'
         )
