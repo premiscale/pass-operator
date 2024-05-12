@@ -199,7 +199,7 @@ def install_pass_operator_crds(namespace: str = 'default') -> int:
     Returns:
         int: The return code of the helm upgrade command.
     """
-    return run(f'helm upgrade install --namespace {namespace} pass-operator-crds ./charts/operator-crds').returnCode
+    return run(f'helm upgrade --install pass-operator-crds ./helm/operator-crds --namespace {namespace} --create-namespace')
 
 
 def uninstall_pass_operator_crds(namespace: str = 'default') -> int:
@@ -216,13 +216,13 @@ def install_pass_operator(
     ssh_value: str,
     gpg_value: str,
     gpg_key_id: str,
+    git_url: str,
     namespace: str = 'default',
     priority: int = 100,
     ssh_createSecret: bool = True,
     pass_storeSubPath: str = 'repo',
     gpg_createSecret: bool = True,
     gpg_passphrase: str = '',
-    git_url: str = '',
     git_branch: str = 'main'
 ) -> int:
     """
@@ -232,7 +232,7 @@ def install_pass_operator(
         int: The return code of the helm upgrade command.
     """
     return run(f"""
-        helm upgrade install --namespace {namespace} pass-operator ./charts/operator
+        helm upgrade --install --namespace {namespace} --create-namespace pass-operator ./helm/operator
             --set global.image.registry="localhost"
             --set operator.interval="3"
             --set operator.initial_delay="1"

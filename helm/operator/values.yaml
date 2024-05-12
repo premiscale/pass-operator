@@ -4,6 +4,9 @@ global:
 
 
 deployment:
+  # A list of pull secret names.
+  pullSecrets: []
+
   image:
     name: pass-operator
     tag: ignore
