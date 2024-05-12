@@ -23,7 +23,7 @@ class CommandOutput:
     returnCode: int
 
 
-def run(command: str, split: str | None = None, shell=False, timeout: float = 5) -> CommandOutput:
+def run(command: str, split: str | None = None, shell=False, timeout: float = 30) -> CommandOutput:
     """
     Run a command and return the output, error, and return code.
 

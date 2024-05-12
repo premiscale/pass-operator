@@ -1,9 +1,54 @@
 from tests.common import run
-from textwrap import dedent
 from gnupg import GPG
+from kubernetes import client
+from time import sleep as syncsleep
 
-import re
 import os
+import logging
+
+
+log = logging.getLogger(__name__)
+
+
+def check_cluster_pod_status(namespace: str | None = None) -> bool:
+    """
+    Ensure all pods are running or completed or completely ready on a cluster.
+
+    Args:
+        namespace (str, optional): The namespace to check for running or completed pods. If None, checks all namespaces. Defaults to None.
+
+    Returns:
+        bool: True if all pods are running or completed or completely ready, False otherwise.
+    """
+    v1 = client.CoreV1Api()
+    namespaces = v1.list_namespace().items
+
+    def _check_namespaced_pods(namespace: client.V1Namespace) -> bool:
+        """
+        If any pods in the given namespace are not running or completed, return False.
+
+        Args:
+            namespace (client.V1Namespace): The namespace to check for running or completed pods.
+
+        Returns:
+            bool: True if all pods are running or completed, False otherwise.
+        """
+        for pod in v1.list_namespaced_pod(namespace.metadata.name).items:
+            if pod.status.phase not in ('Running', 'Completed', 'Succeeded') or (pod.status.phase == 'Running' and any((not c.ready) for c in pod.status.container_statuses)):
+                log.warning(f'Pod {pod.metadata.name} in namespace {namespace.metadata.name} is not running or completed or completely ready.')
+                return False
+        else:
+            return True
+
+    # Ensure that all pods on the cluster are in a ready state.
+    for namespace in namespaces:
+        while True:
+            if _check_namespaced_pods(namespace):
+                break
+            log.warning(f'Namespace {namespace.metadata.name} has pods that are not running or completed or completely ready.')
+            syncsleep(3)
+
+    log.info('All pods in the cluster are running or completed or completely ready.')
 
 
 def generate_ssh_keypair() -> tuple:
@@ -88,7 +133,7 @@ def build_operator_image(tag: str = '0.0.1') -> int:
     Returns:
         int: The return code of the docker build or push command that failed, or 0 if both succeeded.
     """
-    return run(f'docker build -t localhost/pass-operator:{tag} -f ./Dockerfile .').returnCode \
+    return run(f'docker build -t localhost/pass-operator:{tag} -f ./Dockerfile.develop .').returnCode \
         or run(f'docker push localhost/pass-operator:{tag}').returnCode
 
 
