@@ -3,6 +3,7 @@ from gnupg import GPG
 from kubernetes import client
 from time import sleep as syncsleep
 
+import re
 import os
 import logging
 
@@ -133,8 +134,8 @@ def build_operator_image(tag: str = '0.0.1') -> int:
     Returns:
         int: The return code of the docker build or push command that failed, or 0 if both succeeded.
     """
-    return run(f'docker build -t localhost/pass-operator:{tag} -f ./Dockerfile.develop .').returnCode \
-        or run(f'docker push localhost/pass-operator:{tag}').returnCode
+    return run(f'docker build -t localhost/pass-operator:{tag} -f ./Dockerfile.develop .') \
+        or run(f'docker push localhost/pass-operator:{tag}')
 
 
 def build_e2e_image(
@@ -155,19 +156,20 @@ def build_e2e_image(
     Returns:
         int: The return code of the docker build or push command that failed, or 0 if both succeeded.
     """
+    gpg_key = re.sub(r'\n', r'\\n', gpg_key)
+    ssh_public_key = re.sub(r'\\n', r'\\\\n', ssh_public_key)
+
     return run(f"""
-        docker build .
-            --build-arg PASS_VERSION={pass_version}
-            --build-arg TINI_VERSION={tini_version}
-            --build-arg ARCHITECTURE={architecture}
-            --build-arg PASS_DIRECTORY={pass_directory}
-            --build-arg PASS_GPG_KEY_ID={gpg_key_id}
-            --build-arg PASS_GPG_KEY={gpg_key}
-            --build-arg PASS_GPG_PASSPHRASE={gpg_passphrase}
-            --build-arg PASS_GIT_BRANCH={git_branch}
-            --build-arg SSH_PUBLIC_KEY={ssh_public_key}
-            -f ./Dockerfile.e2e
-            -t pass-operator-e2e:{tag}
+        docker build -t localhost/pass-operator-e2e:{tag} -f ./Dockerfile.e2e .
+            --build-arg PASS_VERSION="{pass_version}"
+            --build-arg TINI_VERSION="{tini_version}"
+            --build-arg ARCHITECTURE="{architecture}"
+            --build-arg PASS_DIRECTORY="{pass_directory}"
+            --build-arg PASS_GPG_KEY_ID="{gpg_key_id}"
+            --build-arg PASS_GPG_KEY="{gpg_key}"
+            --build-arg PASS_GPG_PASSPHRASE="{gpg_passphrase}"
+            --build-arg PASS_GIT_BRANCH="{git_branch}"
+            --build-arg SSH_PUBLIC_KEY="{ssh_public_key}"
     """)
     # or run(f'docker push localhost/pass-operator-e2e:{tag}').returnCode
 
@@ -179,7 +181,7 @@ def cleanup_operator_image(tag: str = '0.0.1') -> int:
     Returns:
         int: The return code of the docker rmi command.
     """
-    return run(f'docker rmi localhost/pass-operator:{tag}').returnCode
+    return run(f'docker rmi localhost/pass-operator:{tag}')
 
 
 def cleanup_e2e_image(tag: str = '0.0.1') -> int:
@@ -209,7 +211,7 @@ def uninstall_pass_operator_crds(namespace: str = 'default') -> int:
     Returns:
         int: The return code of the helm uninstall command.
     """
-    return run(f'helm uninstall --namespace {namespace} pass-operator-crds').returnCode
+    return run(f'helm uninstall --namespace {namespace} pass-operator-crds')
 
 
 def install_pass_operator(
@@ -246,7 +248,7 @@ def install_pass_operator(
             --set operator.git.url="{git_url}"
             --set operator.git.branch="{git_branch}"
             --set operator.ssh.value="{ssh_value}"
-    """).returnCode
+    """)
 
 
 def uninstall_pass_operator(namespace: str = 'default') -> int:

@@ -36,7 +36,7 @@ def run(command: str, split: str | None = None, shell=False, timeout: float = 30
         CommandOutput: output, error, and return code.
     """
     cmd = dedent(command).lstrip().rstrip().split(split)
-    # print(' '.join(cmd))
+    print(' '.join(cmd))
     with Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE, text=True, shell=shell, encoding='utf-8') as p:
         stdout, stderr = p.communicate(timeout=timeout) # blocking
         return CommandOutput(stdout.rstrip(), stderr.rstrip(), p.returncode)
