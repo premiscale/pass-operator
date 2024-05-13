@@ -106,9 +106,18 @@ spec:
                 {{- end }}
               {{- end }}
             - name: PASS_GPG_KEY_ID
-              value: {{ .Values.operator.gpg.key_id }}
+              {{- with .Values.operator.gpg }}
+                {{- if .createSecret }}
+              valueFrom:
+                secretKeyRef:
+                  key: id
+                  name: {{ .name }}
+                {{- else }}
+              value: {{ .key_id }}
+                {{- end }}
+              {{- end }}
             - name: PASS_GIT_URL
-              value: {{ .Values.operator.git.url }}
+              value: {{ .Values.operator.git.url | quote }}
             - name: PASS_GIT_BRANCH
               value: {{ .Values.operator.git.branch }}
             - name: PASS_SSH_PRIVATE_KEY

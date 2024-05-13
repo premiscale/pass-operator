@@ -2,8 +2,7 @@
 Helper interface with common methods for managing the operator installation and making API calls.
 """
 
-
-from textwrap import dedent
+from typing import List
 from importlib import resources
 from subprocess import Popen, PIPE
 from dataclasses import dataclass
@@ -23,7 +22,7 @@ class CommandOutput:
     returnCode: int
 
 
-def run(command: str, split: str | None = None, shell=False, timeout: float = 30) -> CommandOutput:
+def run(command: List[str], shell=False, timeout: float = 300) -> CommandOutput:
     """
     Run a command and return the output, error, and return code.
 
@@ -35,9 +34,8 @@ def run(command: str, split: str | None = None, shell=False, timeout: float = 30
     Returns:
         CommandOutput: output, error, and return code.
     """
-    cmd = dedent(command).lstrip().rstrip().split(split)
-    print(' '.join(cmd))
-    with Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE, text=True, shell=shell, encoding='utf-8') as p:
+    print(' '.join(command))
+    with Popen(command, stdin=PIPE, stdout=PIPE, stderr=PIPE, text=True, shell=shell, encoding='utf-8') as p:
         stdout, stderr = p.communicate(timeout=timeout) # blocking
         return CommandOutput(stdout.rstrip(), stderr.rstrip(), p.returncode)
 

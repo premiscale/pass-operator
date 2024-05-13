@@ -42,4 +42,8 @@ fi
 pass init --path="$PASS_DIRECTORY" "$PASS_GPG_KEY_ID"
 
 # Start the operator, passing in arguments from Helm.
-passoperator "$@"
+if [ -n "$(poetry env info -p)" ]; then
+    poetry run passoperator "$@"
+else
+    passoperator "$@"
+fi

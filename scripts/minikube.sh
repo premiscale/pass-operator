@@ -27,13 +27,14 @@ if [ "$1" == "start" ]; then
         --addons=metallb \
         --addons=metrics-server \
         --addons=registry \
+        --insecure-registry "10.0.0.0/24" \
         --cpus 4 \
         --nodes 1 \
         --memory 4096 \
         --disk-size 30g
 
     # Docker registry for localhost images.
-    docker run --rm -itd --network=host --name docker-registry-redirect alpine ash -c "apk add socat && socat TCP-LISTEN:5000,reuseaddr,fork TCP:$(minikube -p pass-operator ip):61917"
+    docker run --name docker-registry-redirect --rm -itd --network=host ubuntu:22.04 /bin/bash -c "apt update && apt install -y socat && socat TCP-LISTEN:5000,reuseaddr,fork TCP:$(minikube ip -p pass-operator):5000"
 
     kubectl config current-context
     kubectl get nodes -o wide

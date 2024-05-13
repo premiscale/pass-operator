@@ -2,6 +2,7 @@ from tests.common import run
 from gnupg import GPG
 from kubernetes import client
 from time import sleep as syncsleep
+from passoperator.utils import b64Enc
 
 import re
 import os
@@ -60,11 +61,11 @@ def generate_ssh_keypair() -> tuple:
         tuple: The public and private keys.
     """
     try:
-        run('ssh-keygen -t ed25519 -f /tmp/id_rsa -q -N ""')
+        run(['ssh-keygen', '-t', 'ed25519', '-f', '/tmp/id_rsa', '-q', '-N', '""'])
 
         return (
-            run('cat /tmp/id_rsa.pub').stdout,
-            run('cat /tmp/id_rsa').stdout
+            run(['cat', '/tmp/id_rsa.pub']).stdout,
+            run(['cat', '/tmp/id_rsa']).stdout
         )
     finally:
         if os.path.exists('/tmp/id_rsa'):
@@ -127,17 +128,6 @@ def delete_gpg_keypair(key_id: str, passphrase: str) -> None:
     gpg.delete_keys(key_id)
 
 
-def build_operator_image(tag: str = '0.0.1') -> int:
-    """
-    Build the local operator image.
-
-    Returns:
-        int: The return code of the docker build or push command that failed, or 0 if both succeeded.
-    """
-    return run(f'docker build -t localhost/pass-operator:{tag} -f ./Dockerfile.develop .') \
-        or run(f'docker push localhost/pass-operator:{tag}')
-
-
 def build_e2e_image(
     ssh_public_key: str,
     gpg_key_id: str,
@@ -156,32 +146,39 @@ def build_e2e_image(
     Returns:
         int: The return code of the docker build or push command that failed, or 0 if both succeeded.
     """
-    gpg_key = re.sub(r'\n', r'\\n', gpg_key)
-    ssh_public_key = re.sub(r'\\n', r'\\\\n', ssh_public_key)
 
-    return run(f"""
-        docker build -t localhost/pass-operator-e2e:{tag} -f ./Dockerfile.e2e .
-            --build-arg PASS_VERSION="{pass_version}"
-            --build-arg TINI_VERSION="{tini_version}"
-            --build-arg ARCHITECTURE="{architecture}"
-            --build-arg PASS_DIRECTORY="{pass_directory}"
-            --build-arg PASS_GPG_KEY_ID="{gpg_key_id}"
-            --build-arg PASS_GPG_KEY="{gpg_key}"
-            --build-arg PASS_GPG_PASSPHRASE="{gpg_passphrase}"
-            --build-arg PASS_GIT_BRANCH="{git_branch}"
-            --build-arg SSH_PUBLIC_KEY="{ssh_public_key}"
-    """)
-    # or run(f'docker push localhost/pass-operator-e2e:{tag}').returnCode
+    return run([
+        'docker', 'build', '-t', f'localhost:5000/pass-operator-e2e:{tag}', '-f', './Dockerfile.e2e', '.',
+        '--build-arg', f'PASS_VERSION={pass_version}',
+        '--build-arg', f'TINI_VERSION={tini_version}',
+        '--build-arg', f'ARCHITECTURE={architecture}',
+        '--build-arg', f'PASS_DIRECTORY={pass_directory}',
+        '--build-arg', f'PASS_GPG_KEY_ID={gpg_key_id}',
+        '--build-arg', f'PASS_GPG_KEY={gpg_key}',
+        '--build-arg', f'PASS_GPG_PASSPHRASE={gpg_passphrase}',
+        '--build-arg', f'PASS_GIT_BRANCH={git_branch}',
+        '--build-arg', f'SSH_PUBLIC_KEY={ssh_public_key}'
+    ]).returnCode or run(['docker', 'push', f'localhost:5000/pass-operator-e2e:{tag}']).returnCode
 
 
-def cleanup_operator_image(tag: str = '0.0.1') -> int:
+def install_pass_operator_e2e(namespace: str = 'default') -> int:
     """
-    Remove the operator image.
+    Install the e2e testing image in the cluster.
 
     Returns:
-        int: The return code of the docker rmi command.
+        int: The return code of the helm upgrade command.
     """
-    return run(f'docker rmi localhost/pass-operator:{tag}')
+    return run(['helm', 'upgrade', '--install', '--namespace', namespace, '--create-namespace', 'pass-operator-e2e', './helm/operator-e2e'])
+
+
+def uninstall_pass_operator_e2e(namespace: str = 'default') -> int:
+    """
+    Uninstall the e2e testing image from the cluster.
+
+    Returns:
+        int: The return code of the helm uninstall command.
+    """
+    return run(['helm', 'uninstall', '--namespace', namespace, 'pass-operator-e2e']).returnCode
 
 
 def cleanup_e2e_image(tag: str = '0.0.1') -> int:
@@ -191,7 +188,7 @@ def cleanup_e2e_image(tag: str = '0.0.1') -> int:
     Returns:
         int: The return code of the docker rmi command.
     """
-    return run(f'docker rmi localhost/pass-operator-e2e:{tag}').returnCode
+    return run(['docker', 'rmi', f'localhost:5000/pass-operator-e2e:{tag}']).returnCode
 
 
 def install_pass_operator_crds(namespace: str = 'default') -> int:
@@ -201,7 +198,7 @@ def install_pass_operator_crds(namespace: str = 'default') -> int:
     Returns:
         int: The return code of the helm upgrade command.
     """
-    return run(f'helm upgrade --install pass-operator-crds ./helm/operator-crds --namespace {namespace} --create-namespace')
+    return run(['helm', 'upgrade', '--install', 'pass-operator-crds', './helm/operator-crds', '--namespace', namespace, '--create-namespace'])
 
 
 def uninstall_pass_operator_crds(namespace: str = 'default') -> int:
@@ -211,7 +208,28 @@ def uninstall_pass_operator_crds(namespace: str = 'default') -> int:
     Returns:
         int: The return code of the helm uninstall command.
     """
-    return run(f'helm uninstall --namespace {namespace} pass-operator-crds')
+    return run(['helm', 'uninstall', '--namespace', namespace, 'pass-operator-crds']).returnCode
+
+
+def cleanup_operator_image(tag: str = '0.0.1') -> int:
+    """
+    Remove the operator image.
+
+    Returns:
+        int: The return code of the docker rmi command.
+    """
+    return run(['docker', 'rmi', f'localhost:5000/pass-operator:{tag}'])
+
+
+def build_operator_image(tag: str = '0.0.1') -> int:
+    """
+    Build the local operator image.
+
+    Returns:
+        int: The return code of the docker build or push command that failed, or 0 if both succeeded.
+    """
+    return run(['docker', 'build', '-t', f'localhost:5000/pass-operator:{tag}', '-f', './Dockerfile.develop', '.']).returnCode \
+        or run(['docker', 'push', f'localhost:5000/pass-operator:{tag}'])
 
 
 def install_pass_operator(
@@ -225,7 +243,8 @@ def install_pass_operator(
     pass_storeSubPath: str = 'repo',
     gpg_createSecret: bool = True,
     gpg_passphrase: str = '',
-    git_branch: str = 'main'
+    git_branch: str = 'main',
+    image_tag: str = '0.0.1'
 ) -> int:
     """
     Install the operator in the cluster.
@@ -233,22 +252,23 @@ def install_pass_operator(
     Returns:
         int: The return code of the helm upgrade command.
     """
-    return run(f"""
-        helm upgrade --install --namespace {namespace} --create-namespace pass-operator ./helm/operator
-            --set global.image.registry="localhost"
-            --set operator.interval="3"
-            --set operator.initial_delay="1"
-            --set operator.priority="{priority}"
-            --set operator.ssh.createSecret="{str(ssh_createSecret).lower()}"
-            --set operator.pass.storeSubPath="{pass_storeSubPath}"
-            --set operator.gpg.createSecret="{str(gpg_createSecret).lower()}"
-            --set operator.gpg.value="{gpg_value}"
-            --set operator.gpg.key_id="{gpg_key_id}"
-            --set operator.gpg.passphrase="{gpg_passphrase}"
-            --set operator.git.url="{git_url}"
-            --set operator.git.branch="{git_branch}"
-            --set operator.ssh.value="{ssh_value}"
-    """)
+    return run([
+        'helm', 'upgrade', '--install', 'pass-operator', './helm/operator', '--namespace', namespace, '--create-namespace',
+            '--set', 'global.image.registry=localhost:5000',
+            '--set', f'deployment.image.tag={image_tag}',
+            '--set', 'operator.interval=60',
+            '--set', 'operator.initial_delay=1',
+            '--set', f'operator.priority={priority}',
+            '--set', f'operator.ssh.createSecret={str(ssh_createSecret).lower()}',
+            '--set', f'operator.pass.storeSubPath={pass_storeSubPath}',
+            '--set', f'operator.gpg.createSecret={str(gpg_createSecret).lower()}',
+            '--set', f'operator.gpg.value={b64Enc(gpg_value)}',
+            '--set', f'operator.gpg.key_id={gpg_key_id}',
+            '--set', f'operator.gpg.passphrase={gpg_passphrase}',
+            '--set', f'operator.git.url={git_url}',
+            '--set', f'operator.git.branch={git_branch}',
+            '--set', f'operator.ssh.value={b64Enc(ssh_value)}'
+    ]).returnCode
 
 
 def uninstall_pass_operator(namespace: str = 'default') -> int:
@@ -258,24 +278,4 @@ def uninstall_pass_operator(namespace: str = 'default') -> int:
     Returns:
         int: The return code of the helm uninstall command.
     """
-    return run(f'helm uninstall --namespace {namespace} pass-operator').returnCode
-
-
-def install_pass_operator_e2e(namespace: str = 'default') -> int:
-    """
-    Install the e2e testing image in the cluster.
-
-    Returns:
-        int: The return code of the helm upgrade command.
-    """
-    return run(f'helm upgrade install --namespace {namespace} pass-operator-e2e ./charts/operator-e2e').returnCode
-
-
-def uninstall_pass_operator_e2e(namespace: str = 'default') -> int:
-    """
-    Uninstall the e2e testing image from the cluster.
-
-    Returns:
-        int: The return code of the helm uninstall command.
-    """
-    return run(f'helm uninstall --namespace {namespace} pass-operator-e2e').returnCode
+    return run(['helm', 'uninstall', '--namespace', namespace, 'pass-operator']).returnCode

@@ -5,8 +5,7 @@ FROM ${IMAGE}:${TAG}
 
 SHELL [ "/bin/bash", "-c" ]
 
-ENV PATH=${PATH}:/opt/pass-operator/.local/bin \
-    PYTHONUNBUFFERED=1 \
+ENV PYTHONUNBUFFERED=1 \
     OPERATOR_INTERVAL=60 \
     OPERATOR_INITIAL_DELAY=3 \
     OPERATOR_PRIORITY=100 \
@@ -57,6 +56,8 @@ USER 10001
 COPY src/ ./src/
 COPY README.md LICENSE poetry.lock pyproject.toml ./
 COPY --chown=operator:operator --chmod=550 bin/entrypoint.sh /entrypoint.sh
+
+ENV PATH=/opt/pass-operator/.local/bin:${PATH}
 
 # Set up SSH and install the pass-operator package from my private registry.
 RUN mkdir -p "$HOME"/.local/bin "$HOME"/.ssh "$HOME"/.gnupg \
