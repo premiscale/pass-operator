@@ -296,6 +296,7 @@ ipch/
 # Visual Studio Trace Files
 *.e2e
 !Dockerfile.e2e
+!bin/entrypoint.e2e.sh
 
 # TFS 2012 Local Workspace
 $tf/

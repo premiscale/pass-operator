@@ -64,8 +64,8 @@ def generate_ssh_keypair() -> tuple:
         run(['ssh-keygen', '-t', 'ed25519', '-f', '/tmp/id_rsa', '-q', '-N', '""'])
 
         return (
-            run(['cat', '/tmp/id_rsa.pub']).stdout,
-            run(['cat', '/tmp/id_rsa']).stdout
+            run(['cat', '/tmp/id_rsa.pub']).stdout.lstrip().rstrip(),
+            run(['cat', '/tmp/id_rsa']).stdout.lstrip().rstrip()
         )
     finally:
         if os.path.exists('/tmp/id_rsa'):
@@ -129,16 +129,10 @@ def delete_gpg_keypair(key_id: str, passphrase: str) -> None:
 
 
 def build_e2e_image(
-    ssh_public_key: str,
-    gpg_key_id: str,
-    gpg_key: str,
     tag: str = '0.0.1',
     pass_version: str = '1.7.4-5',
     tini_version: str = 'v0.19.0',
-    architecture: str = 'arm64',
-    pass_directory: str = 'repo',
-    gpg_passphrase: str = '',
-    git_branch: str = 'main',
+    architecture: str = 'arm64'
 ) -> int:
     """
     Build the e2e testing image for a local git server.
@@ -152,23 +146,40 @@ def build_e2e_image(
         '--build-arg', f'PASS_VERSION={pass_version}',
         '--build-arg', f'TINI_VERSION={tini_version}',
         '--build-arg', f'ARCHITECTURE={architecture}',
-        '--build-arg', f'PASS_DIRECTORY={pass_directory}',
-        '--build-arg', f'PASS_GPG_KEY_ID={gpg_key_id}',
-        '--build-arg', f'PASS_GPG_KEY={gpg_key}',
-        '--build-arg', f'PASS_GPG_PASSPHRASE={gpg_passphrase}',
-        '--build-arg', f'PASS_GIT_BRANCH={git_branch}',
-        '--build-arg', f'SSH_PUBLIC_KEY={ssh_public_key}'
     ]).returnCode or run(['docker', 'push', f'localhost:5000/pass-operator-e2e:{tag}']).returnCode
 
 
-def install_pass_operator_e2e(namespace: str = 'default') -> int:
+def install_pass_operator_e2e(
+        ssh_value: str,
+        gpg_value: str,
+        gpg_key_id: str,
+        namespace: str = 'default',
+        ssh_createSecret: bool = True,
+        pass_storeSubPath: str = 'repo',
+        gpg_createSecret: bool = True,
+        gpg_passphrase: str = '',
+        git_branch: str = 'main',
+        image_tag: str = '0.0.1'
+    ) -> int:
     """
     Install the e2e testing image in the cluster.
 
     Returns:
         int: The return code of the helm upgrade command.
     """
-    return run(['helm', 'upgrade', '--install', '--namespace', namespace, '--create-namespace', 'pass-operator-e2e', './helm/operator-e2e'])
+    return run([
+        'helm', 'upgrade', '--install', '--namespace', namespace, '--create-namespace', 'pass-operator-e2e', './helm/operator-e2e',
+            '--set', 'global.image.registry=localhost:5000',
+            '--set', f'deployment.image.tag={image_tag}',
+            '--set', f'operator.ssh.createSecret={str(ssh_createSecret).lower()}',
+            '--set', f'operator.pass.storeSubPath={pass_storeSubPath}',
+            '--set', f'operator.gpg.createSecret={str(gpg_createSecret).lower()}',
+            '--set', f'operator.gpg.value={b64Enc(gpg_value)}',
+            '--set', f'operator.gpg.key_id={gpg_key_id}',
+            '--set', f'operator.gpg.passphrase={gpg_passphrase}',
+            '--set', f'operator.git.branch={git_branch}',
+            '--set', f'operator.ssh.value={b64Enc(ssh_value)}'
+    ]).returnCode
 
 
 def uninstall_pass_operator_e2e(namespace: str = 'default') -> int:
@@ -198,7 +209,7 @@ def install_pass_operator_crds(namespace: str = 'default') -> int:
     Returns:
         int: The return code of the helm upgrade command.
     """
-    return run(['helm', 'upgrade', '--install', 'pass-operator-crds', './helm/operator-crds', '--namespace', namespace, '--create-namespace'])
+    return run(['helm', 'upgrade', '--install', 'pass-operator-crds', './helm/operator-crds', '--namespace', namespace, '--create-namespace']).returnCode
 
 
 def uninstall_pass_operator_crds(namespace: str = 'default') -> int:
@@ -218,7 +229,7 @@ def cleanup_operator_image(tag: str = '0.0.1') -> int:
     Returns:
         int: The return code of the docker rmi command.
     """
-    return run(['docker', 'rmi', f'localhost:5000/pass-operator:{tag}'])
+    return run(['docker', 'rmi', f'localhost:5000/pass-operator:{tag}']).returnCode
 
 
 def build_operator_image(tag: str = '0.0.1') -> int:

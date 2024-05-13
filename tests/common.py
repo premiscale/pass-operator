@@ -37,7 +37,12 @@ def run(command: List[str], shell=False, timeout: float = 300) -> CommandOutput:
     print(' '.join(command))
     with Popen(command, stdin=PIPE, stdout=PIPE, stderr=PIPE, text=True, shell=shell, encoding='utf-8') as p:
         stdout, stderr = p.communicate(timeout=timeout) # blocking
-        return CommandOutput(stdout.rstrip(), stderr.rstrip(), p.returncode)
+        ret = CommandOutput(stdout.rstrip(), stderr.rstrip(), p.returncode)
+
+    if ret.returnCode != 0:
+        log.error(f'Command failed with return code {ret.returnCode}. {ret.stderr}')
+
+    return ret
 
 
 def load_data(file: str, dtype: str = 'crd') -> dict:
