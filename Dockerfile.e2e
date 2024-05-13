@@ -25,14 +25,14 @@ ARG ARCHITECTURE=arm64
 RUN curl -sL https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini-${ARCHITECTURE} -o /tini \
     && chmod +x /tini
 
-# Add 'operator' user and group.
-RUN mkdir -p /opt/operator \
-    && groupadd operator \
-    && useradd -rm -d /opt/operator -s /bin/bash -g operator -u 10001 operator
+# Add 'passoperator' user and group.
+# Funny enough, the 'operator' user already exists on Linux.
+RUN groupadd passoperator \
+    && useradd -rm -d /opt/operator -s /bin/bash -g passoperator -u 10001 passoperator
 
 WORKDIR /opt/operator
 
-RUN chown -R operator:operator .
+RUN chown -R passoperator:passoperator .
 
 USER 10001
 
@@ -44,6 +44,6 @@ ENV PASS_DIRECTORY="" \
     SSH_PUBLIC_KEY="" \
     PASS_BINARY=/usr/bin/pass
 
-COPY --chown=operator:operator bin/entrypoint.e2e.sh /entrypoint.e2e.sh
+COPY --chown=passoperator:passoperator bin/entrypoint.e2e.sh /entrypoint.e2e.sh
 
 ENTRYPOINT [ "/tini", "--", "/entrypoint.e2e.sh" ]

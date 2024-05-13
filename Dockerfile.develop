@@ -40,13 +40,15 @@ RUN apt update \
     && apt install -y pass="$PASS_VERSION" \
     && rm -rf /var/apt/lists/*
 
-# Add 'operator' user and group.
-RUN useradd -rm -d /opt/pass-operator -s /bin/bash -g operator -u 10001 operator
+# Add 'passoperator' user and group.
+# Funny enough, the 'operator' user already exists on Linux.
+RUN groupadd passoperator \
+    && useradd -rm -d /opt/pass-operator -s /bin/bash -g passoperator -u 10001 passoperator
 
 WORKDIR /opt/pass-operator
 
 # Ensure that the 'operator' user owns the directory and set up a Git hook that prevents the user from pushing.
-RUN chown -R operator:operator . \
+RUN chown -R passoperator:passoperator . \
     && mkdir /hooks \
     && printf "[pull]\\n    rebase = true\\n[core]\\n    hooksPath = /hooks" > /etc/gitconfig
 COPY --chown=root:root --chmod=555 bin/pre-push.sh /hooks/pre-push
@@ -55,7 +57,7 @@ USER 10001
 
 COPY src/ ./src/
 COPY README.md LICENSE poetry.lock pyproject.toml ./
-COPY --chown=operator:operator --chmod=550 bin/entrypoint.sh /entrypoint.sh
+COPY --chown=passoperator:passoperator --chmod=550 bin/entrypoint.sh /entrypoint.sh
 
 ENV PATH=/opt/pass-operator/.local/bin:${PATH}
 
