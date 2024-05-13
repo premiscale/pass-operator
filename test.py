@@ -81,7 +81,7 @@ install_pass_operator(
     pass_storeSubPath='repo',
     gpg_createSecret=True,
     gpg_passphrase='1234',
-    git_url='git+ssh://pass-operator-e2e/pass-operator/repo.git',
+    git_url='git@pass-operator-e2e:repo.git',
     git_branch='main'
 )
 

@@ -24,12 +24,14 @@ RUN apt update \
     && apt install -y pass="$PASS_VERSION" \
     && rm -rf /var/apt/lists/*
 
-# Add 'operator' user and group.
-RUN useradd -rm -d /opt/pass-operator -s /bin/bash -g operator -u 10001 operator
+# Add 'passoperator' user and group.
+# Funny enough, 'operator' is already a user in Linux.
+RUN groupadd passoperator \
+    && useradd -rm -d /opt/pass-operator -s /bin/bash -g operator -u 10001 operator
 
 WORKDIR /opt/pass-operator
 
-RUN chown -R operator:operator . \
+RUN chown -R passoperator:passoperator . \
     && mkdir /hooks \
     && printf "[pull]\\n    rebase = true\\n[core]\\n    hooksPath = /hooks" > /etc/gitconfig
 COPY --chown=root:root --chmod=555 bin/pre-push.sh /hooks/pre-push
@@ -64,6 +66,6 @@ ENV OPERATOR_INTERVAL=60 \
     PASS_GIT_BRANCH=main \
     PASS_SSH_PRIVATE_KEY=""
 
-COPY --chown=operator:operator --chmod=550 bin/entrypoint.sh /entrypoint.sh
+COPY --chown=passoperator:passoperator --chmod=550 bin/entrypoint.sh /entrypoint.sh
 
 ENTRYPOINT [ "/tini", "--", "/entrypoint.sh" ]

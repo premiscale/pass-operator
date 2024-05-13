@@ -26,13 +26,13 @@ RUN curl -sL https://github.com/krallin/tini/releases/download/${TINI_VERSION}/t
     && chmod +x /tini
 
 # Add 'operator' user and group.
-RUN mkdir -p /opt/git \
-    && groupadd git \
-    && useradd -rm -d /opt/git -s /bin/bash -g git -u 10001 git
+RUN mkdir -p /opt/operator \
+    && groupadd operator \
+    && useradd -rm -d /opt/operator -s /bin/bash -g operator -u 10001 operator
 
-WORKDIR /opt/git
+WORKDIR /opt/operator
 
-RUN chown -R git:git .
+RUN chown -R operator:operator .
 
 USER 10001
 
@@ -44,11 +44,6 @@ ENV PASS_DIRECTORY="" \
     SSH_PUBLIC_KEY="" \
     PASS_BINARY=/usr/bin/pass
 
-COPY --chown=git:git bin/entrypoint.e2e.sh /entrypoint.e2e.sh
-
-RUN mkdir .ssh \
-    && chmod 700 .ssh \
-    && touch .ssh/authorized_keys \
-    && chmod 600 .ssh/authorized_keys
+COPY --chown=operator:operator bin/entrypoint.e2e.sh /entrypoint.e2e.sh
 
 ENTRYPOINT [ "/tini", "--", "/entrypoint.e2e.sh" ]
