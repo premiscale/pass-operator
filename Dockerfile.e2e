@@ -16,7 +16,7 @@ USER root
 ARG PASS_VERSION=1.7.4-5
 RUN apt update \
     && apt list -a pass \
-    && apt install -y curl git pass="${PASS_VERSION}" \
+    && apt install -y openssh-server curl git pass="${PASS_VERSION}" \
     && rm -rf /var/apt/lists/*
 
 # https://github.com/krallin/tini
@@ -28,7 +28,7 @@ RUN curl -sL https://github.com/krallin/tini/releases/download/${TINI_VERSION}/t
 # Add 'passoperator' user and group.
 # Funny enough, the 'operator' user already exists on Linux.
 RUN groupadd passoperator \
-    && useradd -rm -d /opt/operator -s /bin/bash -g passoperator -u 10001 passoperator
+    && useradd -rm -d /opt/pass-operator -s /bin/bash -g passoperator -u 10001 passoperator
 
 WORKDIR /opt/operator
 

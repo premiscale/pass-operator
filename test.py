@@ -81,7 +81,7 @@ install_pass_operator(
     pass_storeSubPath='repo',
     gpg_createSecret=True,
     gpg_passphrase='1234',
-    git_url='git@pass-operator-e2e:repo.git',
+    git_url='passoperator@pass-operator-e2e:/opt/pass-operator/.password-store/repo.git',
     git_branch='main'
 )
 

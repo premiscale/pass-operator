@@ -21,7 +21,7 @@ deployment:
       memory: 500Mi
 
   livenessProbe:
-    enabled: true
+    enabled: false
     port: 22
     config: {}
 

@@ -32,24 +32,26 @@ chmod 600 .ssh/authorized_keys
 touch .ssh/config
 chmod 400 .ssh/config
 
-printf "%s\\n" "$SSH_PUBLIC_KEY" > ~/.ssh/authorized_keys
+printf "%s\\n" "$SSH_PUBLIC_KEY" > .ssh/authorized_keys
 
 # Import public gpg key for secrets' encryption.
 gpg --import <(echo "$PASS_GPG_KEY")
 
 # Initialize pass with the indicated directory and GPG key ID to decrypt secrets pulled from the Git repository.
-pass init --path="$PASS_DIRECTORY" "$PASS_GPG_KEY_ID"
+pass init --path="$PASS_DIRECTORY".git "$PASS_GPG_KEY_ID"
 
 (
-    cd ~/.password-store/"$PASS_DIRECTORY" || exit 1 \
+    cd ~/.password-store/"$PASS_DIRECTORY".git || exit 1 \
     && git init --bare --initial-branch="${PASS_GIT_BRANCH}"
 )
 
-/usr/bin/git daemon --reuseaddr \
-    --export-all \
-    --max-connections=32 \
-    --port=22 \
-    --listen=0.0.0.0 \
-    --pid-file=/opt/operator/git.pid \
-    --base-path=/opt/operator/.password-store/ \
-    /opt/operator/.password-store/"$PASS_DIRECTORY" "$@"
+sleep inf
+
+# /usr/bin/git daemon --reuseaddr \
+#     --export-all \
+#     --max-connections=32 \
+#     --port=22 \
+#     --listen=0.0.0.0 \
+#     --pid-file=/opt/operator/git.pid \
+#     --base-path=/opt/operator/.password-store/ \
+#     /opt/operator/.password-store/"$PASS_DIRECTORY" "$@"
