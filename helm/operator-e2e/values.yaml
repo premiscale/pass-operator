@@ -1,0 +1,68 @@
+global:
+  image:
+    registry: docker.io
+
+
+deployment:
+  # A list of pull secret names.
+  pullSecrets: []
+
+  image:
+    name: pass-operator-e2e
+    tag: ignore
+    pullPolicy: Always
+
+  resources:
+    requests:
+      cpu: 0.25
+      memory: 500Mi
+    limits:
+      cpu: 0.25
+      memory: 500Mi
+
+  livenessProbe:
+    enabled: false
+    port: 22
+    config: {}
+
+  podSecurityContext: {}
+
+  containerSecurityContext: {}
+
+
+operator:
+  pass:
+    binary: /usr/bin/pass
+    storeSubPath: ""
+
+  ssh:
+    # If create is false, value is not used; users may bring their own.
+    createSecret: false
+
+    # Name of the secret. If createSecret is false, this is used to reference an existing, user-provided secret.
+    name: public-ssh-key
+
+    # raw string of the secret key b64enc'd.
+    value: ""
+
+  gpg:
+    createSecret: false
+
+    # Name of the secret. If createSecret is false, this is used to reference an existing, user-provided secret.
+    name: public-gpg-key
+
+    key_id: ""
+    value: ""
+    passphrase: ""
+
+  git:
+    branch: main
+
+
+service:
+  create: true
+  type: ClusterIP
+  ports:
+    - name: ssh
+      port: 22
+      targetPort: 22

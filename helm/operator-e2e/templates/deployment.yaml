@@ -21,7 +21,7 @@ spec:
   revisionHistoryLimit: 1
   # Select which pods (by label) this Deployment spec is targeting.
   selector:
-    matchLabels: {{ include "pass-operator.selectorLabels" . | nindent 6 }}
+    matchLabels: {{ include "pass-operator-e2e.selectorLabels" . | nindent 6 }}
   template:
     ## PodTemplateSpec v1 core
     metadata:
@@ -29,7 +29,7 @@ spec:
       annotations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      labels: {{ include "pass-operator.selectorLabels" . | nindent 8 }}
+      labels: {{ include "pass-operator-e2e.selectorLabels" . | nindent 8 }}
     spec:
       ## PodSpec v1core
       {{- if gt (len ((((.Values).deployment).pullSecrets) | default "")) 0 }}
@@ -38,9 +38,6 @@ spec:
         - name: {{ $secret }}
         {{- end }}
       {{- end }}
-      {{- if .Values.serviceAccount.create }}
-      serviceAccountName: {{ .Values.serviceAccount.name | default .Chart.Name }}
-      {{- end }}
       {{- with .Values.deployment.podSecurityContext }}
       securityContext:
         {{- toYaml . | nindent 8 }}
@@ -48,33 +45,24 @@ spec:
       containers:
         ## Container v1 core (array)
         - name: {{ default .Values.deployment.name .Chart.Name }}
-          args: [
-            --log-stdout,
-            --log-level, {{ .Values.operator.log.level }}
-          ]
+          args: []
           {{- with .Values.deployment.livenessProbe }}
             {{- if .enabled }}
           ports:
             - containerPort: {{ .port }}
-              name: healthcheck
+              name: ssh
               protocol: TCP
             {{- end }}
           {{- end }}
           env:
             # Operator
-            - name: OPERATOR_INTERVAL
-              value: {{ .Values.operator.interval | quote }}
-            - name: OPERATOR_INITIAL_DELAY
-              value: {{ .Values.operator.initial_delay | quote }}
-            - name: OPERATOR_PRIORITY
-              value: {{ .Values.operator.priority | quote }}
-            - name: OPERATOR_NAMESPACE
+            - name: OPERATOR_E2E_NAMESPACE
               value: {{ .Values.global.namespace | default .Release.Namespace }}
-            - name: OPERATOR_POD_IP
+            - name: OPERATOR_E2E_POD_IP
               valueFrom:
                 fieldRef:
                   fieldPath: status.podIP
-            - name: OPERATOR_POD_NAME
+            - name: OPERATOR_E2E_POD_NAME
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
@@ -116,11 +104,9 @@ spec:
               value: {{ .key_id }}
                 {{- end }}
               {{- end }}
-            - name: PASS_GIT_URL
-              value: {{ .Values.operator.git.url | quote }}
             - name: PASS_GIT_BRANCH
               value: {{ .Values.operator.git.branch }}
-            - name: PASS_SSH_PRIVATE_KEY
+            - name: SSH_PUBLIC_KEY
               {{- with .Values.operator.ssh }}
                 {{- if .createSecret }}
               valueFrom:
@@ -144,8 +130,7 @@ spec:
           {{- with .Values.deployment.startupProbe }}
             {{- if .enabled }}
           startupProbe:
-            httpGet:
-              path: {{ .path }}
+            tcpSocket:
               port: {{ .port }}
             {{- with .config }}
             {{- toYaml .| nindent 12 }}
@@ -155,8 +140,7 @@ spec:
           {{- with .Values.deployment.livenessProbe }}
             {{- if .enabled }}
           livenessProbe:
-            httpGet:
-              path: {{ .path }}
+            tcpSocket:
               port: {{ .port }}
             {{- with .config }}
             {{- toYaml .| nindent 12 }}
@@ -166,8 +150,7 @@ spec:
           {{- with .Values.deployment.readinessProbe }}
             {{- if .enabled }}
           readinessProbe:
-            httpGet:
-              path: {{ .path }}
+            tcpSocket:
               port: {{ .port }}
             {{- with .config }}
             {{- toYaml .| nindent 12 }}

@@ -5,7 +5,6 @@ Verify that classmethods passoperator.secret.PassSecret.{from_dict,to_dict} are 
 
 from deepdiff import DeepDiff
 from unittest import TestCase
-from humps import camelize
 from cattrs import structure as from_dict
 
 from passoperator.secret import PassSecret, ManagedSecret, Metadata, PassSecretSpec
@@ -24,7 +23,7 @@ class PassSecretParseInverse(TestCase):
         """
         Create a PassSecret instance for use in testing.
         """
-        self.passsecret_data = camelize(load_data('test_singular_data'))
+        self.passsecret_data = load_data('test_singular_data')
 
         return super().setUp()
 
@@ -73,9 +72,9 @@ class PassSecretParseInverse(TestCase):
                         namespace='pass-operator'
                     ),
                     spec=PassSecretSpec(
-                        encryptedData=camelize({
+                        encryptedData={
                             'singular_data': 'premiscale/operator/singular-data'
-                        }),
+                        },
                         managedSecret=ManagedSecret(
                             metadata=Metadata(
                                 name='singular-data',
