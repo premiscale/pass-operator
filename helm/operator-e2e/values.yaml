@@ -30,6 +30,9 @@ deployment:
   containerSecurityContext: {}
 
 
+job: {}
+
+
 operator:
   pass:
     binary: /usr/bin/pass
