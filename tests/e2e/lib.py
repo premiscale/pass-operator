@@ -61,11 +61,11 @@ def generate_ssh_keypair() -> tuple:
         tuple: The public and private keys.
     """
     try:
-        run(['ssh-keygen', '-t', 'ed25519', '-f', '/tmp/id_rsa', '-q', '-N', '""'])
+        run(['ssh-keygen', '-t', 'ed25519', '-f', '/tmp/id_rsa', '-q', '-N', ''])
 
         return (
-            run(['cat', '/tmp/id_rsa.pub']).stdout.lstrip().rstrip(),
-            run(['cat', '/tmp/id_rsa']).stdout.lstrip().rstrip()
+            run(['cat', '/tmp/id_rsa.pub']).stdout,
+            run(['cat', '/tmp/id_rsa']).stdout
         )
     finally:
         if os.path.exists('/tmp/id_rsa'):

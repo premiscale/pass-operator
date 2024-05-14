@@ -22,10 +22,10 @@ fi
 
 # Add private SSH key to SSH agent for git pulls.
 eval "$(ssh-agent -s)"
-printf "%s" "$PASS_SSH_PRIVATE_KEY" | ssh-add -
+printf "%s\\n" "$PASS_SSH_PRIVATE_KEY" | ssh-add -
 
 # Set up ~/.ssh/config to disable strict host key checking on github.com.
-printf "Host github.com\\n    StrictHostKeyChecking no\\n" > ~/.ssh/config
+printf "Host github.com\\n    StrictHostKeyChecking no\\n\\nHost pass-operator-e2e\\n    StrictHostKeyChecking no\\n" > ~/.ssh/config
 chmod 400 ~/.ssh/config
 
 # Import private gpg key for secrets' decryption.

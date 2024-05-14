@@ -27,7 +27,7 @@ RUN apt update \
 # Add 'passoperator' user and group.
 # Funny enough, 'operator' is already a user in Linux.
 RUN groupadd passoperator \
-    && useradd -rm -d /opt/pass-operator -s /bin/bash -g operator -u 10001 operator
+    && useradd -rm -d /opt/pass-operator -s /bin/bash -g passoperator -u 10001 passoperator
 
 WORKDIR /opt/pass-operator
 
