@@ -45,7 +45,7 @@ operator:
     storeSubPath: ''
 
   log:
-    level: info
+    level: debug
 
   ssh:
     # If create is false, value is not used; users may bring their own.

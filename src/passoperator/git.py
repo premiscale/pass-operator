@@ -29,7 +29,7 @@ def clone() -> None:
     #     sys.exit(1)
 
     if str(repo.active_branch) != env['PASS_GIT_BRANCH']:
-        repo.git.checkout(env['PASS_GIT_BRANCH'])
+        repo.git.checkout('origin/' + env['PASS_GIT_BRANCH'])
 
     log.info(f'Successfully cloned repo {env["PASS_GIT_URL"]} to password store {env["PASS_DIRECTORY"]}')
 

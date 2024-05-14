@@ -11,6 +11,8 @@ LABEL org.opencontainers.image.licenses "GPLv3"
 LABEL org.opencontainers.image.authors "Emma Doyle <emma@premiscale.com>"
 LABEL org.opencontainers.image.documentation "https://premiscale.com"
 
+# Note: this pod is intentionally ran as root because of sshd limitations. SSHd is required for git over SSH.
+# https://superuser.com/a/1548482
 USER root
 
 ARG PASS_VERSION=1.7.4-5
@@ -26,17 +28,7 @@ ARG ARCHITECTURE=arm64
 RUN curl -sL https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini-${ARCHITECTURE} -o /tini \
     && chmod +x /tini
 
-# Add 'passoperator' user and group.
-# Funny enough, the 'operator' user already exists on Linux.
-RUN groupadd passoperator \
-    && useradd -rm -d /opt/pass-operator -s /bin/bash -g passoperator -u 10001 passoperator
-
 WORKDIR /opt/operator
-
-RUN chown -R passoperator:passoperator . \
-    && chown -R passoperator:passoperator /etc/ssh/ssh_host_*key
-
-USER 10001
 
 ENV PASS_DIRECTORY="" \
     PASS_GPG_KEY_ID="" \
@@ -46,6 +38,6 @@ ENV PASS_DIRECTORY="" \
     SSH_PUBLIC_KEY="" \
     PASS_BINARY=/usr/bin/pass
 
-COPY --chown=passoperator:passoperator bin/entrypoint.e2e.sh /entrypoint.e2e.sh
+COPY bin/entrypoint.e2e.sh /entrypoint.e2e.sh
 
 ENTRYPOINT [ "/tini", "--", "/entrypoint.e2e.sh" ]
