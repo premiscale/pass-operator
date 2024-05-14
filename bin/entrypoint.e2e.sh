@@ -45,8 +45,6 @@ pass init --path="$PASS_DIRECTORY".git "$PASS_GPG_KEY_ID"
     && git init --bare --initial-branch="${PASS_GIT_BRANCH}"
 )
 
-sleep inf
-
 # /usr/bin/git daemon --reuseaddr \
 #     --export-all \
 #     --max-connections=32 \
@@ -55,3 +53,5 @@ sleep inf
 #     --pid-file=/opt/operator/git.pid \
 #     --base-path=/opt/operator/.password-store/ \
 #     /opt/operator/.password-store/"$PASS_DIRECTORY" "$@"
+
+/usr/sbin/sshd -D -o ListenAddress=0.0.0.0
