@@ -40,4 +40,5 @@ ENV PASS_DIRECTORY="" \
 
 COPY bin/entrypoint.e2e.sh /entrypoint.e2e.sh
 
-ENTRYPOINT [ "/tini", "--", "/entrypoint.e2e.sh" ]
+ENTRYPOINT [ "/tini", "--" ]
+CMD [ "/entrypoint.e2e.sh" ]

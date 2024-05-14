@@ -1,167 +1,92 @@
-apiVersion: apps/v1
+apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ default .Values.deployment.name .Chart.Name }}
-  namespace: {{ .Values.global.namespace | default .Release.Namespace }}
-  {{- with .Values.deployment.labels }}
+  name: {{ .Chart.Name }}
+  namespace: {{ .Release.Namespace }}
+  {{- with .Values.job.labels }}
   labels:
-    {{- range $k, $v := . }}
-    {{ $k }}: {{ $v }}
-    {{- end }}
+    {{- toYaml . | nindent 4 }}
   {{- end }}
-  {{- with .Values.deployment.annotations }}
+  {{- with .Values.job.annotations }}
   annotations:
-    {{- range $k, $v := . }}
-    {{ $k }}: {{ $v }}
-    {{- end }}
+    {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
-  ## DeploymentSpec v1 core
-  replicas: {{ .Values.deployment.replicas | default 1 }}
-  revisionHistoryLimit: 1
-  # Select which pods (by label) this Deployment spec is targeting.
-  selector:
-    matchLabels: {{ include "pass-operator-e2e.selectorLabels" . | nindent 6 }}
-  template:
-    ## PodTemplateSpec v1 core
-    metadata:
-      {{- with .Values.deployment.podAnnotations }}
-      annotations:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      labels: {{ include "pass-operator-e2e.selectorLabels" . | nindent 8 }}
+  activeDeadlineSeconds: {{ .Values.job.activeDeadlineSeconds }}
+  jobTemplate:
     spec:
-      ## PodSpec v1core
-      {{- if gt (len ((((.Values).deployment).pullSecrets) | default "")) 0 }}
-      imagePullSecrets:
-        {{- range $secret := .Values.deployment.pullSecrets }}
-        - name: {{ $secret }}
-        {{- end }}
-      {{- end }}
-      {{- with .Values.deployment.podSecurityContext }}
-      securityContext:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      containers:
-        ## Container v1 core (array)
-        - name: {{ default .Values.deployment.name .Chart.Name }}
-          args: []
-          {{- with .Values.deployment.livenessProbe }}
-            {{- if .enabled }}
-          ports:
-            - containerPort: {{ .port }}
-              name: ssh
-              protocol: TCP
-            {{- end }}
-          {{- end }}
-          env:
-            # Operator
-            - name: OPERATOR_E2E_NAMESPACE
-              value: {{ .Values.global.namespace | default .Release.Namespace }}
-            - name: OPERATOR_E2E_POD_IP
-              valueFrom:
-                fieldRef:
-                  fieldPath: status.podIP
-            - name: OPERATOR_E2E_POD_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.name
-            # Pass
-            - name: PASS_BINARY
-              value: {{ .Values.operator.pass.binary }}
-            - name: PASS_DIRECTORY
-              value: {{ .Values.operator.pass.storeSubPath }}
-            - name: PASS_GPG_KEY
-              {{- with .Values.operator.gpg }}
-                {{- if .createSecret }}
-              valueFrom:
-                secretKeyRef:
-                  key: ssh-privatekey
-                  name: {{ .name }}
-                {{- else }}
-              value: {{ .value }}
-                {{- end }}
-              {{- end }}
-            - name: PASS_GPG_PASSPHRASE
-              {{- with .Values.operator.gpg }}
-                {{- if .createSecret }}
-              valueFrom:
-                secretKeyRef:
-                  key: passphrase
-                  name: {{ .name }}
-                {{- else }}
-              value: {{ .passphrase }}
-                {{- end }}
-              {{- end }}
-            - name: PASS_GPG_KEY_ID
-              {{- with .Values.operator.gpg }}
-                {{- if .createSecret }}
-              valueFrom:
-                secretKeyRef:
-                  key: id
-                  name: {{ .name }}
-                {{- else }}
-              value: {{ .key_id }}
-                {{- end }}
-              {{- end }}
-            - name: PASS_GIT_BRANCH
-              value: {{ .Values.operator.git.branch }}
-            - name: SSH_PUBLIC_KEY
-              {{- with .Values.operator.ssh }}
-                {{- if .createSecret }}
-              valueFrom:
-                secretKeyRef:
-                  key: ssh-privatekey
-                  name: {{ .name }}
-                {{- else }}
-              value: {{ .value }}
-                {{- end }}
-              {{- end }}
-          {{- with .Values.deployment.containerSecurityContext }}
+      template:
+        spec:
+          {{- with .Values.job.securityContext }}
           securityContext:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          {{- if (((.Values.global).image).registry) }}
-          image: {{ .Values.global.image.registry }}/{{ .Values.deployment.image.name }}:{{ .Values.deployment.image.tag }}
-          {{- else }}
-          image: {{ .Values.deployment.image.registry }}/{{ .Values.deployment.image.name }}:{{ .Values.deployment.image.tag }}
+          {{- if .Values.job.enabled }}
+          serviceAccountName: {{ .Chart.Name }}
           {{- end }}
-          imagePullPolicy: {{ default .Values.deployment.image.pullPolicy "Always" }}
-          {{- with .Values.deployment.startupProbe }}
-            {{- if .enabled }}
-          startupProbe:
-            tcpSocket:
-              port: {{ .port }}
-            {{- with .config }}
-            {{- toYaml .| nindent 12 }}
-            {{- end }}
+          containers:
+            - name: {{ .Chart.Name }}
+              command: {{ .Values.job.command }}
+              {{- if .Values.global.image.registry }}
+              image: "{{ .Values.global.image.registry }}/{{ .Values.job.image.name }}:{{ .Values.job.image.tag }}"
+              {{- else }}
+              image: "{{ .Values.job.image.name }}:{{ .Values.job.image.tag }}"
+              {{- end }}
+              imagePullPolicy: Always
+              {{- with .Values.job.resources }}
+              resources:
+                {{- toYaml . | nindent 16 }}
+              {{- end }}
+              env:
+                # Pass
+                - name: PASS_BINARY
+                  value: {{ .Values.operator.pass.binary }}
+                - name: PASS_DIRECTORY
+                  value: {{ .Values.operator.pass.storeSubPath }}
+                - name: PASS_GPG_KEY
+                  {{- with .Values.operator.gpg }}
+                    {{- if .createSecret }}
+                  valueFrom:
+                    secretKeyRef:
+                      key: ssh-privatekey
+                      name: {{ .name }}
+                    {{- else }}
+                  value: {{ .value }}
+                    {{- end }}
+                  {{- end }}
+                - name: PASS_GPG_PASSPHRASE
+                  {{- with .Values.operator.gpg }}
+                    {{- if .createSecret }}
+                  valueFrom:
+                    secretKeyRef:
+                      key: passphrase
+                      name: {{ .name }}
+                    {{- else }}
+                  value: {{ .passphrase }}
+                    {{- end }}
+                  {{- end }}
+                - name: PASS_GPG_KEY_ID
+                  {{- with .Values.operator.gpg }}
+                    {{- if .createSecret }}
+                  valueFrom:
+                    secretKeyRef:
+                      key: id
+                      name: {{ .name }}
+                    {{- else }}
+                  value: {{ .key_id }}
+                    {{- end }}
+                  {{- end }}
+                - name: PASS_GIT_BRANCH
+                  value: {{ .Values.operator.git.branch }}
+                - name: SSH_PRIVATE_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      key: ssh-privatekey
+                      name: private-ssh-key
+          {{- if gt (len .Values.job.pullSecrets) 0 }}
+            {{- range .Values.job.image.pullSecrets }}
+          imagePullSecrets:
+            - name: {{ . }}
             {{- end }}
           {{- end }}
-          {{- with .Values.deployment.livenessProbe }}
-            {{- if .enabled }}
-          livenessProbe:
-            tcpSocket:
-              port: {{ .port }}
-            {{- with .config }}
-            {{- toYaml .| nindent 12 }}
-            {{- end }}
-            {{- end }}
-          {{- end }}
-          {{- with .Values.deployment.readinessProbe }}
-            {{- if .enabled }}
-          readinessProbe:
-            tcpSocket:
-              port: {{ .port }}
-            {{- with .config }}
-            {{- toYaml .| nindent 12 }}
-            {{- end }}
-            {{- end }}
-          {{- end }}
-          {{- with .Values.deployment.ports }}
-          ports:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
-          {{- with .Values.deployment.resources }}
-          resources:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
+          restartPolicy: Never
