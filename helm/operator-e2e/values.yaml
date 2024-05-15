@@ -30,49 +30,6 @@ deployment:
   containerSecurityContext: {}
 
 
-# The following job is used both to initialize the git repository and to populate the e2e pass store with secrets / data.
-job:
-  activeDeadlineSeconds: 600
-  pullSecrets: []
-
-  image:
-    name: pass-operator-e2
-    tag: ignore
-    pullPolicy: Always
-
-  resources:
-    requests:
-      cpu: 0.25
-      memory: 500Mi
-    limits:
-      cpu: 0.25
-      memory: 500Mi
-
-  ssh:
-    createSecret: false
-
-    name: private-ssh-key
-
-    # raw string of the secret key b64enc'd.
-    value: ""
-
-  gpg:
-    createSecret: false
-
-    name: private-gpg-key
-
-    key_id: ""
-    value: ""
-    passphrase: ""
-
-  git:
-    branch: main
-
-
-initializeRepoJob:
-  command: [ /entrypoint.e2e.init.sh ]
-
-
 operator:
   pass:
     binary: /usr/bin/pass

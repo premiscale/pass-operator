@@ -142,7 +142,7 @@ def build_e2e_image(
     """
 
     return run([
-        'docker', 'build', '-t', f'localhost:5000/pass-operator-e2e:{tag}', '-f', './Dockerfile.e2e', '.',
+        'docker', 'build', '-t', f'localhost:5000/pass-operator-e2e:{tag}', '-f', './tests/e2e/Dockerfile.e2e', '.',
         '--build-arg', f'PASS_VERSION={pass_version}',
         '--build-arg', f'TINI_VERSION={tini_version}',
         '--build-arg', f'ARCHITECTURE={architecture}',

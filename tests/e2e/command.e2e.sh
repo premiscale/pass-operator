@@ -44,7 +44,7 @@ gpg --import <(echo "$PASS_GPG_KEY")
     mkdir -p "$PASS_DIRECTORY".git || exit 1 \
     && chmod 777 "$PASS_DIRECTORY".git \
     && cd "$PASS_DIRECTORY".git \
-    && git init \
+    && git init --bare \
     && git checkout -b "${PASS_GIT_BRANCH}" \
     && git commit --allow-empty -m "Initial commit"
 )
