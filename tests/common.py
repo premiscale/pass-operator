@@ -8,6 +8,8 @@ from subprocess import Popen, PIPE
 from dataclasses import dataclass
 from humps import camelize
 
+import random
+import string
 import yaml
 import logging
 
@@ -64,3 +66,16 @@ def load_data(file: str, dtype: str = 'crd') -> dict:
         camelized_manifest['spec']['encryptedData'] = manifest['spec']['encryptedData']
 
         return camelized_manifest
+
+
+def random_secret(length: int = 40) -> str:
+    """
+    Generate a random string of a specified length for use as a test secret.
+
+    Args:
+        length (int, optional): length of the random string. Defaults to 40.
+
+    Returns:
+        str: the random string.
+    """
+    return ''.join(random.choices(string.ascii_letters + string.digits, k=length))

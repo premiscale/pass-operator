@@ -6,7 +6,8 @@ End-to-end tests of the operator that validate the lifecycle of a PassSecret and
 from unittest import TestCase
 from kubernetes import client, config
 from tests.common import (
-    load_data
+    load_data,
+    random_secret
 )
 from tests.e2e.lib import (
     # Tools
@@ -47,7 +48,7 @@ logging.basicConfig(
 
 # Generate GPG and SSH keypairs for use in testing.
 log.info('Generating GPG and SSH keypairs for testing.')
-gpg_passphrase = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
+gpg_passphrase = random_secret()
 gpg_public_key, gpg_private_key, gpg_fingerprint = generate_gpg_keypair(
     passphrase=gpg_passphrase,
     delete_from_keyring=True

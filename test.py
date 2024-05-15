@@ -1,6 +1,10 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from tests.common import (
+    random_secret
+)
+
 from tests.e2e.lib import (
     # Tools
     check_cluster_pod_status,
@@ -22,8 +26,6 @@ from tests.e2e.lib import (
 
 import logging
 import sys
-import string
-import random
 
 
 log = logging.getLogger(__name__)
@@ -41,7 +43,7 @@ uninstall_pass_operator_crds(namespace='pass-operator')
 
 # Generate GPG and SSH keypairs for use in testing.
 log.info('Generating GPG and SSH keypairs for testing.')
-gpg_passphrase = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
+gpg_passphrase = random_secret()
 gpg_public_key, gpg_private_key, gpg_fingerprint = generate_gpg_keypair(
     passphrase=gpg_passphrase,
     delete_from_keyring=True
