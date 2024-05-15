@@ -27,7 +27,6 @@ def generate_unencrypted_crds() -> None:
             data = load_data(crd.stem, 'crd', camelcase=False)
 
             # Assign random secrets to the values in encryptedData so the command of the e2e server to parse into the pass store.
-            print(data['spec']['encryptedData'])
             data['spec']['encryptedData'] = {v: random_secret() for k, v in data['spec']['encryptedData'].items()}
             with open(f'tests/data/crd/{crd.stem}.unencrypted.yaml', 'w') as f:
                 yaml.dump(data, f)

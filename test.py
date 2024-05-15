@@ -59,7 +59,6 @@ log.info('Building e2e image')
 # e2e artifacts that the operator depends on to run.
 generate_unencrypted_crds()
 build_e2e_image()
-cleanup_unencrypted_crds()
 
 log.info('Installing pass-operator-e2e')
 install_pass_operator_e2e(
@@ -97,5 +96,6 @@ install_pass_operator(
 )
 
 
+cleanup_unencrypted_crds()
 cleanup_e2e_image()
 cleanup_operator_image()

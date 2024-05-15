@@ -21,7 +21,7 @@ RUN apt update \
     && apt install -y nmap net-tools openssh-server curl git pass="${PASS_VERSION}" \
     && rm -rf /var/apt/lists/* \
     && ssh-keygen -A -v \
-    && mkdir -p ${HOME}/data/crd
+    && mkdir -p /root/data/crd
 
 # https://github.com/krallin/tini
 ARG TINI_VERSION=v0.19.0
@@ -42,8 +42,11 @@ ENV PASS_DIRECTORY="" \
     PASS_BINARY=/usr/bin/pass
 
 COPY ./command.e2e.sh /command.e2e.sh
-# Copy in the unencrypted data so we can populate the pass store when the container starts.
-COPY ./data/crd/* ${HOME}/data/crd/
+
+# Copy in the randomly-generated unencrypted data so we can populate the pass store when the container starts for the first time.
+# This is a very intentional move and only intended to be used for e2e testing purposes where local tests need
+# to compare values contained in managed Secrets in the cluster with the unencrypted data.
+COPY ./data/crd/*.unencrypted.yaml /root/data/crd/
 
 ENTRYPOINT [ "/tini", "--" ]
 CMD [ "/command.e2e.sh" ]
