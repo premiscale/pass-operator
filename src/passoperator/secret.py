@@ -23,6 +23,9 @@ log = logging.getLogger(__name__)
 
 @define
 class Metadata:
+    """
+    Metadata is the schema for the metadata field of a K8s object.
+    """
     name: str
     namespace: str = 'default'
     annotations: Dict[str, str] | None = None
@@ -79,6 +82,8 @@ class ManagedSecret:
                 key: b64Enc(value) for key, value in self.stringData.items()
             }
 
+        return None
+
     def to_dict(self, export: bool = False) -> Dict:
         """
         Output this object as a k8s manifest dictionary.
@@ -89,7 +94,7 @@ class ManagedSecret:
         Returns:
             Dict: this object as a dict.
         """
-        d = to_dict(self, filter=lambda a, v: v is not None and v != False)
+        d = to_dict(self, filter=lambda a, v: v is not None and v is not False)
 
         if export:
             d.pop('stringData')
@@ -100,8 +105,8 @@ class ManagedSecret:
         """
         Output this secret to a dictionary with keys that match the arguments of kubernetes.client.V1Secret, for convenience.
         """
-        d = self.to_dict(export=True)
-        d.pop('stringData')
+        d = dict(self.to_dict(export=True))
+        d.pop('data')
         d['string_data'] = self.stringData
         return d
 
@@ -140,7 +145,7 @@ class ManagedSecret:
             ManagedSecret: the ManagedSecret object created from the manifest.
         """
         # Camelize the body to match the PassSecret object's fields, but keep the encryptedData field as-is.
-        camelized_body = camelize(dict(body))
+        camelized_body = dict(camelize(dict(body)))
         camelized_body['data'] = dict(body)['data']
 
         return from_dict(
@@ -163,7 +168,7 @@ class PassSecretSpec:
         self.managedSecret = self.decrypt(self.managedSecret, self.encryptedData)
 
     @staticmethod
-    def decrypt(cls: ManagedSecret, encryptedData: Dict[str, str]) -> ManagedSecret:
+    def decrypt(ms: ManagedSecret, encryptedData: Dict[str, str]) -> ManagedSecret:
         """
         Decrypt the contents of this PassSecret's paths before returning the spec object.
         """
@@ -184,10 +189,10 @@ class PassSecretSpec:
                 stringData[secretKey] = ''
 
         return ManagedSecret(
-            metadata=cls.metadata,
+            metadata=ms.metadata,
             stringData=stringData,
-            immutable=cls.immutable,
-            type=cls.type
+            immutable=ms.immutable,
+            type=ms.type
         )
 
     def to_dict(self) -> Dict:
