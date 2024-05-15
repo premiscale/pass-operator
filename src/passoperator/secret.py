@@ -252,7 +252,7 @@ class PassSecret:
             PassSecret: the PassSecret object created from the body.
         """
         # Camelize the body to match the PassSecret object's fields, but keep the encryptedData field as-is.
-        camelized_body = camelize(dict(body))
+        camelized_body = dict(camelize(dict(body)))
         camelized_body['spec']['encryptedData'] = dict(body)['spec']['encryptedData']
 
         return from_dict(
