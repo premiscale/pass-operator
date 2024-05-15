@@ -44,10 +44,22 @@ gpg --import <(echo "$PASS_GPG_KEY")
     mkdir -p "$PASS_DIRECTORY".git || exit 1 \
     && chmod 777 "$PASS_DIRECTORY".git \
     && cd "$PASS_DIRECTORY".git \
-    && git init --bare \
-    && git checkout -b "${PASS_GIT_BRANCH}" \
-    && git commit --allow-empty -m "Initial commit"
+    && git config --global init.defaultBranch "main" \
+    && git init --bare
 )
+
+git config --global user.email "emmatest@premiscale.com"
+git config --global user.name "Emma Doyle"
+git clone "$PASS_DIRECTORY".git "$PASS_DIRECTORY"
+(
+    cd "$PASS_DIRECTORY" || exit 1 \
+    && printf "Initial pass repository for e2e tests." > README.md \
+    && git add README.md \
+    && git commit -m "Initial commit" \
+    && git push origin main
+)
+
+rm -rf "${PASS_DIRECTORY:?}"
 
 # /usr/bin/git daemon --reuseaddr \
 #     --export-all \
