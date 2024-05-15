@@ -5,11 +5,9 @@ End-to-end tests of the operator that validate the lifecycle of a PassSecret and
 
 from unittest import TestCase
 from kubernetes import client, config
-
 from tests.common import (
     load_data
 )
-
 from tests.e2e.lib import (
     # Tools
     check_cluster_pod_status,
@@ -31,11 +29,9 @@ from tests.e2e.lib import (
 
 import logging
 import sys
+import string
+import random
 
-
-config.load_kube_config(
-    context='pass-operator'
-)
 
 log = logging.getLogger(__name__)
 logging.basicConfig(
@@ -44,29 +40,46 @@ logging.basicConfig(
     level=logging.INFO
 )
 
+# # Uninstalling prior Helm chart installations.
+# uninstall_pass_operator(namespace='pass-operator')
+# uninstall_pass_operator_e2e(namespace='pass-operator')
+# uninstall_pass_operator_crds(namespace='pass-operator')
 
 # Generate GPG and SSH keypairs for use in testing.
-gpg_passphrase = '1234'
+log.info('Generating GPG and SSH keypairs for testing.')
+gpg_passphrase = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
 gpg_public_key, gpg_private_key, gpg_fingerprint = generate_gpg_keypair(
     passphrase=gpg_passphrase,
     delete_from_keyring=True
 )
 ssh_public_key, ssh_private_key = generate_ssh_keypair()
 
+log.info('Building e2e image')
 # e2e artifacts that the operator depends on to run.
-build_e2e_image(
-    ssh_public_key=ssh_public_key,
-    gpg_key_id=gpg_fingerprint,
-    gpg_key=gpg_public_key,
-    gpg_passphrase=gpg_passphrase,
-)
+build_e2e_image()
+
+log.info('Installing pass-operator-e2e')
 install_pass_operator_e2e(
-    namespace='pass-operator-e2e'
+    ssh_value=ssh_public_key,
+    gpg_value=gpg_public_key,
+    gpg_key_id=gpg_fingerprint,
+    namespace='pass-operator',
+    ssh_createSecret=True,
+    pass_storeSubPath='repo',
+    gpg_createSecret=True,
+    gpg_passphrase=gpg_passphrase,
+    git_branch='main'
 )
 
+log.info('Installing pass-operator crds')
+
 # Build and install operator artifacts.
-install_pass_operator_crds()
+install_pass_operator_crds(namespace='pass-operator')
+
+log.info('Building operator image')
 build_operator_image()
+
+log.info('Installing pass-operator')
 install_pass_operator(
     ssh_value=ssh_private_key,
     gpg_value=gpg_private_key,
@@ -75,16 +88,19 @@ install_pass_operator(
     ssh_createSecret=True,
     pass_storeSubPath='repo',
     gpg_createSecret=True,
-    gpg_passphrase='',
-    git_url='git+ssh://localhost:2222/pass-operator.git',
+    gpg_passphrase=gpg_passphrase,
+    git_url='root@pass-operator-e2e:/opt/operator/repo.git',
     git_branch='main'
 )
 
-cleanup_operator_image()
 cleanup_e2e_image()
+cleanup_operator_image()
 
+config.load_kube_config(
+    context='pass-operator'
+)
 
-class PassSecret(TestCase):
+class PassSecretE2E(TestCase):
     """
     Methods for testing the Kubernetes operator end-to-end.
     """

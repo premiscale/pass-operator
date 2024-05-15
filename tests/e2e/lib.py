@@ -129,20 +129,19 @@ def delete_gpg_keypair(key_id: str, passphrase: str) -> None:
 
 
 def build_e2e_image(
-    tag: str = '0.0.1',
-    pass_version: str = '1.7.4-5',
-    tini_version: str = 'v0.19.0',
-    architecture: str = 'arm64'
-) -> int:
+        tag: str = '0.0.1',
+        pass_version: str = '1.7.4-5',
+        tini_version: str = 'v0.19.0',
+        architecture: str = 'arm64'
+    ) -> int:
     """
     Build the e2e testing image for a local git server.
 
     Returns:
         int: The return code of the docker build or push command that failed, or 0 if both succeeded.
     """
-
     return run([
-        'docker', 'build', '-t', f'localhost:5000/pass-operator-e2e:{tag}', '-f', './tests/e2e/Dockerfile.e2e', './tests/e2e/',
+        'docker', 'build', '-t', f'localhost:5000/pass-operator-e2e:{tag}', '-f', './tests/Dockerfile.e2e', './tests/',
         '--build-arg', f'PASS_VERSION={pass_version}',
         '--build-arg', f'TINI_VERSION={tini_version}',
         '--build-arg', f'ARCHITECTURE={architecture}',
@@ -244,19 +243,19 @@ def build_operator_image(tag: str = '0.0.1') -> int:
 
 
 def install_pass_operator(
-    ssh_value: str,
-    gpg_value: str,
-    gpg_key_id: str,
-    git_url: str,
-    namespace: str = 'default',
-    priority: int = 100,
-    ssh_createSecret: bool = True,
-    pass_storeSubPath: str = 'repo',
-    gpg_createSecret: bool = True,
-    gpg_passphrase: str = '',
-    git_branch: str = 'main',
-    image_tag: str = '0.0.1'
-) -> int:
+        ssh_value: str,
+        gpg_value: str,
+        gpg_key_id: str,
+        git_url: str,
+        namespace: str = 'default',
+        priority: int = 100,
+        ssh_createSecret: bool = True,
+        pass_storeSubPath: str = 'repo',
+        gpg_createSecret: bool = True,
+        gpg_passphrase: str = '',
+        git_branch: str = 'main',
+        image_tag: str = '0.0.1'
+    ) -> int:
     """
     Install the operator in the cluster.
 

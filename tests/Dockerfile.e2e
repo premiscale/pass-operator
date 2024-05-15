@@ -20,7 +20,8 @@ RUN apt update \
     && apt list -a pass \
     && apt install -y nmap net-tools openssh-server curl git pass="${PASS_VERSION}" \
     && rm -rf /var/apt/lists/* \
-    && ssh-keygen -A -v
+    && ssh-keygen -A -v \
+    && mkdir -p ${HOME}/data/crd
 
 # https://github.com/krallin/tini
 ARG TINI_VERSION=v0.19.0
@@ -28,7 +29,9 @@ ARG ARCHITECTURE=arm64
 RUN curl -sL https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini-${ARCHITECTURE} -o /tini \
     && chmod +x /tini
 
-WORKDIR /opt/operator
+RUN curl -sL https://github.com/mikefarah/yq/releases/download/v4.44.1/yq_linux_${ARCHITECTURE} -o yq \
+    && install yq /usr/bin/yq \
+    && rm yq
 
 ENV PASS_DIRECTORY="" \
     PASS_GPG_KEY_ID="" \
@@ -39,6 +42,8 @@ ENV PASS_DIRECTORY="" \
     PASS_BINARY=/usr/bin/pass
 
 COPY ./command.e2e.sh /command.e2e.sh
+# Copy in the unencrypted data so we can populate the pass store when the container starts.
+COPY ./data/crd/ ${HOME}/data/crd/
 
 ENTRYPOINT [ "/tini", "--" ]
 CMD [ "/command.e2e.sh" ]

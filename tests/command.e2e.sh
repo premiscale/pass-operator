@@ -37,38 +37,47 @@ printf "%s" "$SSH_PUBLIC_KEY" > ~/.ssh/authorized_keys
 # Import public gpg key for secrets' encryption.
 gpg --import <(echo "$PASS_GPG_KEY")
 
-# # Initialize pass with the indicated directory and GPG key ID to decrypt secrets pulled from the Git repository.
-# pass init --path="$PASS_DIRECTORY".git "$PASS_GPG_KEY_ID"
+
+##
+# Populate a pass directory with secrets parsed out of unencrypted CRDs.
+function populate_pass_store()
+{
+    local paths f
+
+    for f in ./data/crd/*.unencrypted.yaml; do
+        mapfile -t paths < <(yq '.spec.encryptedData | to_entries[].key' "$f")
+
+        for path in "${paths[@]}"; do
+            printf "%s" "$(yq ".spec.encryptedData.\"$path\"" "$f" | awk NF)" | pass insert --echo "$path"
+        done
+    done
+}
+
+
+# Initialize pass with the indicated directory and GPG key ID to decrypt secrets pulled from the Git repository.
+pass init --path="$PASS_DIRECTORY".git "$PASS_GPG_KEY_ID"
 
 (
-    mkdir -p "$PASS_DIRECTORY".git || exit 1 \
-    && chmod 777 "$PASS_DIRECTORY".git \
-    && cd "$PASS_DIRECTORY".git \
+    ln -s "$HOME"/.password-store/"$PASS_DIRECTORY".git/ "$HOME"/"$PASS_DIRECTORY".git \
+    && cd "$HOME"/"$PASS_DIRECTORY".git \
     && git config --global init.defaultBranch "main" \
     && git init --bare
 )
 
 git config --global user.email "emmatest@premiscale.com"
 git config --global user.name "Emma Doyle"
-git clone "$PASS_DIRECTORY".git "$PASS_DIRECTORY"
+git clone "$HOME"/"$PASS_DIRECTORY".git "$PASS_DIRECTORY"
+
 (
     cd "$PASS_DIRECTORY" || exit 1 \
     && printf "Initial pass repository for e2e tests." > README.md \
-    && git add README.md \
+    && populate_pass_store \
+    && git add . \
     && git commit -m "Initial commit" \
     && git push origin main
 )
 
 rm -rf "${PASS_DIRECTORY:?}"
-
-# /usr/bin/git daemon --reuseaddr \
-#     --export-all \
-#     --max-connections=32 \
-#     --port=22 \
-#     --listen=0.0.0.0 \
-#     --pid-file=/opt/operator/git.pid \
-#     --base-path=/opt/operator/.password-store/ \
-#     /opt/operator/.password-store/"$PASS_DIRECTORY" "$@"
 
 mkdir /var/run/sshd
 
@@ -77,5 +86,5 @@ mkdir /var/run/sshd
     -o Port=22 \
     -o PasswordAuthentication=no \
     -o AuthorizedKeysFile=.ssh/authorized_keys \
-    -o PidFile=/opt/operator/sshd.pid \
+    -o PidFile="$HOME"/sshd.pid \
     -o ChallengeResponseAuthentication=no
