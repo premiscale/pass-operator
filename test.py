@@ -1,8 +1,14 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from tests.common import (
+    random_secret
+)
+
 from tests.e2e.lib import (
     # Tools
+    generate_unencrypted_crds,
+    cleanup_unencrypted_crds,
     check_cluster_pod_status,
     generate_gpg_keypair,
     generate_ssh_keypair,
@@ -37,9 +43,12 @@ uninstall_pass_operator_e2e(namespace='pass-operator')
 uninstall_pass_operator_crds(namespace='pass-operator')
 
 
+# check_cluster_pod_status()
+
+
 # Generate GPG and SSH keypairs for use in testing.
 log.info('Generating GPG and SSH keypairs for testing.')
-gpg_passphrase = '1234'
+gpg_passphrase = random_secret()
 gpg_public_key, gpg_private_key, gpg_fingerprint = generate_gpg_keypair(
     passphrase=gpg_passphrase,
     delete_from_keyring=True
@@ -48,6 +57,7 @@ ssh_public_key, ssh_private_key = generate_ssh_keypair()
 
 log.info('Building e2e image')
 # e2e artifacts that the operator depends on to run.
+generate_unencrypted_crds()
 build_e2e_image()
 
 log.info('Installing pass-operator-e2e')
@@ -81,10 +91,11 @@ install_pass_operator(
     pass_storeSubPath='repo',
     gpg_createSecret=True,
     gpg_passphrase='1234',
-    git_url='root@pass-operator-e2e:/opt/operator/repo.git',
+    git_url='root@pass-operator-e2e:/root/repo.git',
     git_branch='main'
 )
 
 
+cleanup_unencrypted_crds()
 cleanup_e2e_image()
 cleanup_operator_image()

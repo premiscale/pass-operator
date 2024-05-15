@@ -1,15 +1,45 @@
+"""
+A library of common e2e-related routines.
+"""
+
 from tests.common import run
 from gnupg import GPG
 from kubernetes import client
 from time import sleep as syncsleep
 from passoperator.utils import b64Enc
+from tests.common import random_secret, load_data
 
-import re
+import pathlib
 import os
 import logging
+import yaml
 
 
 log = logging.getLogger(__name__)
+
+
+def generate_unencrypted_crds() -> None:
+    """
+    Generate random unencrypted CRDs for testing.
+    """
+    for crd in pathlib.Path('tests/data/crd').iterdir():
+        if crd.is_file() and crd.suffix == '.yaml':
+            data = load_data(crd.stem, 'crd', camelcase=False)
+
+            # Assign random secrets to the values in encryptedData so the command of the e2e server to parse into the pass store.
+            data['spec']['encryptedData'] = {v: random_secret() for k, v in data['spec']['encryptedData'].items()}
+            with open(f'tests/data/crd/{crd.stem}.unencrypted.yaml', 'w') as f:
+                yaml.dump(data, f)
+
+
+def cleanup_unencrypted_crds() -> None:
+    """
+    Remove unencrypted CRDs generated for testing from the filesystem.
+    """
+    for crd in pathlib.Path('tests/data/crd').iterdir():
+        if crd.is_file() and crd.name.endswith('.unencrypted.yaml'):
+            log.info(f'Removing generated unencrypted CRD file {crd}.')
+            os.remove(crd)
 
 
 def check_cluster_pod_status(namespace: str | None = None) -> bool:
@@ -129,20 +159,19 @@ def delete_gpg_keypair(key_id: str, passphrase: str) -> None:
 
 
 def build_e2e_image(
-    tag: str = '0.0.1',
-    pass_version: str = '1.7.4-5',
-    tini_version: str = 'v0.19.0',
-    architecture: str = 'arm64'
-) -> int:
+        tag: str = '0.0.1',
+        pass_version: str = '1.7.4-5',
+        tini_version: str = 'v0.19.0',
+        architecture: str = 'arm64'
+    ) -> int:
     """
     Build the e2e testing image for a local git server.
 
     Returns:
         int: The return code of the docker build or push command that failed, or 0 if both succeeded.
     """
-
     return run([
-        'docker', 'build', '-t', f'localhost:5000/pass-operator-e2e:{tag}', '-f', './tests/e2e/Dockerfile.e2e', './tests/e2e/',
+        'docker', 'build', '-t', f'localhost:5000/pass-operator-e2e:{tag}', '-f', './tests/Dockerfile.e2e', './tests/',
         '--build-arg', f'PASS_VERSION={pass_version}',
         '--build-arg', f'TINI_VERSION={tini_version}',
         '--build-arg', f'ARCHITECTURE={architecture}',
@@ -244,19 +273,19 @@ def build_operator_image(tag: str = '0.0.1') -> int:
 
 
 def install_pass_operator(
-    ssh_value: str,
-    gpg_value: str,
-    gpg_key_id: str,
-    git_url: str,
-    namespace: str = 'default',
-    priority: int = 100,
-    ssh_createSecret: bool = True,
-    pass_storeSubPath: str = 'repo',
-    gpg_createSecret: bool = True,
-    gpg_passphrase: str = '',
-    git_branch: str = 'main',
-    image_tag: str = '0.0.1'
-) -> int:
+        ssh_value: str,
+        gpg_value: str,
+        gpg_key_id: str,
+        git_url: str,
+        namespace: str = 'default',
+        priority: int = 100,
+        ssh_createSecret: bool = True,
+        pass_storeSubPath: str = 'repo',
+        gpg_createSecret: bool = True,
+        gpg_passphrase: str = '',
+        git_branch: str = 'main',
+        image_tag: str = '0.0.1'
+    ) -> int:
     """
     Install the operator in the cluster.
 

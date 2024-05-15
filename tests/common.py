@@ -8,6 +8,8 @@ from subprocess import Popen, PIPE
 from dataclasses import dataclass
 from humps import camelize
 
+import random
+import string
 import yaml
 import logging
 
@@ -45,7 +47,7 @@ def run(command: List[str], shell=False, timeout: float = 300) -> CommandOutput:
     return ret
 
 
-def load_data(file: str, dtype: str = 'crd') -> dict:
+def load_data(file: str, dtype: str = 'crd', camelcase: bool = True) -> dict:
     """
     Load a YAML file into a dictionary.
 
@@ -58,9 +60,26 @@ def load_data(file: str, dtype: str = 'crd') -> dict:
     """
     with resources.open_text(f'tests.data.{dtype}', f'{file}.yaml') as f:
         manifest = yaml.load(f, Loader=yaml.Loader)
-        camelized_manifest = camelize(manifest)
+
+        if camelcase:
+            camelized_manifest = camelize(manifest)
+        else:
+            camelized_manifest = manifest
 
         # We undo the camelization of the 'metadata' field to ensure that users' cases and capitalization are respected.
         camelized_manifest['spec']['encryptedData'] = manifest['spec']['encryptedData']
 
         return camelized_manifest
+
+
+def random_secret(length: int = 40) -> str:
+    """
+    Generate a random string of a specified length for use as a test secret.
+
+    Args:
+        length (int, optional): length of the random string. Defaults to 40.
+
+    Returns:
+        str: the random string.
+    """
+    return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
