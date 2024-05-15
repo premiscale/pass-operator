@@ -30,8 +30,6 @@ from tests.e2e.lib import (
 
 import logging
 import sys
-import string
-import random
 
 
 log = logging.getLogger(__name__)

@@ -7,6 +7,8 @@ from tests.common import (
 
 from tests.e2e.lib import (
     # Tools
+    generate_unencrypted_crds,
+    cleanup_unencrypted_crds,
     check_cluster_pod_status,
     generate_gpg_keypair,
     generate_ssh_keypair,
@@ -41,6 +43,9 @@ uninstall_pass_operator_e2e(namespace='pass-operator')
 uninstall_pass_operator_crds(namespace='pass-operator')
 
 
+# check_cluster_pod_status()
+
+
 # Generate GPG and SSH keypairs for use in testing.
 log.info('Generating GPG and SSH keypairs for testing.')
 gpg_passphrase = random_secret()
@@ -52,7 +57,9 @@ ssh_public_key, ssh_private_key = generate_ssh_keypair()
 
 log.info('Building e2e image')
 # e2e artifacts that the operator depends on to run.
+generate_unencrypted_crds()
 build_e2e_image()
+cleanup_unencrypted_crds()
 
 log.info('Installing pass-operator-e2e')
 install_pass_operator_e2e(

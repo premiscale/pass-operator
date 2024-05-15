@@ -43,7 +43,7 @@ ENV PASS_DIRECTORY="" \
 
 COPY ./command.e2e.sh /command.e2e.sh
 # Copy in the unencrypted data so we can populate the pass store when the container starts.
-COPY ./data/crd/ ${HOME}/data/crd/
+COPY ./data/crd/* ${HOME}/data/crd/
 
 ENTRYPOINT [ "/tini", "--" ]
 CMD [ "/command.e2e.sh" ]

@@ -1,15 +1,46 @@
+"""
+A library of common e2e-related routines.
+"""
+
 from tests.common import run
 from gnupg import GPG
 from kubernetes import client
 from time import sleep as syncsleep
 from passoperator.utils import b64Enc
+from tests.common import random_secret, load_data
 
-import re
+import pathlib
 import os
 import logging
+import yaml
 
 
 log = logging.getLogger(__name__)
+
+
+def generate_unencrypted_crds() -> None:
+    """
+    Generate random unencrypted CRDs for testing.
+    """
+    for crd in pathlib.Path('tests/data/crd').iterdir():
+        if crd.is_file() and crd.suffix == '.yaml':
+            data = load_data(crd.stem, 'crd', camelcase=False)
+
+            # Assign random secrets to the values in encryptedData so the command of the e2e server to parse into the pass store.
+            print(data['spec']['encryptedData'])
+            data['spec']['encryptedData'] = {v: random_secret() for k, v in data['spec']['encryptedData'].items()}
+            with open(f'tests/data/crd/{crd.stem}.unencrypted.yaml', 'w') as f:
+                yaml.dump(data, f)
+
+
+def cleanup_unencrypted_crds() -> None:
+    """
+    Remove unencrypted CRDs generated for testing from the filesystem.
+    """
+    for crd in pathlib.Path('tests/data/crd').iterdir():
+        if crd.is_file() and crd.name.endswith('.unencrypted.yaml'):
+            log.info(f'Removing generated unencrypted CRD file {crd}.')
+            os.remove(crd)
 
 
 def check_cluster_pod_status(namespace: str | None = None) -> bool:
