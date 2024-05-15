@@ -38,6 +38,7 @@ ENV PASS_DIRECTORY="" \
     SSH_PUBLIC_KEY="" \
     PASS_BINARY=/usr/bin/pass
 
-COPY bin/entrypoint.e2e.sh /entrypoint.e2e.sh
+COPY ./command.e2e.sh /command.e2e.sh
 
-ENTRYPOINT [ "/tini", "--", "/entrypoint.e2e.sh" ]
+ENTRYPOINT [ "/tini", "--" ]
+CMD [ "/command.e2e.sh" ]

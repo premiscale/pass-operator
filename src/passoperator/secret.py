@@ -128,6 +128,26 @@ class ManagedSecret:
         """
         return self.data == __value.data
 
+    @classmethod
+    def from_kopf(cls, body: kopf.Body | Dict) -> ManagedSecret:
+        """
+        Create a ManagedSecret object from a K8s body dict.
+
+        Args:
+            body (kopf.Body | Dict): the K8s manifest.
+
+        Returns:
+            ManagedSecret: the ManagedSecret object created from the manifest.
+        """
+        # Camelize the body to match the PassSecret object's fields, but keep the encryptedData field as-is.
+        camelized_body = camelize(dict(body))
+        camelized_body['data'] = dict(body)['data']
+
+        return from_dict(
+            camelized_body,
+            cls
+        )
+
 
 @define
 class PassSecretSpec:
