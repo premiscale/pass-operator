@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-This script should be merged into tests/e2e/ at some point and deleted.
+Set up a test environment; build all local artifacts using the e2e lib and deploy the operator.
 """
 
 
