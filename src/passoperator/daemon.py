@@ -104,6 +104,67 @@ def reconciliation(body: kopf.Body, **_: Any) -> None:
 #     pass
 
 
+@kopf.on.delete('v1', 'secrets', annotations={'secrets.premiscale.com/managed': kopf.PRESENT})
+@kopf.on.update('v1', 'secrets', annotations={'secrets.premiscale.com/managed': kopf.PRESENT})
+def reset_secret(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.Meta, **_: Any) -> None:
+    """
+    Reset a modified managed secret if it is updated externally.
+
+    Args:
+        body [kopf.Body]: raw body of the Secret.
+        old [kopf.BodyEssence]: old body of the Secret.
+        new [kopf.BodyEssence]: new body of the Secret.
+    """
+    log.warning(f'Secret "{meta["name"]}" in Namespace "{meta["namespace"]}" was updated externally. Resetting to previous, PassSecret-defined state.')
+
+    metadata = {
+        'metadata': {
+            'name': meta['name'],
+            'namespace': meta['namespace']
+        }
+    }
+
+    # Parse the old Secret manifest.
+    try:
+        oldSecret = ManagedSecret.from_kopf(
+            {
+                **metadata,
+                **old
+            }
+        )
+    except (ValueError, KeyError) as e:
+        raise kopf.PermanentError(e)
+
+    # Parse the new Secret manifest.
+    try:
+        newSecret = ManagedSecret.from_kopf(
+            {
+                **metadata,
+                **new
+            }
+        )
+    except (ValueError, KeyError) as e:
+        raise kopf.PermanentError(e)
+
+    v1 = client.CoreV1Api()
+
+    try:
+        # Secret was updated in-place. Users won't be able to modify name or namespace, so we can safely just patch the secret and bring it back.
+        v1.patch_namespaced_secret(
+            name=oldSecret.metadata.name,
+            namespace=oldSecret.metadata.namespace,
+            body=client.V1Secret(
+                **oldSecret.to_client_dict()
+            )
+        )
+
+        log.info(
+            f'Successfully updated Secret "{newSecret.metadata.name}" in Namespace "{newSecret.metadata.namespace}".'
+        )
+    except client.ApiException as e:
+        raise kopf.PermanentError(e)
+
+
 @kopf.on.update('secrets.premiscale.com', 'v1alpha1', 'passsecret')
 def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.Meta, **_: Any) -> None:
     """

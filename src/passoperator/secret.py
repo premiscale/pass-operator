@@ -9,6 +9,7 @@ from pathlib import Path
 from attrs import define, asdict as to_dict
 from cattrs import structure as from_dict
 from humps import camelize
+from datetime import datetime
 
 from passoperator.gpg import decrypt
 from passoperator.utils import b64Dec, b64Enc
@@ -256,6 +257,8 @@ class PassSecret:
         # Camelize the body to match the PassSecret object's fields, but keep the encryptedData field as-is.
         camelized_body = dict(camelize(dict(body)))
         camelized_body['spec']['encryptedData'] = dict(body)['spec']['encryptedData']
+        camelized_body['spec']['managedSecret']['metadata']['annotations']['secrets.premiscale.com/managed'] = 'true'
+        camelized_body['spec']['managedSecret']['metadata']['annotations']['secrets.premiscale.com/last-updated'] = datetime.now().isoformat()
 
         return from_dict(
             camelized_body,
