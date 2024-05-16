@@ -75,6 +75,7 @@ def reconciliation(body: kopf.Body, **_: Any) -> None:
             namespace=passSecretObj.spec.managedSecret.metadata.namespace
         )
 
+        log.debug(secret)
         _managedSecret = ManagedSecret.from_kopf(secret.to_dict())
 
         # If the managed secret data does not match what's in the newly-generated ManagedSecret object,
