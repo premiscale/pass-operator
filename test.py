@@ -69,7 +69,7 @@ install_pass_operator_e2e(
     ssh_createSecret=True,
     pass_storeSubPath='repo',
     gpg_createSecret=True,
-    gpg_passphrase='1234',
+    gpg_passphrase=gpg_passphrase,
     git_branch='main'
 )
 
@@ -90,7 +90,7 @@ install_pass_operator(
     ssh_createSecret=True,
     pass_storeSubPath='repo',
     gpg_createSecret=True,
-    gpg_passphrase='1234',
+    gpg_passphrase=gpg_passphrase,
     git_url='root@pass-operator-e2e:/root/repo.git',
     git_branch='main'
 )
