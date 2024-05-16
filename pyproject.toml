@@ -37,7 +37,7 @@ mypy = "^1.0.1"
 pylint = "^3.0.3"
 pytest = "^7.4.4"
 coverage = "^7.4.1"
-deepdiff = "^6.7.1"
+deepdiff = "^7.0.0"
 
 [build-system]
 requires = ["poetry-core"]
