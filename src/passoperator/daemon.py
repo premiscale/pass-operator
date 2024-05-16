@@ -75,7 +75,6 @@ def reconciliation(body: kopf.Body, **_: Any) -> None:
             namespace=passSecretObj.spec.managedSecret.metadata.namespace
         )
 
-        print(secret, type(secret))
         _managedSecret = ManagedSecret.from_kopf(secret.to_dict())
 
         # If the managed secret data does not match what's in the newly-generated ManagedSecret object,
@@ -297,7 +296,7 @@ def main() -> int:
     args = parser.parse_args()
 
     if args.version:
-        print(f'passoperator v{__version__}')
+        print(f'passoperator v{__version__}', file=sys.stdout)
         sys.exit(0)
 
     config.load_incluster_config()
