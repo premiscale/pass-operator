@@ -11,8 +11,6 @@ from kubernetes import client, config
 from http import HTTPStatus
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
-from cattrs import structure as from_dict
-from humps import camelize
 
 from passoperator.git import pull, clone
 from passoperator.utils import LogLevel
@@ -77,7 +75,8 @@ def reconciliation(body: kopf.Body, **_: Any) -> None:
             namespace=passSecretObj.spec.managedSecret.metadata.namespace
         )
 
-        _managedSecret = ManagedSecret.from_kopf(secret)
+        print(secret, type(secret))
+        _managedSecret = ManagedSecret.from_kopf(secret.to_dict())
 
         # If the managed secret data does not match what's in the newly-generated ManagedSecret object,
         # submit a patch request to update it.
@@ -251,8 +250,9 @@ def check_gpg_id(path: Path | str, remove: bool =False) -> None:
     """
     if Path(path).exists():
         with open(path, mode='r', encoding='utf-8') as gpg_id_f:
-            if gpg_id_f.read().rstrip() != env['PASS_GPG_KEY_ID']:
-                log.error(f'PASS_GPG_KEY_ID ({env["PASS_GPG_KEY_ID"]}) does not equal .gpg-id contained in {path}')
+            _gpg_id = gpg_id_f.read().rstrip()
+            if _gpg_id != env['PASS_GPG_KEY_ID']:
+                log.error(f'PASS_GPG_KEY_ID ({env["PASS_GPG_KEY_ID"]}) does not equal .gpg-id contained in {path}: {_gpg_id}')
                 sys.exit(1)
 
         if remove:

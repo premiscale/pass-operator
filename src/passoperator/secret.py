@@ -145,7 +145,8 @@ class ManagedSecret:
         Returns:
             ManagedSecret: the ManagedSecret object created from the manifest.
         """
-        # Camelize the body to match the PassSecret object's fields, but keep the encryptedData field as-is.
+
+        # Camelize the body to match the PassSecret object's fields, but keep the data fields as-is.
         camelized_body = dict(camelize(dict(body)))
         camelized_body['data'] = dict(body)['data']
 

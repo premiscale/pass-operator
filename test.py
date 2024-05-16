@@ -1,6 +1,11 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
+"""
+This script should be merged into tests/e2e/ at some point and deleted.
+"""
+
+
 from tests.common import (
     random_secret
 )
