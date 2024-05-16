@@ -147,9 +147,23 @@ def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.
 
     v1 = client.CoreV1Api()
 
+    # Handle namespace changes.
     try:
         if newPassSecret.spec.managedSecret.metadata.namespace != oldPassSecret.spec.managedSecret.metadata.namespace:
             # Namespace is different. Delete the former secret and create a new one in the new namespace.
+            v1.delete_namespaced_secret(
+                name=oldPassSecret.spec.managedSecret.metadata.name,
+                namespace=oldPassSecret.spec.managedSecret.metadata.namespace
+            )
+
+            v1.create_namespaced_secret(
+                namespace=newPassSecret.spec.managedSecret.metadata.namespace,
+                body=client.V1Secret(
+                    **newPassSecret.spec.managedSecret.to_client_dict()
+                )
+            )
+        elif newPassSecret.spec.managedSecret.metadata.name != oldPassSecret.spec.managedSecret.metadata.name:
+            # Namespace is the same, but the secret's name has changed. Delete the old secret and create a new one.
             v1.delete_namespaced_secret(
                 name=oldPassSecret.spec.managedSecret.metadata.name,
                 namespace=oldPassSecret.spec.managedSecret.metadata.namespace
