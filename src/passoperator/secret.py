@@ -39,7 +39,10 @@ class Metadata:
         Returns:
             Dict: this object as a dict.
         """
-        return to_dict(self, filter=lambda a, v: v is not None)
+        return to_dict(
+            self,
+            filter=lambda a, v: v is not None
+        )
 
 
 @define
@@ -82,6 +85,13 @@ class ManagedSecret:
             self.data = {
                 key: b64Enc(value) for key, value in self.stringData.items()
             }
+
+        # Ensure the managed secret is marked as managed and has a last-updated timestamp.
+        if self.metadata.annotations is None:
+            self.metadata.annotations = {}
+
+        self.metadata.annotations['secrets.premiscale.com/managed'] = 'true'
+        self.metadata.annotations['secrets.premiscale.com/last-updated'] = datetime.now().isoformat()
 
         return None
 
@@ -257,8 +267,6 @@ class PassSecret:
         # Camelize the body to match the PassSecret object's fields, but keep the encryptedData field as-is.
         camelized_body = dict(camelize(dict(body)))
         camelized_body['spec']['encryptedData'] = dict(body)['spec']['encryptedData']
-        camelized_body['spec']['managedSecret']['metadata']['annotations']['secrets.premiscale.com/managed'] = 'true'
-        camelized_body['spec']['managedSecret']['metadata']['annotations']['secrets.premiscale.com/last-updated'] = datetime.now().isoformat()
 
         return from_dict(
             camelized_body,

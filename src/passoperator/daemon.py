@@ -104,11 +104,40 @@ def reconciliation(body: kopf.Body, **_: Any) -> None:
 #     pass
 
 
+def lookup_passsecret(managedSecretName: str) -> PassSecret | None:
+    """
+    Look up a PassSecret object by name and namespace.
+
+    Args:
+        managedSecretName [str]: name of the managed Secret to look up a PassSecret by, if it exists.
+
+    Returns:
+        PassSecret | None: the PassSecret object if found, else None.
+    """
+    v1 = client.CustomObjectsApi()
+
+    try:
+        passSecrets = v1.list_namespaced_custom_object(
+            group='secrets.premiscale.com',
+            version='v1alpha1',
+            namespace=env['OPERATOR_NAMESPACE'],
+            plural='passsecrets'
+        )
+
+        for passSecret in passSecrets['items']:
+            if passSecret['spec']['managedSecret']['metadata']['name'] == managedSecretName:
+                return PassSecret.from_kopf(passSecret)
+        else:
+            return None
+    except client.ApiException as e:
+        raise kopf.PermanentError(e)
+
+
 @kopf.on.delete('v1', 'secrets', annotations={'secrets.premiscale.com/managed': kopf.PRESENT})
 @kopf.on.update('v1', 'secrets', annotations={'secrets.premiscale.com/managed': kopf.PRESENT})
 def reset_secret(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.Meta, **_: Any) -> None:
     """
-    Reset a modified managed secret if it is updated externally.
+    Reset a modified managed secret if it is updated externally. This is effectively the inverse of the reconciliation method.
 
     Args:
         body [kopf.Body]: raw body of the Secret.
@@ -117,36 +146,37 @@ def reset_secret(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta:
     """
     log.warning(f'Secret "{meta["name"]}" in Namespace "{meta["namespace"]}" was updated externally. Resetting to previous, PassSecret-defined state.')
 
-    metadata = {
-        'metadata': {
-            'name': meta['name'],
-            'namespace': meta['namespace']
-        }
-    }
+    log.debug(f'Secret metadata: {meta}')
+    log.debug(f'Old managed secret body: {old}')
+    log.debug(f'New managed secret body: {new}')
 
     # Parse the old Secret manifest.
     try:
-        oldSecret = ManagedSecret.from_kopf(
-            {
-                **metadata,
-                **old
-            }
-        )
+        _old = dict(old)
+        _old['metadata']['name'] = meta['name']
+        _old['metadata']['namespace'] = meta['namespace']
+        oldSecret = ManagedSecret.from_kopf(_old)
     except (ValueError, KeyError) as e:
         raise kopf.PermanentError(e)
 
     # Parse the new Secret manifest.
     try:
-        newSecret = ManagedSecret.from_kopf(
-            {
-                **metadata,
-                **new
-            }
-        )
+        _new = dict(new)
+        _new['metadata']['name'] = meta['name']
+        _new['metadata']['namespace'] = meta['namespace']
+        newSecret = ManagedSecret.from_kopf(_new)
     except (ValueError, KeyError) as e:
         raise kopf.PermanentError(e)
 
     v1 = client.CoreV1Api()
+
+    # Guard against secrets not managed by an actual PassSecret. In other words, allow the secret deletion to go through.
+    # TODO: write an e2e test for this.
+    if lookup_passsecret(managedSecretName=oldSecret.metadata.name) is None:
+        log.warning(f'Secret "{oldSecret.metadata.name}" in Namespace "{oldSecret.metadata.namespace}" is not managed by PassSecret. Skipping.')
+        return
+    else:
+        log.info(f'Secret "{oldSecret.metadata.name}" in Namespace "{oldSecret.metadata.namespace}" is managed by PassSecret. Proceeding with managed Secret reset.')
 
     try:
         # Secret was updated in-place. Users won't be able to modify name or namespace, so we can safely just patch the secret and bring it back.
@@ -159,7 +189,7 @@ def reset_secret(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta:
         )
 
         log.info(
-            f'Successfully updated Secret "{newSecret.metadata.name}" in Namespace "{newSecret.metadata.namespace}".'
+            f'Successfully reset Secret "{oldSecret.metadata.name}" in Namespace "{oldSecret.metadata.namespace}".'
         )
     except client.ApiException as e:
         raise kopf.PermanentError(e)
