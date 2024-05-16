@@ -11,8 +11,6 @@ from kubernetes import client, config
 from http import HTTPStatus
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
-from cattrs import structure as from_dict
-from humps import camelize
 
 from passoperator.git import pull, clone
 from passoperator.utils import LogLevel
@@ -77,7 +75,8 @@ def reconciliation(body: kopf.Body, **_: Any) -> None:
             namespace=passSecretObj.spec.managedSecret.metadata.namespace
         )
 
-        _managedSecret = ManagedSecret.from_kopf(secret)
+        log.debug(secret)
+        _managedSecret = ManagedSecret.from_kopf(secret.to_dict())
 
         # If the managed secret data does not match what's in the newly-generated ManagedSecret object,
         # submit a patch request to update it.
@@ -148,6 +147,7 @@ def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.
 
     v1 = client.CoreV1Api()
 
+    # Handle namespace changes.
     try:
         if newPassSecret.spec.managedSecret.metadata.namespace != oldPassSecret.spec.managedSecret.metadata.namespace:
             # Namespace is different. Delete the former secret and create a new one in the new namespace.
@@ -162,10 +162,23 @@ def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.
                     **newPassSecret.spec.managedSecret.to_client_dict()
                 )
             )
+        elif newPassSecret.spec.managedSecret.metadata.name != oldPassSecret.spec.managedSecret.metadata.name:
+            # Namespace is the same, but the secret's name has changed. Delete the old secret and create a new one.
+            v1.delete_namespaced_secret(
+                name=oldPassSecret.spec.managedSecret.metadata.name,
+                namespace=oldPassSecret.spec.managedSecret.metadata.namespace
+            )
+
+            v1.create_namespaced_secret(
+                namespace=newPassSecret.spec.managedSecret.metadata.namespace,
+                body=client.V1Secret(
+                    **newPassSecret.spec.managedSecret.to_client_dict()
+                )
+            )
         else:
             # Namespace is the same, secret's being updated in-place.
             v1.patch_namespaced_secret(
-                name=oldPassSecret.metadata.name,
+                name=newPassSecret.metadata.name,
                 namespace=oldPassSecret.metadata.namespace,
                 body=client.V1Secret(
                     **newPassSecret.spec.managedSecret.to_client_dict()
@@ -173,7 +186,7 @@ def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.
             )
 
         log.info(
-            f'Successfully updated PassSecret "{newPassSecret.metadata.name}" managed Secret {newPassSecret.spec.managedSecret.metadata.name}.'
+            f'Successfully updated PassSecret "{newPassSecret.metadata.name}" managed Secret "{newPassSecret.spec.managedSecret.metadata.name}".'
         )
     except client.ApiException as e:
         raise kopf.PermanentError(e)
@@ -251,8 +264,9 @@ def check_gpg_id(path: Path | str, remove: bool =False) -> None:
     """
     if Path(path).exists():
         with open(path, mode='r', encoding='utf-8') as gpg_id_f:
-            if gpg_id_f.read().rstrip() != env['PASS_GPG_KEY_ID']:
-                log.error(f'PASS_GPG_KEY_ID ({env["PASS_GPG_KEY_ID"]}) does not equal .gpg-id contained in {path}')
+            _gpg_id = gpg_id_f.read().rstrip()
+            if _gpg_id != env['PASS_GPG_KEY_ID']:
+                log.error(f'PASS_GPG_KEY_ID ({env["PASS_GPG_KEY_ID"]}) does not equal .gpg-id contained in {path}: {_gpg_id}')
                 sys.exit(1)
 
         if remove:
@@ -297,7 +311,7 @@ def main() -> int:
     args = parser.parse_args()
 
     if args.version:
-        print(f'passoperator v{__version__}')
+        print(f'passoperator v{__version__}', file=sys.stdout)
         sys.exit(0)
 
     config.load_incluster_config()

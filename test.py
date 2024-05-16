@@ -1,6 +1,11 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
+"""
+This script should be merged into tests/e2e/ at some point and deleted.
+"""
+
+
 from tests.common import (
     random_secret
 )
@@ -69,7 +74,7 @@ install_pass_operator_e2e(
     ssh_createSecret=True,
     pass_storeSubPath='repo',
     gpg_createSecret=True,
-    gpg_passphrase='1234',
+    gpg_passphrase=gpg_passphrase,
     git_branch='main'
 )
 
@@ -90,7 +95,7 @@ install_pass_operator(
     ssh_createSecret=True,
     pass_storeSubPath='repo',
     gpg_createSecret=True,
-    gpg_passphrase='1234',
+    gpg_passphrase=gpg_passphrase,
     git_url='root@pass-operator-e2e:/root/repo.git',
     git_branch='main'
 )

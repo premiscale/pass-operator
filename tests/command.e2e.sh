@@ -73,7 +73,8 @@ function populate_pass_store()
 (
     git clone "$HOME"/"$PASS_DIRECTORY".git "$HOME"/"$PASS_DIRECTORY" \
     && populate_pass_store \
-    && cp -R "$HOME"/.password-store/"$PASS_DIRECTORY".git/* "$HOME"/"$PASS_DIRECTORY" \
+    && cp -R "$HOME"/.password-store/"$PASS_DIRECTORY".git/premiscale "$HOME"/"$PASS_DIRECTORY" \
+    && cp "$HOME"/.password-store/"$PASS_DIRECTORY".git/.gpg-id "$HOME"/"$PASS_DIRECTORY" \
     && cd "$HOME"/"$PASS_DIRECTORY" || exit 1 \
     && printf "Initial pass repository for e2e tests." > README.md \
     && git add . \
