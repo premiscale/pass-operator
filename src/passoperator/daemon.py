@@ -178,7 +178,7 @@ def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.
         else:
             # Namespace is the same, secret's being updated in-place.
             v1.patch_namespaced_secret(
-                name=oldPassSecret.metadata.name,
+                name=newPassSecret.metadata.name,
                 namespace=oldPassSecret.metadata.namespace,
                 body=client.V1Secret(
                     **newPassSecret.spec.managedSecret.to_client_dict()
@@ -186,7 +186,7 @@ def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.
             )
 
         log.info(
-            f'Successfully updated PassSecret "{newPassSecret.metadata.name}" managed Secret {newPassSecret.spec.managedSecret.metadata.name}.'
+            f'Successfully updated PassSecret "{newPassSecret.metadata.name}" managed Secret "{newPassSecret.spec.managedSecret.metadata.name}".'
         )
     except client.ApiException as e:
         raise kopf.PermanentError(e)
