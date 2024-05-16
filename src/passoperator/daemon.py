@@ -103,6 +103,10 @@ def reconciliation(body: kopf.Body, **_: Any) -> None:
 # def cleanup(**kwargs) -> None:
 #     pass
 
+# @kopf.on.resume()
+# def resume(**kwargs) -> None:
+#     pass
+
 
 def lookup_passsecret(managedSecretName: str) -> PassSecret | None:
     """
@@ -195,6 +199,7 @@ def reset_secret(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta:
         raise kopf.PermanentError(e)
 
 
+@kopf.on.resume('secrets.premiscale.com', 'v1alpha1', 'passsecret')
 @kopf.on.update('secrets.premiscale.com', 'v1alpha1', 'passsecret')
 def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.Meta, **_: Any) -> None:
     """
@@ -270,6 +275,7 @@ def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.
         raise kopf.PermanentError(e)
 
 
+@kopf.on.resume('secrets.premiscale.com', 'v1alpha1', 'passsecret')
 @kopf.on.create('secrets.premiscale.com', 'v1alpha1', 'passsecret')
 def create(body: kopf.Body, **_: Any) -> None:
     """
