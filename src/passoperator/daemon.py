@@ -147,7 +147,7 @@ def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.
 
     v1 = client.CoreV1Api()
 
-    # Handle namespace changes.
+    # Handle typically immutable field changes separately from the rest of the manifest on Secrets.
     try:
         if newPassSecret.spec.managedSecret.metadata.namespace != oldPassSecret.spec.managedSecret.metadata.namespace or newPassSecret.spec.managedSecret.metadata.name != oldPassSecret.spec.managedSecret.metadata.name:
             # Name or namespace is different. Delete the former secret and create a new one in the new namespace.
@@ -163,7 +163,7 @@ def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.
                 )
             )
         else:
-            # Namespace is the same, secret's being updated in-place.
+            # Name and namespace are the same, but the secret's being updated in-place.
             v1.patch_namespaced_secret(
                 name=newPassSecret.metadata.name,
                 namespace=oldPassSecret.metadata.namespace,
