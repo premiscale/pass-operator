@@ -107,6 +107,7 @@ class ManagedSecret:
         """
         d = dict(self.to_dict(export=True))
         d.pop('data')
+        d.pop('apiVersion')
         d['string_data'] = self.stringData
         return d
 
