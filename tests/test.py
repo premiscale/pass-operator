@@ -6,11 +6,11 @@ Set up a test environment; build all local artifacts using the e2e lib and deplo
 """
 
 
-from tests.common import (
+from common import (
     random_secret
 )
 
-from tests.e2e.lib import (
+from e2e.lib import (
     # Tools
     generate_unencrypted_crds,
     cleanup_unencrypted_crds,

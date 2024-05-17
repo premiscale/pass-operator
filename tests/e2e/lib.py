@@ -2,12 +2,16 @@
 A library of common e2e-related routines.
 """
 
-from tests.common import run
+
 from gnupg import GPG
 from kubernetes import client
 from time import sleep as syncsleep
 from passoperator.utils import b64Enc
-from tests.common import random_secret, load_data
+from common import (
+    random_secret,
+    load_data,
+    run
+)
 
 import pathlib
 import os

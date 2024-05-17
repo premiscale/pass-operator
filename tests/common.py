@@ -58,7 +58,7 @@ def load_data(file: str, dtype: str = 'crd', camelcase: bool = True) -> dict:
     Returns:
         dict: The dictionary representation of the YAML file.
     """
-    with resources.open_text(f'tests.data.{dtype}', f'{file}.yaml') as f:
+    with resources.open_text(f'data.{dtype}', f'{file}.yaml') as f:
         manifest = yaml.load(f, Loader=yaml.Loader)
 
         if camelcase:

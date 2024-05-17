@@ -3,7 +3,7 @@ A kubernetes operator that syncs and decrypts secrets from Linux password store 
 """
 
 
-from typing import Any
+from typing import Any, List
 from pathlib import Path
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from importlib import metadata
@@ -11,6 +11,7 @@ from kubernetes import client, config
 from http import HTTPStatus
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
+from time import sleep
 
 from passoperator.git import pull, clone
 from passoperator.utils import LogLevel
@@ -108,7 +109,7 @@ def reconciliation(body: kopf.Body, **_: Any) -> None:
 #     pass
 
 
-def lookup_passsecret(managedSecretName: str) -> PassSecret | None:
+def lookup_managing_passsecret(managedSecretName: str) -> PassSecret | None:
     """
     Look up a PassSecret object by name and namespace.
 
@@ -137,8 +138,10 @@ def lookup_passsecret(managedSecretName: str) -> PassSecret | None:
         raise kopf.PermanentError(e)
 
 
-@kopf.on.resume('v1', 'secrets', annotations={'secrets.premiscale.com/managed': kopf.PRESENT})
-@kopf.on.delete('v1', 'secrets', annotations={'secrets.premiscale.com/managed': kopf.PRESENT}, optional=True)
+deleted_passsecrets_secrets: List[str] = []
+
+
+@kopf.on.delete('v1', 'secrets', annotations={'secrets.premiscale.com/managed': kopf.PRESENT})
 def replace_secret(body: kopf.Body, **_: Any) -> None:
     """
     Replace a delete managed secret if it is updated externally.
@@ -155,23 +158,35 @@ def replace_secret(body: kopf.Body, **_: Any) -> None:
     except (ValueError, KeyError) as e:
         raise kopf.PermanentError(e)
 
+    if managedSecretObj.metadata.name in deleted_passsecrets_secrets:
+        deleted_passsecrets_secrets.remove(managedSecretObj.metadata.name)
+        log.info(f'Secret "{managedSecretObj.metadata.name}" in Namespace "{managedSecretObj.metadata.namespace}" was already deleted by the operator. Skipping.')
+        return None
+
     v1 = client.CoreV1Api()
 
     # Guard against secrets not managed by an actual PassSecret. In other words, allow the secret deletion to go through.
     # TODO: write an e2e test for this.
-    if (passSecret := lookup_passsecret(managedSecretName=managedSecretObj.metadata.name)) is None:
+    if (passSecret := lookup_managing_passsecret(managedSecretName=managedSecretObj.metadata.name)) is None:
         log.warning(f'Secret "{managedSecretObj.metadata.name}" in Namespace "{managedSecretObj.metadata.namespace}" is not managed by PassSecret. Skipping.')
-        return
-    else:
-        log.info(f'Secret "{managedSecretObj.metadata.name}" in Namespace "{managedSecretObj.metadata.namespace}" is managed by PassSecret "{passSecret.metadata.name}". Proceeding with managed Secret recreation.')
+        return None
+
+    log.info(f'Secret "{managedSecretObj.metadata.name}" in Namespace "{managedSecretObj.metadata.namespace}" is managed by PassSecret "{passSecret.metadata.name}". Proceeding with managed Secret recreation.')
 
     try:
-        v1.create_namespaced_secret(
-            namespace=managedSecretObj.metadata.namespace,
-            body=client.V1Secret(
-                **managedSecretObj.to_client_dict()
+        while True:
+            response = v1.create_namespaced_secret(
+                namespace=managedSecretObj.metadata.namespace,
+                body=client.V1Secret(
+                    **managedSecretObj.to_client_dict()
+                )
             )
-        )
+
+            if response['reason'] == 'AlreadyExists':
+                log.warning(f'Secret "{managedSecretObj.metadata.name}" in Namespace "{managedSecretObj.metadata.namespace}" is still being deleted. Retrying.')
+                sleep(0.1)
+            else:
+                break
 
         log.info(
             f'Successfully reset Secret "{managedSecretObj.metadata.name}" in Namespace "{managedSecretObj.metadata.namespace}".'
@@ -180,7 +195,6 @@ def replace_secret(body: kopf.Body, **_: Any) -> None:
         raise kopf.PermanentError(e)
 
 
-@kopf.on.resume('v1', 'secrets', annotations={'secrets.premiscale.com/managed': kopf.PRESENT})
 @kopf.on.update('v1', 'secrets', annotations={'secrets.premiscale.com/managed': kopf.PRESENT}, )
 def reset_secret(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.Meta, **_: Any) -> None:
     """
@@ -218,7 +232,7 @@ def reset_secret(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta:
 
     # Guard against secrets not managed by an actual PassSecret. In other words, allow the secret deletion to go through.
     # TODO: write an e2e test for this.
-    if lookup_passsecret(managedSecretName=oldSecret.metadata.name) is None:
+    if lookup_managing_passsecret(managedSecretName=oldSecret.metadata.name) is None:
         log.warning(f'Secret "{oldSecret.metadata.name}" in Namespace "{oldSecret.metadata.namespace}" is not managed by PassSecret. Skipping.')
         return
     else:
@@ -241,7 +255,6 @@ def reset_secret(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta:
         raise kopf.PermanentError(e)
 
 
-@kopf.on.resume('secrets.premiscale.com', 'v1alpha1', 'passsecret')
 @kopf.on.update('secrets.premiscale.com', 'v1alpha1', 'passsecret')
 def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.Meta, **_: Any) -> None:
     """
@@ -288,6 +301,9 @@ def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.
     # Handle typically immutable field changes separately from the rest of the manifest on Secrets.
     try:
         if newPassSecret.spec.managedSecret.metadata.namespace != oldPassSecret.spec.managedSecret.metadata.namespace or newPassSecret.spec.managedSecret.metadata.name != oldPassSecret.spec.managedSecret.metadata.name:
+            # Indicate to the secrets' deletion handler that we want to ignore this object's deletion.
+            deleted_passsecrets_secrets.append(oldPassSecret.spec.managedSecret.metadata.name)
+
             # Name or namespace is different. Delete the former secret and create a new one in the new namespace.
             v1.delete_namespaced_secret(
                 name=oldPassSecret.spec.managedSecret.metadata.name,
@@ -317,7 +333,6 @@ def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.
         raise kopf.PermanentError(e)
 
 
-@kopf.on.resume('secrets.premiscale.com', 'v1alpha1', 'passsecret')
 @kopf.on.create('secrets.premiscale.com', 'v1alpha1', 'passsecret')
 def create(body: kopf.Body, **_: Any) -> None:
     """
@@ -351,8 +366,7 @@ def create(body: kopf.Body, **_: Any) -> None:
         raise kopf.PermanentError(e)
 
 
-@kopf.on.resume('secrets.premiscale.com', 'v1alpha1', 'passsecret')
-@kopf.on.delete('secrets.premiscale.com', 'v1alpha1', 'passsecret', optional=True)
+@kopf.on.delete('secrets.premiscale.com', 'v1alpha1', 'passsecret')
 def delete(body: kopf.Body, **_: Any) -> None:
     """
     Remove a managed secret, as the managing PassSecret has been deleted.
@@ -370,6 +384,10 @@ def delete(body: kopf.Body, **_: Any) -> None:
     v1 = client.CoreV1Api()
 
     try:
+        # Indicate to the secrets' deletion handler that we want to ignore this object's deletion.
+        # It was intentional and that handler does not need to re-create it.
+        deleted_passsecrets_secrets.append(passSecretObj.spec.managedSecret.metadata.name)
+
         v1.delete_namespaced_secret(
             name=passSecretObj.spec.managedSecret.metadata.name,
             namespace=passSecretObj.spec.managedSecret.metadata.namespace
