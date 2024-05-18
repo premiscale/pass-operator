@@ -2,7 +2,7 @@ version: 2.1
 
 
 orbs:
-  general: premiscale/general@dev:84f3c80360559a8a65d51d3eb71a26a7323feccd
+  general: premiscale/general@dev:4de200d6e87894301096c79ce78b407d7ca4fc6a
 
 
 workflows:
@@ -20,6 +20,7 @@ workflows:
           name: kubelinter
           # TODO: re-enable this exclude
           exclude: no-read-only-root-fs
+          path: helm/operator/
 
       - general/helm-test-deprecated:
           name: deprecated api
