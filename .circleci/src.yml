@@ -29,204 +29,204 @@ workflows:
 
       # develop
 
-      - general/python-release-poetry:
-          name: twine upload [python-develop]
-          context: nexus
-          repository: python-develop
-          version: 0.0.<< pipeline.number >>
-          pypirc-config: .pypirc
-          requires:
-            - pylint
-            - mypy
-          filters:
-            branches:
-              ignore:
-                - master
+      # - general/python-release-poetry:
+      #     name: twine upload [python-develop]
+      #     context: nexus
+      #     repository: python-develop
+      #     version: 0.0.<< pipeline.number >>
+      #     pypirc-config: .pypirc
+      #     requires:
+      #       - pylint
+      #       - mypy
+      #     filters:
+      #       branches:
+      #         ignore:
+      #           - master
 
-      - general/docker-ecr-python-codeartifact:
-          name: docker ecr [pass-operator] [develop]
-          image-name: pass-operator
-          context:
-            - aws-development
-            - aws-codeartifact-development
-          args: >-
-            --build-arg=PYTHON_PACKAGE_VERSION=0.0.<< pipeline.number >>
-            --build-arg=PYTHON_USERNAME=$PYTHON_USERNAME
-            --build-arg=PYTHON_REPOSITORY=python-develop
-            --build-arg=REPO_DOMAIN=$REPO_DOMAIN
-          tag: 0.0.<< pipeline.number >>
-          requires:
-            - twine upload [python-develop]
-          filters:
-            branches:
-              ignore:
-                - master
+      # - general/docker-ecr-python-codeartifact:
+      #     name: docker ecr [pass-operator] [develop]
+      #     image-name: pass-operator
+      #     context:
+      #       - aws-development
+      #       - aws-codeartifact-development
+      #     args: >-
+      #       --build-arg=PYTHON_PACKAGE_VERSION=0.0.<< pipeline.number >>
+      #       --build-arg=PYTHON_USERNAME=$PYTHON_USERNAME
+      #       --build-arg=PYTHON_REPOSITORY=python-develop
+      #       --build-arg=REPO_DOMAIN=$REPO_DOMAIN
+      #     tag: 0.0.<< pipeline.number >>
+      #     requires:
+      #       - twine upload [python-develop]
+      #     filters:
+      #       branches:
+      #         ignore:
+      #           - master
 
-      - general/helm-release-nexus:
-          name: helm build and push [helm/operator] [develop]
-          context: nexus
-          repo: $HELM_DEVELOP_REPOSITORY_URL
-          path: helm/operator
-          version: 0.0.<< pipeline.number >>
-          image-tag: 0.0.<< pipeline.number >>
-          image-tag-path: .deployment.image.tag
-          requires:
-            - docker ecr [pass-operator] [develop]
-          filters:
-            branches:
-              ignore:
-                - master
+      # - general/helm-release-nexus:
+      #     name: helm build and push [helm/operator] [develop]
+      #     context: nexus
+      #     repo: $HELM_DEVELOP_REPOSITORY_URL
+      #     path: helm/operator
+      #     version: 0.0.<< pipeline.number >>
+      #     image-tag: 0.0.<< pipeline.number >>
+      #     image-tag-path: .deployment.image.tag
+      #     requires:
+      #       - docker ecr [pass-operator] [develop]
+      #     filters:
+      #       branches:
+      #         ignore:
+      #           - master
 
-      - slack/on-hold:
-          name: 'slack: notify release development deployment hold'
-          context: slack
-          requires:
-            - helm build and push [helm/operator] [develop]
-          filters:
-            branches:
-              ignore:
-                - master
+      # - slack/on-hold:
+      #     name: 'slack: notify release development deployment hold'
+      #     context: slack
+      #     requires:
+      #       - helm build and push [helm/operator] [develop]
+      #     filters:
+      #       branches:
+      #         ignore:
+      #           - master
 
-      - request-approval:
-          name: 'hold: release develop deployment'
-          requires:
-            - 'slack: notify release development deployment hold'
-          type: approval
-          filters:
-            branches:
-              ignore:
-                - master
+      # - request-approval:
+      #     name: 'hold: release develop deployment'
+      #     requires:
+      #       - 'slack: notify release development deployment hold'
+      #     type: approval
+      #     filters:
+      #       branches:
+      #         ignore:
+      #           - master
 
-      - general/helm-upgrade:
-          name: helm upgrade install [helm/operator] [develop]
-          cluster: $CHELSEA_CLUSTER
-          namespace: pass-operator-develop
-          repo: $HELM_DEVELOP_REPOSITORY_URL
-          version: 0.0.<< pipeline.number >>
-          additional-values: >-
-            --set global.image.registry="$DOCKER_DEVELOP_DOMAIN"
-            --set deployment.pullSecrets[0]=nexus-docker-registry
-            --set operator.interval="$OPERATOR_INTERVAL"
-            --set operator.initial_delay="$OPERATOR_INITIAL_DELAY"
-            --set operator.priority="$OPERATOR_PRIORITY"
-            --set operator.ssh.createSecret="true"
-            --set operator.pass.binary="$PASS_BINARY"
-            --set operator.pass.storeSubPath="$PASS_DIRECTORY"
-            --set operator.gpg.createSecret="true"
-            --set operator.gpg.value="$PASS_GPG_KEY"
-            --set operator.gpg.key_id="$PASS_GPG_KEY_ID"
-            --set operator.gpg.passphrase="$PASS_GPG_PASSPHRASE"
-            --set operator.git.url="$PASS_GIT_URL"
-            --set operator.git.branch="$PASS_GIT_BRANCH"
-            --set operator.ssh.value="$PASS_SSH_PRIVATE_KEY"
-          requires:
-            - 'hold: release develop deployment'
-          context:
-            - kubeconfig
-            - nexus
-            - password-store-operator
-          filters:
-            branches:
-              ignore:
-                - master
+      # - general/helm-upgrade:
+      #     name: helm upgrade install [helm/operator] [develop]
+      #     cluster: $CHELSEA_CLUSTER
+      #     namespace: pass-operator-develop
+      #     repo: $HELM_DEVELOP_REPOSITORY_URL
+      #     version: 0.0.<< pipeline.number >>
+      #     additional-values: >-
+      #       --set global.image.registry="$DOCKER_DEVELOP_DOMAIN"
+      #       --set deployment.pullSecrets[0]=nexus-docker-registry
+      #       --set operator.interval="$OPERATOR_INTERVAL"
+      #       --set operator.initial_delay="$OPERATOR_INITIAL_DELAY"
+      #       --set operator.priority="$OPERATOR_PRIORITY"
+      #       --set operator.ssh.createSecret="true"
+      #       --set operator.pass.binary="$PASS_BINARY"
+      #       --set operator.pass.storeSubPath="$PASS_DIRECTORY"
+      #       --set operator.gpg.createSecret="true"
+      #       --set operator.gpg.value="$PASS_GPG_KEY"
+      #       --set operator.gpg.key_id="$PASS_GPG_KEY_ID"
+      #       --set operator.gpg.passphrase="$PASS_GPG_PASSPHRASE"
+      #       --set operator.git.url="$PASS_GIT_URL"
+      #       --set operator.git.branch="$PASS_GIT_BRANCH"
+      #       --set operator.ssh.value="$PASS_SSH_PRIVATE_KEY"
+      #     requires:
+      #       - 'hold: release develop deployment'
+      #     context:
+      #       - kubeconfig
+      #       - nexus
+      #       - password-store-operator
+      #     filters:
+      #       branches:
+      #         ignore:
+      #           - master
 
       # master
 
-      - general/python-release-poetry:
-          name: twine upload [python-master]
-          context: nexus
-          repository: python-master
-          version: 0.0.<< pipeline.number >>
-          pypirc-config: .pypirc
-          requires:
-            - pylint
-          filters:
-            branches:
-              only:
-                - master
+      # - general/python-release-poetry:
+      #     name: twine upload [python-master]
+      #     context: nexus
+      #     repository: python-master
+      #     version: 0.0.<< pipeline.number >>
+      #     pypirc-config: .pypirc
+      #     requires:
+      #       - pylint
+      #     filters:
+      #       branches:
+      #         only:
+      #           - master
 
-      - general/docker-ecr-python-codeartifact:
-          name: docker ecr [pass-operator] [master]
-          image-name: pass-operator
-          context: nexus
-          args: >-
-            --build-arg=PYTHON_PACKAGE_VERSION=0.0.<< pipeline.number >>
-            --build-arg=PYTHON_USERNAME=$NEXUS_USERNAME
-            --build-arg=PYTHON_PASSWORD=$NEXUS_PASSWORD
-            --build-arg=PYTHON_REPOSITORY=python-master
-            --build-arg=REPO_DOMAIN=$REPO_DOMAIN
-          tag: 0.0.<< pipeline.number >>
-          requires:
-            - twine upload [python-master]
-          filters:
-            branches:
-              only:
-                - master
+      # - general/docker-ecr-python-codeartifact:
+      #     name: docker ecr [pass-operator] [master]
+      #     image-name: pass-operator
+      #     context: nexus
+      #     args: >-
+      #       --build-arg=PYTHON_PACKAGE_VERSION=0.0.<< pipeline.number >>
+      #       --build-arg=PYTHON_USERNAME=$NEXUS_USERNAME
+      #       --build-arg=PYTHON_PASSWORD=$NEXUS_PASSWORD
+      #       --build-arg=PYTHON_REPOSITORY=python-master
+      #       --build-arg=REPO_DOMAIN=$REPO_DOMAIN
+      #     tag: 0.0.<< pipeline.number >>
+      #     requires:
+      #       - twine upload [python-master]
+      #     filters:
+      #       branches:
+      #         only:
+      #           - master
 
-      - general/helm-release-nexus:
-          name: helm build and push [helm/operator] [master]
-          context: nexus
-          repo: $HELM_MASTER_REPOSITORY_URL
-          path: helm/operator
-          version: 0.0.<< pipeline.number >>
-          image-tag: 0.0.<< pipeline.number >>
-          image-tag-path: .deployment.image.tag
-          requires:
-            - docker ecr [pass-operator] [master]
-          filters:
-            branches:
-              only:
-                - master
+      # - general/helm-release-nexus:
+      #     name: helm build and push [helm/operator] [master]
+      #     context: nexus
+      #     repo: $HELM_MASTER_REPOSITORY_URL
+      #     path: helm/operator
+      #     version: 0.0.<< pipeline.number >>
+      #     image-tag: 0.0.<< pipeline.number >>
+      #     image-tag-path: .deployment.image.tag
+      #     requires:
+      #       - docker ecr [pass-operator] [master]
+      #     filters:
+      #       branches:
+      #         only:
+      #           - master
 
-      - slack/on-hold:
-          name: 'slack: notify release master deployment hold'
-          context: slack
-          requires:
-            - helm build and push [helm/operator] [master]
-          filters:
-            branches:
-              only:
-                - master
+      # - slack/on-hold:
+      #     name: 'slack: notify release master deployment hold'
+      #     context: slack
+      #     requires:
+      #       - helm build and push [helm/operator] [master]
+      #     filters:
+      #       branches:
+      #         only:
+      #           - master
 
-      - request-approval:
-          name: 'hold: release master deployment'
-          requires:
-            - 'slack: notify release master deployment hold'
-          type: approval
-          filters:
-            branches:
-              only:
-                - master
+      # - request-approval:
+      #     name: 'hold: release master deployment'
+      #     requires:
+      #       - 'slack: notify release master deployment hold'
+      #     type: approval
+      #     filters:
+      #       branches:
+      #         only:
+      #           - master
 
-      - general/helm-upgrade:
-          name: helm upgrade install [helm/operator] [master]
-          cluster: $CHELSEA_CLUSTER
-          namespace: pass-operator-master
-          repo: $HELM_MASTER_REPOSITORY_URL
-          version: 0.0.<< pipeline.number >>
-          additional-values: >-
-            --set global.image.registry="$DOCKER_MASTER_DOMAIN"
-            --set deployment.pullSecrets[0]=nexus-docker-registry
-            --set operator.interval="$OPERATOR_INTERVAL"
-            --set operator.initial_delay="$OPERATOR_INITIAL_DELAY"
-            --set operator.priority="$OPERATOR_PRIORITY"
-            --set operator.ssh.createSecret="true"
-            --set operator.pass.binary="$PASS_BINARY"
-            --set operator.pass.storeSubPath="$PASS_DIRECTORY"
-            --set operator.gpg.createSecret="true"
-            --set operator.gpg.value="$PASS_GPG_KEY"
-            --set operator.gpg.key_id="$PASS_GPG_KEY_ID"
-            --set operator.gpg.passphrase="$PASS_GPG_PASSPHRASE"
-            --set operator.git.url="$PASS_GIT_URL"
-            --set operator.git.branch="$PASS_GIT_BRANCH"
-            --set operator.ssh.value="$PASS_SSH_PRIVATE_KEY"
-          requires:
-            - 'hold: release master deployment'
-          context:
-            - kubeconfig
-            - nexus
-            - password-store-operator
-          filters:
-            branches:
-              only:
-                - master
+      # - general/helm-upgrade:
+      #     name: helm upgrade install [helm/operator] [master]
+      #     cluster: $CHELSEA_CLUSTER
+      #     namespace: pass-operator-master
+      #     repo: $HELM_MASTER_REPOSITORY_URL
+      #     version: 0.0.<< pipeline.number >>
+      #     additional-values: >-
+      #       --set global.image.registry="$DOCKER_MASTER_DOMAIN"
+      #       --set deployment.pullSecrets[0]=nexus-docker-registry
+      #       --set operator.interval="$OPERATOR_INTERVAL"
+      #       --set operator.initial_delay="$OPERATOR_INITIAL_DELAY"
+      #       --set operator.priority="$OPERATOR_PRIORITY"
+      #       --set operator.ssh.createSecret="true"
+      #       --set operator.pass.binary="$PASS_BINARY"
+      #       --set operator.pass.storeSubPath="$PASS_DIRECTORY"
+      #       --set operator.gpg.createSecret="true"
+      #       --set operator.gpg.value="$PASS_GPG_KEY"
+      #       --set operator.gpg.key_id="$PASS_GPG_KEY_ID"
+      #       --set operator.gpg.passphrase="$PASS_GPG_PASSPHRASE"
+      #       --set operator.git.url="$PASS_GIT_URL"
+      #       --set operator.git.branch="$PASS_GIT_BRANCH"
+      #       --set operator.ssh.value="$PASS_SSH_PRIVATE_KEY"
+      #     requires:
+      #       - 'hold: release master deployment'
+      #     context:
+      #       - kubeconfig
+      #       - nexus
+      #       - password-store-operator
+      #     filters:
+      #       branches:
+      #         only:
+      #           - master

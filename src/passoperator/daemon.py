@@ -30,11 +30,13 @@ log = logging.getLogger(__name__)
 
 
 @kopf.on.startup()
-def start(**_: Any) -> None:
+def start(settings: kopf.OperatorSettings, **_: Any) -> None:
     """
     Set up operator runtime.
     """
     log.info(f'Starting operator version {__version__}')
+    settings.persistence.finalizer = 'secrets.premiscale.com/finalizer'
+    settings.persistence.progress_storage = kopf.AnnotationsProgressStorage(prefix='secrets.premiscale.com')
 
 
 @kopf.timer(
@@ -91,7 +93,7 @@ def reconciliation(body: kopf.Body, **_: Any) -> None:
                 name=passSecretObj.spec.managedSecret.metadata.name,
                 namespace=passSecretObj.spec.managedSecret.metadata.namespace,
                 body=client.V1Secret(
-                    **passSecretObj.spec.managedSecret.to_client_dict()
+                    **passSecretObj.spec.managedSecret.to_client_dict(finalizers=False)
                 )
             )
 
@@ -134,123 +136,6 @@ def lookup_managing_passsecret(managedSecretName: str) -> PassSecret | None:
                 return PassSecret.from_kopf(passSecret)
         else:
             return None
-    except client.ApiException as e:
-        raise kopf.PermanentError(e)
-
-
-deleted_passsecrets_secrets: List[str] = []
-
-
-@kopf.on.delete('v1', 'secrets', annotations={'secrets.premiscale.com/managed': kopf.PRESENT})
-def replace_secret(body: kopf.Body, **_: Any) -> None:
-    """
-    Replace a delete managed secret if it is updated externally.
-
-    Args:
-        body [kopf.Body]: raw body of the Secret.
-    """
-    log.warning(f'Secret "{body["metadata"]["name"]}" in Namespace "{body["metadata"]["namespace"]}" was deleted externally. Replacing.')
-
-    log.debug(f'Old managed secret body: {body}')
-
-    try:
-        managedSecretObj = ManagedSecret.from_kopf(body)
-    except (ValueError, KeyError) as e:
-        raise kopf.PermanentError(e)
-
-    if managedSecretObj.metadata.name in deleted_passsecrets_secrets:
-        deleted_passsecrets_secrets.remove(managedSecretObj.metadata.name)
-        log.info(f'Secret "{managedSecretObj.metadata.name}" in Namespace "{managedSecretObj.metadata.namespace}" was already deleted by the operator. Skipping.')
-        return None
-
-    v1 = client.CoreV1Api()
-
-    # Guard against secrets not managed by an actual PassSecret. In other words, allow the secret deletion to go through.
-    # TODO: write an e2e test for this.
-    if (passSecret := lookup_managing_passsecret(managedSecretName=managedSecretObj.metadata.name)) is None:
-        log.warning(f'Secret "{managedSecretObj.metadata.name}" in Namespace "{managedSecretObj.metadata.namespace}" is not managed by PassSecret. Skipping.')
-        return None
-
-    log.info(f'Secret "{managedSecretObj.metadata.name}" in Namespace "{managedSecretObj.metadata.namespace}" is managed by PassSecret "{passSecret.metadata.name}". Proceeding with managed Secret recreation.')
-
-    try:
-        while True:
-            response = v1.create_namespaced_secret(
-                namespace=managedSecretObj.metadata.namespace,
-                body=client.V1Secret(
-                    **managedSecretObj.to_client_dict()
-                )
-            )
-
-            if response['reason'] == 'AlreadyExists':
-                log.warning(f'Secret "{managedSecretObj.metadata.name}" in Namespace "{managedSecretObj.metadata.namespace}" is still being deleted. Retrying.')
-                sleep(0.1)
-            else:
-                break
-
-        log.info(
-            f'Successfully reset Secret "{managedSecretObj.metadata.name}" in Namespace "{managedSecretObj.metadata.namespace}".'
-        )
-    except client.ApiException as e:
-        raise kopf.PermanentError(e)
-
-
-@kopf.on.update('v1', 'secrets', annotations={'secrets.premiscale.com/managed': kopf.PRESENT}, )
-def reset_secret(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.Meta, **_: Any) -> None:
-    """
-    Reset a modified managed secret if it is updated externally. This is effectively the inverse of the reconciliation method.
-
-    Args:
-        body [kopf.Body]: raw body of the Secret.
-        old [kopf.BodyEssence]: old body of the Secret.
-        new [kopf.BodyEssence]: new body of the Secret.
-    """
-
-    log.debug(f'Secret metadata: {meta}')
-    log.debug(f'Old managed secret body: {old}')
-    log.debug(f'New managed secret body: {new}')
-
-    # Parse the old Secret manifest.
-    try:
-        _old = dict(old)
-        _old['metadata']['name'] = meta['name']
-        _old['metadata']['namespace'] = meta['namespace']
-        oldSecret = ManagedSecret.from_kopf(_old)
-    except (ValueError, KeyError) as e:
-        raise kopf.PermanentError(e)
-
-    # Parse the new Secret manifest.
-    try:
-        _new = dict(new)
-        _new['metadata']['name'] = meta['name']
-        _new['metadata']['namespace'] = meta['namespace']
-        newSecret = ManagedSecret.from_kopf(_new)
-    except (ValueError, KeyError) as e:
-        raise kopf.PermanentError(e)
-
-    v1 = client.CoreV1Api()
-
-    # Guard against secrets not managed by an actual PassSecret. In other words, allow the secret deletion to go through.
-    # TODO: write an e2e test for this.
-    if lookup_managing_passsecret(managedSecretName=oldSecret.metadata.name) is None:
-        log.warning(f'Secret "{oldSecret.metadata.name}" in Namespace "{oldSecret.metadata.namespace}" is not managed by PassSecret. Skipping.')
-        return
-    else:
-        log.info(f'Secret "{oldSecret.metadata.name}" in Namespace "{oldSecret.metadata.namespace}" is managed by PassSecret. Proceeding with managed Secret reset.')
-
-    try:
-        # Secret was updated in-place. Users won't be able to modify name or namespace, so we can safely just patch the secret and bring it back.
-        v1.patch_namespaced_secret(
-            name=oldSecret.metadata.name,
-            namespace=oldSecret.metadata.namespace,
-            body=client.V1Secret(
-                **oldSecret.to_client_dict()
-            )
-        )
-
-        log.info(
-            f'Successfully reset Secret "{oldSecret.metadata.name}" in Namespace "{oldSecret.metadata.namespace}".'
-        )
     except client.ApiException as e:
         raise kopf.PermanentError(e)
 
@@ -301,9 +186,6 @@ def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.
     # Handle typically immutable field changes separately from the rest of the manifest on Secrets.
     try:
         if newPassSecret.spec.managedSecret.metadata.namespace != oldPassSecret.spec.managedSecret.metadata.namespace or newPassSecret.spec.managedSecret.metadata.name != oldPassSecret.spec.managedSecret.metadata.name:
-            # Indicate to the secrets' deletion handler that we want to ignore this object's deletion.
-            deleted_passsecrets_secrets.append(oldPassSecret.spec.managedSecret.metadata.name)
-
             # Name or namespace is different. Delete the former secret and create a new one in the new namespace.
             v1.delete_namespaced_secret(
                 name=oldPassSecret.spec.managedSecret.metadata.name,
@@ -313,7 +195,7 @@ def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.
             v1.create_namespaced_secret(
                 namespace=newPassSecret.spec.managedSecret.metadata.namespace,
                 body=client.V1Secret(
-                    **newPassSecret.spec.managedSecret.to_client_dict()
+                    **newPassSecret.spec.managedSecret.to_client_dict(finalizers=False)
                 )
             )
         else:
@@ -322,7 +204,7 @@ def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.
                 name=newPassSecret.metadata.name,
                 namespace=oldPassSecret.metadata.namespace,
                 body=client.V1Secret(
-                    **newPassSecret.spec.managedSecret.to_client_dict()
+                    **newPassSecret.spec.managedSecret.to_client_dict(finalizers=False)
                 )
             )
 
@@ -354,7 +236,7 @@ def create(body: kopf.Body, **_: Any) -> None:
         v1.create_namespaced_secret(
             namespace=passSecretObj.spec.managedSecret.metadata.namespace,
             body=client.V1Secret(
-                **passSecretObj.spec.managedSecret.to_client_dict()
+                **passSecretObj.spec.managedSecret.to_client_dict(finalizers=False)
             )
         )
         log.info(
@@ -384,10 +266,6 @@ def delete(body: kopf.Body, **_: Any) -> None:
     v1 = client.CoreV1Api()
 
     try:
-        # Indicate to the secrets' deletion handler that we want to ignore this object's deletion.
-        # It was intentional and that handler does not need to re-create it.
-        deleted_passsecrets_secrets.append(passSecretObj.spec.managedSecret.metadata.name)
-
         v1.delete_namespaced_secret(
             name=passSecretObj.spec.managedSecret.metadata.name,
             namespace=passSecretObj.spec.managedSecret.metadata.namespace

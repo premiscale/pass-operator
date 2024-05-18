@@ -49,17 +49,17 @@ workflows:
             tags:
               only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/
 
-      - general/python-release-poetry:
-          name: python package [nexus]
-          context: nexus
-          repository: python
-          requires:
-            - 'hold: tagged pipeline'
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/
+      # - general/python-release-poetry:
+      #     name: python package [nexus]
+      #     context: nexus
+      #     repository: python
+      #     requires:
+      #       - 'hold: tagged pipeline'
+      #     filters:
+      #       branches:
+      #         ignore: /.*/
+      #       tags:
+      #         only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/
 
       - general/python-release-poetry:
           name: python package [pypi]
@@ -73,26 +73,26 @@ workflows:
             tags:
               only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/
 
-      - general/docker-nexus:
-          name: docker build [nexus]
-          image-name: pass-operator
-          context: nexus
-          nexus-domain: $DOCKER_DOMAIN
-          tag: $CIRCLE_TAG
-          args: >-
-            --build-arg=PYTHON_PACKAGE_VERSION=$CIRCLE_TAG
-            --build-arg=PYTHON_USERNAME=$NEXUS_USERNAME
-            --build-arg=PYTHON_PASSWORD=$NEXUS_PASSWORD
-            --build-arg=PYTHON_REPOSITORY=python
-            --build-arg=REPO_DOMAIN=$REPO_DOMAIN
-          requires:
-            - python package [nexus]
-            - python package [pypi]
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/
+      # - general/docker-nexus:
+      #     name: docker build [nexus]
+      #     image-name: pass-operator
+      #     context: nexus
+      #     nexus-domain: $DOCKER_DOMAIN
+      #     tag: $CIRCLE_TAG
+      #     args: >-
+      #       --build-arg=PYTHON_PACKAGE_VERSION=$CIRCLE_TAG
+      #       --build-arg=PYTHON_USERNAME=$NEXUS_USERNAME
+      #       --build-arg=PYTHON_PASSWORD=$NEXUS_PASSWORD
+      #       --build-arg=PYTHON_REPOSITORY=python
+      #       --build-arg=REPO_DOMAIN=$REPO_DOMAIN
+      #     requires:
+      #       - python package [nexus]
+      #       - python package [pypi]
+      #     filters:
+      #       branches:
+      #         ignore: /.*/
+      #       tags:
+      #         only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/
 
       - general/docker-hub:
           name: docker build [dockerhub]
@@ -109,7 +109,7 @@ workflows:
             --build-arg=PYTHON_REPOSITORY=python
             --build-arg=REPO_DOMAIN=$REPO_DOMAIN
           requires:
-            - python package [nexus]
+            # - python package [nexus]
             - python package [pypi]
           filters:
             branches:
@@ -117,109 +117,109 @@ workflows:
             tags:
               only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/
 
-      - general/helm-release-nexus:
-          name: helm package [nexus]
-          context: nexus
-          repo: $HELM_REPOSITORY_URL
-          path: helm/operator
-          version: $CIRCLE_TAG
-          image-tag: $CIRCLE_TAG
-          image-tag-path: .deployment.image.tag
-          requires:
-            - docker build [dockerhub]
-            - docker build [nexus]
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/
+      # - general/helm-release-nexus:
+      #     name: helm package [nexus]
+      #     context: nexus
+      #     repo: $HELM_REPOSITORY_URL
+      #     path: helm/operator
+      #     version: $CIRCLE_TAG
+      #     image-tag: $CIRCLE_TAG
+      #     image-tag-path: .deployment.image.tag
+      #     requires:
+      #       - docker build [dockerhub]
+      #       - docker build [nexus]
+      #     filters:
+      #       branches:
+      #         ignore: /.*/
+      #       tags:
+      #         only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/
 
-      - general/helm-release-nexus:
-          name: helm package crds [nexus]
-          context: nexus
-          repo: $HELM_REPOSITORY_URL
-          path: helm/operator-crds
-          version: $CIRCLE_TAG
-          requires:
-            - docker build [dockerhub]
-            - docker build [nexus]
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/
+      # - general/helm-release-nexus:
+      #     name: helm package crds [nexus]
+      #     context: nexus
+      #     repo: $HELM_REPOSITORY_URL
+      #     path: helm/operator-crds
+      #     version: $CIRCLE_TAG
+      #     requires:
+      #       - docker build [dockerhub]
+      #       - docker build [nexus]
+      #     filters:
+      #       branches:
+      #         ignore: /.*/
+      #       tags:
+      #         only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/
 
-      - slack/on-hold:
-          name: 'slack: notify release deployment hold'
-          context: slack
-          requires:
-            - helm package crds [nexus]
-            - helm package [nexus]
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/
+      # - slack/on-hold:
+      #     name: 'slack: notify release deployment hold'
+      #     context: slack
+      #     requires:
+      #       - helm package crds [nexus]
+      #       - helm package [nexus]
+      #     filters:
+      #       branches:
+      #         ignore: /.*/
+      #       tags:
+      #         only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/
 
-      - request-approval:
-          name: 'hold: release deployment'
-          requires:
-            - 'slack: notify release deployment hold'
-          type: approval
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/
+      # - request-approval:
+      #     name: 'hold: release deployment'
+      #     requires:
+      #       - 'slack: notify release deployment hold'
+      #     type: approval
+      #     filters:
+      #       branches:
+      #         ignore: /.*/
+      #       tags:
+      #         only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/
 
-      - general/helm-upgrade:
-          name: helm upgrade [nexus]
-          cluster: $CHELSEA_CLUSTER
-          namespace: pass-operator
-          repo: $HELM_REPOSITORY_URL
-          additional-values: >-
-            --set global.image.registry="$DOCKER_DOMAIN"
-            --set deployment.pullSecrets[0]=nexus-docker-registry
-            --set operator.interval="$OPERATOR_INTERVAL"
-            --set operator.initial_delay="$OPERATOR_INITIAL_DELAY"
-            --set operator.priority="$OPERATOR_PRIORITY"
-            --set operator.ssh.createSecret="true"
-            --set operator.pass.binary="$PASS_BINARY"
-            --set operator.pass.storeSubPath="$PASS_DIRECTORY"
-            --set operator.gpg.createSecret="true"
-            --set operator.gpg.value="$PASS_GPG_KEY"
-            --set operator.gpg.key_id="$PASS_GPG_KEY_ID"
-            --set operator.gpg.passphrase="$PASS_GPG_PASSPHRASE"
-            --set operator.git.url="$PASS_GIT_URL"
-            --set operator.git.branch="$PASS_GIT_BRANCH"
-            --set operator.ssh.value="$PASS_SSH_PRIVATE_KEY"
-          requires:
-            - helm package [nexus]
-            - 'hold: release deployment'
-          context:
-            - password-store-operator
-            - kubeconfig
-            - nexus
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/
+      # - general/helm-upgrade:
+      #     name: helm upgrade operator-crds [nexus]
+      #     cluster: $CHELSEA_CLUSTER
+      #     namespace: pass-operator
+      #     repo: $HELM_REPOSITORY_URL
+      #     install-name: pass-operator-crds
+      #     requires:
+      #       - helm package crds [nexus]
+      #       - 'hold: release deployment'
+      #     context:
+      #       - kubeconfig
+      #       - nexus
+      #     filters:
+      #       branches:
+      #         ignore: /.*/
+      #       tags:
+      #         only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/
 
-      - general/helm-upgrade:
-          name: helm upgrade operator-crds [nexus]
-          cluster: $CHELSEA_CLUSTER
-          namespace: pass-operator
-          repo: $HELM_REPOSITORY_URL
-          install-name: pass-operator-crds
-          requires:
-            - helm package crds [nexus]
-            - 'hold: release deployment'
-          context:
-            - kubeconfig
-            - nexus
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/
+      # - general/helm-upgrade:
+      #     name: helm upgrade [nexus]
+      #     cluster: $CHELSEA_CLUSTER
+      #     namespace: pass-operator
+      #     repo: $HELM_REPOSITORY_URL
+      #     additional-values: >-
+      #       --set global.image.registry="$DOCKER_DOMAIN"
+      #       --set deployment.pullSecrets[0]=nexus-docker-registry
+      #       --set operator.interval="$OPERATOR_INTERVAL"
+      #       --set operator.initial_delay="$OPERATOR_INITIAL_DELAY"
+      #       --set operator.priority="$OPERATOR_PRIORITY"
+      #       --set operator.ssh.createSecret="true"
+      #       --set operator.pass.binary="$PASS_BINARY"
+      #       --set operator.pass.storeSubPath="$PASS_DIRECTORY"
+      #       --set operator.gpg.createSecret="true"
+      #       --set operator.gpg.value="$PASS_GPG_KEY"
+      #       --set operator.gpg.key_id="$PASS_GPG_KEY_ID"
+      #       --set operator.gpg.passphrase="$PASS_GPG_PASSPHRASE"
+      #       --set operator.git.url="$PASS_GIT_URL"
+      #       --set operator.git.branch="$PASS_GIT_BRANCH"
+      #       --set operator.ssh.value="$PASS_SSH_PRIVATE_KEY"
+      #     requires:
+      #       - helm package [nexus]
+      #       - 'hold: release deployment'
+      #     context:
+      #       - password-store-operator
+      #       - kubeconfig
+      #       - nexus
+      #     filters:
+      #       branches:
+      #         ignore: /.*/
+      #       tags:
+      #         only: /^v?[0-9]+\.[0-9]+\.[0-9]+$/

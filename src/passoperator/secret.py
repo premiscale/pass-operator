@@ -4,7 +4,7 @@ Provide interfaces for interacting with PassSecret manifests and encrypted data 
 
 
 from __future__ import annotations
-from typing import Dict, Final
+from typing import Dict, Final, List
 from pathlib import Path
 from attrs import define, asdict as to_dict
 from cattrs import structure as from_dict
@@ -57,6 +57,7 @@ class ManagedSecret:
     type: str = 'Opaque'
     kind: Final[str] = 'Secret'
     apiVersion: Final[str] = 'v1'
+    finalizers: List[str] = []
 
     def __attrs_post_init__(self) -> None:
         if not self.data and not self.stringData:
@@ -112,13 +113,18 @@ class ManagedSecret:
 
         return d
 
-    def to_client_dict(self) -> Dict:
+    def to_client_dict(self, finalizers: bool = False) -> Dict:
         """
         Output this secret to a dictionary with keys that match the arguments of kubernetes.client.V1Secret, for convenience.
+
+        Args:
+            finalizers (bool): if True, include the finalizers field in the output.
         """
         d = dict(self.to_dict(export=True))
         d.pop('data')
         d.pop('apiVersion')
+        if not finalizers:
+            d.pop('finalizers')
         d['string_data'] = self.stringData
         return d
 
