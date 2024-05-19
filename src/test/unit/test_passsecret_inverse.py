@@ -9,7 +9,7 @@ from cattrs import structure as from_dict
 
 from passoperator.secret import PassSecret, ManagedSecret, Metadata, PassSecretSpec
 
-from tests.common import (
+from test.common import (
     load_data
 )
 
@@ -57,7 +57,8 @@ class PassSecretParseInverse(TestCase):
                     "root['spec']['managedSecret']['kind']",
                     "root['spec']['managedSecret']['data']",
                     "root['spec']['managedSecret']['immutable']",
-                    "root['spec']['managedSecret']['apiVersion']"
+                    "root['spec']['managedSecret']['apiVersion']",
+                    "root['spec']['managedSecret']['finalizers']"
                 ]
             ),
             {}
@@ -93,7 +94,8 @@ class PassSecretParseInverse(TestCase):
                     "root['spec']['managedSecret']['kind']",
                     "root['spec']['managedSecret']['data']",
                     "root['spec']['managedSecret']['immutable']",
-                    "root['spec']['managedSecret']['apiVersion']"
+                    "root['spec']['managedSecret']['apiVersion']",
+                    "root['spec']['managedSecret']['finalizers']"
                 ]
             ),
             {}

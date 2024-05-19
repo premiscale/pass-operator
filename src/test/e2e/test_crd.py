@@ -5,11 +5,13 @@ End-to-end tests of the operator that validate the lifecycle of a PassSecret and
 
 from unittest import TestCase
 from kubernetes import client, config
-from tests.common import (
+
+from test.common import (
     load_data,
     random_secret
 )
-from tests.e2e.lib import (
+
+from test.e2e.lib import (
     # Tools
     check_cluster_pod_status,
     generate_gpg_keypair,
@@ -99,6 +101,15 @@ config.load_kube_config(
     context='pass-operator'
 )
 
+passsecret_data_singular = load_data('test_singular_data')
+passsecret_data_zero = load_data('test_zero_data')
+passsecret_data_multiple = load_data('test_multiple_data')
+passsecret_data_singular_immutable = load_data('test_singular_data_immutable')
+passsecret_data_singular_different_managed_secret_name = load_data('test_singular_data_different_managed_secret_name')
+passsecret_singular_collision_1 = load_data('test_singular_data_collision_1')
+passsecret_singular_collision_2 = load_data('test_singular_data_collision_2')
+
+
 class PassSecretE2E(TestCase):
     """
     Methods for testing the Kubernetes operator end-to-end.
@@ -114,47 +125,40 @@ class PassSecretE2E(TestCase):
 
         return super().setUp()
 
-    def tearDown(self) -> None:
-        return super().tearDown()
+    # def tearDown(self) -> None:
+    #     return super().tearDown()
 
     def test_operator_singular_data(self) -> None:
         """
         Test that the operator is running as intended in the cluster.
         """
-        self.passsecret_data_singular = load_data('test_singular_data')
 
     def test_operator_zero_data(self) -> None:
         """
         Test that the operator is running as intended in the cluster.
         """
-        self.passsecret_data_zero = load_data('test_zero_data')
 
     def test_operator_multiple_data(self) -> None:
         """
         Test that the operator is running as intended in the cluster.
         """
-        self.passsecret_data_multiple = load_data('test_multiple_data')
 
     def test_operator_singular_data_immutable(self) -> None:
         """
         Test that the operator is running as intended in the cluster.
         """
-        self.passsecret_data_singular_immutable = load_data('test_singular_data_immutable')
 
     def test_operator_singular_data_different_managed_secret_name(self) -> None:
         """
         Test that the operator is running as intended in the cluster.
         """
-        self.passsecret_data_singular_different_managed_secret_name = load_data('test_singular_data_different_managed_secret_name')
 
     def test_operator_singular_collision_1(self) -> None:
         """
         Test that the operator is running as intended in the cluster.
         """
-        self.passsecret_singular_collision_1 = load_data('test_singular_data_collision_1')
 
     def test_operator_singular_collision_2(self) -> None:
         """
         Test that the operator is running as intended in the cluster.
         """
-        self.passsecret_singular_collision_2 = load_data('test_singular_data_collision_2')
