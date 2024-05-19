@@ -14,18 +14,19 @@ from test.common import (
 )
 
 
+passsecret_data = load_data('test_singular_data')
+
+
 class PassSecretParseInverse(TestCase):
     """
     Test that from_dict and asdict are inverse methods.
     """
 
-    def setUp(self) -> None:
-        """
-        Create a PassSecret instance for use in testing.
-        """
-        self.passsecret_data = load_data('test_singular_data')
-
-        return super().setUp()
+    # def setUp(self) -> None:
+    #     """
+    #     Create a PassSecret instance for use in testing.
+    #     """
+    #     return super().setUp()
 
     def test_passsecret_export_import_inverse(self) -> None:
         """
@@ -36,7 +37,7 @@ class PassSecretParseInverse(TestCase):
 
         self.assertIsNotNone(
             from_dict(
-                self.passsecret_data,
+                passsecret_data,
                 PassSecret
             )
         )
@@ -45,10 +46,10 @@ class PassSecretParseInverse(TestCase):
         self.assertDictEqual(
             DeepDiff(
                 from_dict(
-                    self.passsecret_data,
+                    passsecret_data,
                     PassSecret
                 ).to_dict(),
-                self.passsecret_data,
+                passsecret_data,
                 exclude_paths=[
                     "root['metadata']['labels']",
                     "root['metadata']['annotations']",
@@ -85,7 +86,7 @@ class PassSecretParseInverse(TestCase):
                         )
                     )
                 ).to_dict(),
-                self.passsecret_data,
+                passsecret_data,
                 exclude_paths=[
                     "root['metadata']['labels']",
                     "root['metadata']['annotations']",
