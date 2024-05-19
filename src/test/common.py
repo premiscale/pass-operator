@@ -19,6 +19,9 @@ log = logging.getLogger(__name__)
 
 @dataclass
 class CommandOutput:
+    """
+    Dataclass to store the output, error, and return code of a command.
+    """
     stdout: str
     stderr: str
     returnCode: int
@@ -36,7 +39,7 @@ def run(command: List[str], shell=False, timeout: float = 300) -> CommandOutput:
     Returns:
         CommandOutput: output, error, and return code.
     """
-    print(' '.join(command))
+    # print(' '.join(command))
     with Popen(command, stdin=PIPE, stdout=PIPE, stderr=PIPE, text=True, shell=shell, encoding='utf-8') as p:
         stdout, stderr = p.communicate(timeout=timeout) # blocking
         ret = CommandOutput(stdout.rstrip(), stderr.rstrip(), p.returncode)
@@ -58,7 +61,7 @@ def load_data(file: str, dtype: str = 'crd', camelcase: bool = True) -> dict:
     Returns:
         dict: The dictionary representation of the YAML file.
     """
-    with resources.open_text(f'tests.data.{dtype}', f'{file}.yaml') as f:
+    with resources.open_text(f'test.data.{dtype}', f'{file}.yaml') as f:
         manifest = yaml.load(f, Loader=yaml.Loader)
 
         if camelcase:

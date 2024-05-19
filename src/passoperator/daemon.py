@@ -3,7 +3,7 @@ A kubernetes operator that syncs and decrypts secrets from Linux password store 
 """
 
 
-from typing import Any
+from typing import Any, List
 from pathlib import Path
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from importlib import metadata
@@ -11,6 +11,7 @@ from kubernetes import client, config
 from http import HTTPStatus
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
+from time import sleep
 
 from passoperator.git import pull, clone
 from passoperator.utils import LogLevel
@@ -29,11 +30,13 @@ log = logging.getLogger(__name__)
 
 
 @kopf.on.startup()
-def start(**_: Any) -> None:
+def start(settings: kopf.OperatorSettings, **_: Any) -> None:
     """
     Set up operator runtime.
     """
     log.info(f'Starting operator version {__version__}')
+    settings.persistence.finalizer = 'secrets.premiscale.com/finalizer'
+    settings.persistence.progress_storage = kopf.AnnotationsProgressStorage(prefix='secrets.premiscale.com')
 
 
 @kopf.timer(
@@ -90,7 +93,7 @@ def reconciliation(body: kopf.Body, **_: Any) -> None:
                 name=passSecretObj.spec.managedSecret.metadata.name,
                 namespace=passSecretObj.spec.managedSecret.metadata.namespace,
                 body=client.V1Secret(
-                    **passSecretObj.spec.managedSecret.to_client_dict()
+                    **passSecretObj.spec.managedSecret.to_client_dict(finalizers=False)
                 )
             )
 
@@ -102,6 +105,39 @@ def reconciliation(body: kopf.Body, **_: Any) -> None:
 # @kopf.on.cleanup()
 # def cleanup(**kwargs) -> None:
 #     pass
+
+# @kopf.on.resume()
+# def resume(**kwargs) -> None:
+#     pass
+
+
+def lookup_managing_passsecret(managedSecretName: str) -> PassSecret | None:
+    """
+    Look up a PassSecret object by name and namespace.
+
+    Args:
+        managedSecretName [str]: name of the managed Secret to look up a PassSecret by, if it exists.
+
+    Returns:
+        PassSecret | None: the PassSecret object if found, else None.
+    """
+    v1 = client.CustomObjectsApi()
+
+    try:
+        passSecrets = v1.list_namespaced_custom_object(
+            group='secrets.premiscale.com',
+            version='v1alpha1',
+            namespace=env['OPERATOR_NAMESPACE'],
+            plural='passsecrets'
+        )
+
+        for passSecret in passSecrets['items']:
+            if passSecret['spec']['managedSecret']['metadata']['name'] == managedSecretName:
+                return PassSecret.from_kopf(passSecret)
+        else:
+            return None
+    except client.ApiException as e:
+        raise kopf.PermanentError(e)
 
 
 @kopf.on.update('secrets.premiscale.com', 'v1alpha1', 'passsecret')
@@ -147,10 +183,10 @@ def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.
 
     v1 = client.CoreV1Api()
 
-    # Handle namespace changes.
+    # Handle typically immutable field changes separately from the rest of the manifest on Secrets.
     try:
-        if newPassSecret.spec.managedSecret.metadata.namespace != oldPassSecret.spec.managedSecret.metadata.namespace:
-            # Namespace is different. Delete the former secret and create a new one in the new namespace.
+        if newPassSecret.spec.managedSecret.metadata.namespace != oldPassSecret.spec.managedSecret.metadata.namespace or newPassSecret.spec.managedSecret.metadata.name != oldPassSecret.spec.managedSecret.metadata.name:
+            # Name or namespace is different. Delete the former secret and create a new one in the new namespace.
             v1.delete_namespaced_secret(
                 name=oldPassSecret.spec.managedSecret.metadata.name,
                 namespace=oldPassSecret.spec.managedSecret.metadata.namespace
@@ -159,29 +195,16 @@ def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.
             v1.create_namespaced_secret(
                 namespace=newPassSecret.spec.managedSecret.metadata.namespace,
                 body=client.V1Secret(
-                    **newPassSecret.spec.managedSecret.to_client_dict()
-                )
-            )
-        elif newPassSecret.spec.managedSecret.metadata.name != oldPassSecret.spec.managedSecret.metadata.name:
-            # Namespace is the same, but the secret's name has changed. Delete the old secret and create a new one.
-            v1.delete_namespaced_secret(
-                name=oldPassSecret.spec.managedSecret.metadata.name,
-                namespace=oldPassSecret.spec.managedSecret.metadata.namespace
-            )
-
-            v1.create_namespaced_secret(
-                namespace=newPassSecret.spec.managedSecret.metadata.namespace,
-                body=client.V1Secret(
-                    **newPassSecret.spec.managedSecret.to_client_dict()
+                    **newPassSecret.spec.managedSecret.to_client_dict(finalizers=False)
                 )
             )
         else:
-            # Namespace is the same, secret's being updated in-place.
+            # Name and namespace are the same, but the secret's being updated in-place.
             v1.patch_namespaced_secret(
                 name=newPassSecret.metadata.name,
                 namespace=oldPassSecret.metadata.namespace,
                 body=client.V1Secret(
-                    **newPassSecret.spec.managedSecret.to_client_dict()
+                    **newPassSecret.spec.managedSecret.to_client_dict(finalizers=False)
                 )
             )
 
@@ -213,7 +236,7 @@ def create(body: kopf.Body, **_: Any) -> None:
         v1.create_namespaced_secret(
             namespace=passSecretObj.spec.managedSecret.metadata.namespace,
             body=client.V1Secret(
-                **passSecretObj.spec.managedSecret.to_client_dict()
+                **passSecretObj.spec.managedSecret.to_client_dict(finalizers=False)
             )
         )
         log.info(

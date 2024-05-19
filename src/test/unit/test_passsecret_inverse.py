@@ -9,9 +9,12 @@ from cattrs import structure as from_dict
 
 from passoperator.secret import PassSecret, ManagedSecret, Metadata, PassSecretSpec
 
-from tests.common import (
+from test.common import (
     load_data
 )
+
+
+passsecret_data = load_data('test_singular_data')
 
 
 class PassSecretParseInverse(TestCase):
@@ -19,13 +22,11 @@ class PassSecretParseInverse(TestCase):
     Test that from_dict and asdict are inverse methods.
     """
 
-    def setUp(self) -> None:
-        """
-        Create a PassSecret instance for use in testing.
-        """
-        self.passsecret_data = load_data('test_singular_data')
-
-        return super().setUp()
+    # def setUp(self) -> None:
+    #     """
+    #     Create a PassSecret instance for use in testing.
+    #     """
+    #     return super().setUp()
 
     def test_passsecret_export_import_inverse(self) -> None:
         """
@@ -36,7 +37,7 @@ class PassSecretParseInverse(TestCase):
 
         self.assertIsNotNone(
             from_dict(
-                self.passsecret_data,
+                passsecret_data,
                 PassSecret
             )
         )
@@ -45,10 +46,10 @@ class PassSecretParseInverse(TestCase):
         self.assertDictEqual(
             DeepDiff(
                 from_dict(
-                    self.passsecret_data,
+                    passsecret_data,
                     PassSecret
                 ).to_dict(),
-                self.passsecret_data,
+                passsecret_data,
                 exclude_paths=[
                     "root['metadata']['labels']",
                     "root['metadata']['annotations']",
@@ -57,7 +58,8 @@ class PassSecretParseInverse(TestCase):
                     "root['spec']['managedSecret']['kind']",
                     "root['spec']['managedSecret']['data']",
                     "root['spec']['managedSecret']['immutable']",
-                    "root['spec']['managedSecret']['apiVersion']"
+                    "root['spec']['managedSecret']['apiVersion']",
+                    "root['spec']['managedSecret']['finalizers']"
                 ]
             ),
             {}
@@ -84,7 +86,7 @@ class PassSecretParseInverse(TestCase):
                         )
                     )
                 ).to_dict(),
-                self.passsecret_data,
+                passsecret_data,
                 exclude_paths=[
                     "root['metadata']['labels']",
                     "root['metadata']['annotations']",
@@ -93,7 +95,8 @@ class PassSecretParseInverse(TestCase):
                     "root['spec']['managedSecret']['kind']",
                     "root['spec']['managedSecret']['data']",
                     "root['spec']['managedSecret']['immutable']",
-                    "root['spec']['managedSecret']['apiVersion']"
+                    "root['spec']['managedSecret']['apiVersion']",
+                    "root['spec']['managedSecret']['finalizers']"
                 ]
             ),
             {}

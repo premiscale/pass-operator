@@ -2,12 +2,17 @@
 A library of common e2e-related routines.
 """
 
-from tests.common import run
+
 from gnupg import GPG
 from kubernetes import client
 from time import sleep as syncsleep
 from passoperator.utils import b64Enc
-from tests.common import random_secret, load_data
+
+from test.common import (
+    random_secret,
+    load_data,
+    run
+)
 
 import pathlib
 import os
@@ -22,13 +27,17 @@ def generate_unencrypted_crds() -> None:
     """
     Generate random unencrypted CRDs for testing.
     """
-    for crd in pathlib.Path('tests/data/crd').iterdir():
+    # Ensure there are no leftover unencrypted data files from the last test run.
+    cleanup_unencrypted_crds()
+
+    for crd in pathlib.Path('src/test/data/crd').iterdir():
         if crd.is_file() and crd.suffix == '.yaml':
             data = load_data(crd.stem, 'crd', camelcase=False)
 
             # Assign random secrets to the values in encryptedData so the command of the e2e server to parse into the pass store.
             data['spec']['encryptedData'] = {v: random_secret() for k, v in data['spec']['encryptedData'].items()}
-            with open(f'tests/data/crd/{crd.stem}.unencrypted.yaml', 'w') as f:
+
+            with open(f'src/test/data/crd/{crd.stem}.unencrypted.yaml', 'w', encoding='utf-8') as f:
                 yaml.dump(data, f)
 
 
@@ -36,7 +45,7 @@ def cleanup_unencrypted_crds() -> None:
     """
     Remove unencrypted CRDs generated for testing from the filesystem.
     """
-    for crd in pathlib.Path('tests/data/crd').iterdir():
+    for crd in pathlib.Path('src/test/data/crd').iterdir():
         if crd.is_file() and crd.name.endswith('.unencrypted.yaml'):
             log.info(f'Removing generated unencrypted CRD file {crd}.')
             os.remove(crd)
@@ -69,18 +78,19 @@ def check_cluster_pod_status(namespace: str | None = None) -> bool:
             if pod.status.phase not in ('Running', 'Completed', 'Succeeded') or (pod.status.phase == 'Running' and any((not c.ready) for c in pod.status.container_statuses)):
                 log.warning(f'Pod {pod.metadata.name} in namespace {namespace.metadata.name} is not running or completed or completely ready.')
                 return False
-        else:
-            return True
+        return True
 
-    # Ensure that all pods on the cluster are in a ready state.
-    for namespace in namespaces:
+    # Ensure that all pods on the cluster are in a healthy state.
+    for ns in namespaces:
         while True:
-            if _check_namespaced_pods(namespace):
+            if _check_namespaced_pods(ns):
                 break
-            log.warning(f'Namespace {namespace.metadata.name} has pods that are not running or completed or completely ready.')
+            log.warning(f'Namespace {ns.metadata.name} has pods that are not running or completed or completely ready.') # type: ignore
             syncsleep(3)
 
     log.info('All pods in the cluster are running or completed or completely ready.')
+
+    return True
 
 
 def generate_ssh_keypair() -> tuple:
@@ -171,7 +181,7 @@ def build_e2e_image(
         int: The return code of the docker build or push command that failed, or 0 if both succeeded.
     """
     return run([
-        'docker', 'build', '-t', f'localhost:5000/pass-operator-e2e:{tag}', '-f', './tests/Dockerfile.e2e', './tests/',
+        'docker', 'build', '-t', f'localhost:5000/pass-operator-e2e:{tag}', '-f', './src/test/Dockerfile.e2e', './src/test/',
         '--build-arg', f'PASS_VERSION={pass_version}',
         '--build-arg', f'TINI_VERSION={tini_version}',
         '--build-arg', f'ARCHITECTURE={architecture}',
@@ -269,7 +279,7 @@ def build_operator_image(tag: str = '0.0.1') -> int:
         int: The return code of the docker build or push command that failed, or 0 if both succeeded.
     """
     return run(['docker', 'build', '-t', f'localhost:5000/pass-operator:{tag}', '-f', './Dockerfile.develop', '.']).returnCode \
-        or run(['docker', 'push', f'localhost:5000/pass-operator:{tag}'])
+        or run(['docker', 'push', f'localhost:5000/pass-operator:{tag}']).returnCode
 
 
 def install_pass_operator(

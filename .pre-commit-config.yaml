@@ -49,13 +49,13 @@ repos:
           - --non-interactive
           - --install-types
           - --config-file=pyproject.toml
-        files: src/
+        files: ^src/.*.py$
       - id: pylint
         language: script
         name: pylint
         entry: /usr/bin/env poetry run pylint
         args: []
-        files: src/
+        files: ^src/.*.py$
 
   - repo: https://github.com/abravalheri/validate-pyproject
     rev: v0.15
@@ -67,6 +67,11 @@ repos:
     hooks:
       - id: poetry-check
       - id: poetry-lock
+
+  - repo: https://github.com/python-poetry/poetry-plugin-export
+    rev: 1.8.0
+    hooks:
+      - id: poetry-export
 
   - repo: https://github.com/premiscale/pre-commit-hooks
     rev: v0.0.9

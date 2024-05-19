@@ -2,15 +2,15 @@
 # -*- coding: utf-8 -*-
 
 """
-This script should be merged into tests/e2e/ at some point and deleted.
+Set up a test environment; build all local artifacts using the e2e lib and deploy the operator.
 """
 
 
-from tests.common import (
+from test.common import (
     random_secret
 )
 
-from tests.e2e.lib import (
+from test.e2e.lib import (
     # Tools
     generate_unencrypted_crds,
     cleanup_unencrypted_crds,

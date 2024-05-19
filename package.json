@@ -16,7 +16,8 @@
     "minikube:up": "./scripts/minikube.sh start",
     "minikube:down": "./scripts/minikube.sh stop",
     "minikube:delete": "./scripts/minikube.sh delete",
-    "test:e2e": "yarn minikube:up && poetry run pytest -vrP tests/e2e; yarn minikube:delete",
-    "test:unit": "poetry run pytest -vrP tests/unit"
+    "test:e2e": "yarn minikube:up && poetry run pytest -vrP src/test/e2e; yarn minikube:delete",
+    "test:unit": "poetry run pytest -vrP src/test/unit",
+    "test:e2e:test": "./src/test_hook.py"
   }
 }

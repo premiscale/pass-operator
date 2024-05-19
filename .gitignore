@@ -533,4 +533,4 @@ MigrationBackup/
 
 *.xml
 tmp*
-tests/data/crd/*.unencrypted.yaml
+src/test/data/crd/*.unencrypted.yaml

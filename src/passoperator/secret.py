@@ -4,11 +4,12 @@ Provide interfaces for interacting with PassSecret manifests and encrypted data 
 
 
 from __future__ import annotations
-from typing import Dict, Final
+from typing import Dict, Final, List
 from pathlib import Path
 from attrs import define, asdict as to_dict
 from cattrs import structure as from_dict
 from humps import camelize
+from datetime import datetime
 
 from passoperator.gpg import decrypt
 from passoperator.utils import b64Dec, b64Enc
@@ -38,7 +39,10 @@ class Metadata:
         Returns:
             Dict: this object as a dict.
         """
-        return to_dict(self, filter=lambda a, v: v is not None)
+        return to_dict(
+            self,
+            filter=lambda a, v: v is not None
+        )
 
 
 @define
@@ -53,6 +57,7 @@ class ManagedSecret:
     type: str = 'Opaque'
     kind: Final[str] = 'Secret'
     apiVersion: Final[str] = 'v1'
+    finalizers: List[str] = []
 
     def __attrs_post_init__(self) -> None:
         if not self.data and not self.stringData:
@@ -82,6 +87,13 @@ class ManagedSecret:
                 key: b64Enc(value) for key, value in self.stringData.items()
             }
 
+        # Ensure the managed secret is marked as managed and has a last-updated timestamp.
+        if self.metadata.annotations is None:
+            self.metadata.annotations = {}
+
+        self.metadata.annotations['secrets.premiscale.com/managed'] = 'true'
+        self.metadata.annotations['secrets.premiscale.com/last-updated'] = datetime.now().isoformat()
+
         return None
 
     def to_dict(self, export: bool = False) -> Dict:
@@ -101,13 +113,18 @@ class ManagedSecret:
 
         return d
 
-    def to_client_dict(self) -> Dict:
+    def to_client_dict(self, finalizers: bool = False) -> Dict:
         """
         Output this secret to a dictionary with keys that match the arguments of kubernetes.client.V1Secret, for convenience.
+
+        Args:
+            finalizers (bool): if True, include the finalizers field in the output.
         """
         d = dict(self.to_dict(export=True))
         d.pop('data')
         d.pop('apiVersion')
+        if not finalizers:
+            d.pop('finalizers')
         d['string_data'] = self.stringData
         return d
 
