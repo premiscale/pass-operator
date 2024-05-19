@@ -25,7 +25,7 @@ jobs:
       - run:
           name: Python unit tests
           command: |+
-            poetry run pytest tests/unit
+            poetry run pytest --junitxml=junit_test_results.xml src/test/unit
       - store_test_results:
           path: ./junit_test_results.xml
 
