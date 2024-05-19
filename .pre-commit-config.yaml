@@ -68,6 +68,11 @@ repos:
       - id: poetry-check
       - id: poetry-lock
 
+  - repo: https://github.com/python-poetry/poetry-plugin-export
+    rev: 1.8.0
+    hooks:
+      - id: poetry-export
+
   - repo: https://github.com/premiscale/pre-commit-hooks
     rev: v0.0.9
     hooks:
