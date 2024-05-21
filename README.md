@@ -53,7 +53,7 @@ type: Opaque
 
 ## Installation
 
-See the [chart README](https://github.com/premiscale/pass-operator/tree/helm-readme/helm/operator) for an overview of operator installation and configuration options.
+See the [chart README](https://github.com/premiscale/pass-operator/tree/master/helm/operator) for an overview of operator installation and configuration options.
 
 ## Development
 
