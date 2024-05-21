@@ -2,7 +2,7 @@ fail_fast: true
 repos:
   # Requires hadolint binary on local machine.
   - repo: https://github.com/hadolint/hadolint
-    rev: v2.12.1-beta
+    rev: v2.13.0-beta
     hooks:
       - id: hadolint
         args:
@@ -13,7 +13,7 @@ repos:
           - Dockerfile
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v4.6.0
     hooks:
       - id: trailing-whitespace
       - id: check-added-large-files
@@ -58,12 +58,12 @@ repos:
         files: ^src/.*.py$
 
   - repo: https://github.com/abravalheri/validate-pyproject
-    rev: v0.15
+    rev: v0.17
     hooks:
       - id: validate-pyproject
 
   - repo: https://github.com/python-poetry/poetry
-    rev: 1.7.0
+    rev: 1.8.0
     hooks:
       - id: poetry-check
       - id: poetry-lock
@@ -77,3 +77,13 @@ repos:
     rev: v0.0.9
     hooks:
     -   id: msg-issue-prefix
+
+  - repo: https://github.com/bitnami/readme-generator-for-helm
+    rev: 2.6.1
+    hooks:
+      - id: helm-readme-generator
+        # in order to run helm-readme-generator only once
+        pass_filenames: false
+        always_run: true
+        # default args are [--readme=chart/README.md, --values=chart/values.yaml]
+        args: [--readme=helm/operator/README.md, --values=helm/operator/values.yaml, --schema=helm/operator/values.schema.json]
