@@ -2,10 +2,10 @@
 
 This operator requires the following items to start successfully.
 
-- private GPG key to decrypt the secrets that have been encrypted with a public key, locally
-- local pass store (on your local development machine)
-- git repository populated by the local password store
-- private SSH key to clone the Git repository
+- [private GPG key](#private-gpg-key) to decrypt the secrets that have been encrypted with a public key, locally
+- [local pass store](#password-store) (on your local development machine)
+- [git repository](#git-repository) populated by the local password store
+- [private SSH key](#private-ssh-key) to clone the Git repository
 
 I will go more in-depth and explain these requirements in the following sections.
 
@@ -14,7 +14,7 @@ I will go more in-depth and explain these requirements in the following sections
 The private GPG key is used by `pass` to decrypt your secrets that were encrypted on your local machine.
 
 <details>
-  <summary><b>Generating GPG keys</b></summary>
+  <summary><b>Show</b></summary>
 
   You can find a lot of explanation about how to generate keys with GPG online, but I'll write down my process below for generating keys to use with this operator.
 
@@ -82,6 +82,9 @@ The private GPG key is used by `pass` to decrypt your secrets that were encrypte
 
 Install [`pass`](https://www.passwordstore.org/) and initialize a local store using the GPG keys you generated in the last step.
 
+<details>
+    <summary><b>Show</b></summary>
+
 ```shell
 pass init "$GPG_KEY_ID" --path <subpath of ~/.password-store/>
 ```
@@ -95,8 +98,14 @@ total 12K
 4.0K drwxrwxr-x 13 emmadoyle emmadoyle 4.0K Jan 15 13:36 ..
 4.0K -rw-------  1 emmadoyle emmadoyle   41 Jan 15 13:36 .gpg-id
 ```
+</details>
 
 ## Git repository
+
+Link your local password store to a git repository.
+
+<details>
+    <summary><b>Show</b></summary>
 
 From the `pass` [man page](https://git.zx2c4.com/password-store/about/),
 
@@ -119,6 +128,8 @@ total 16K
 4.0K drwxrwxr-x  7 emmadoyle emmadoyle 4.0K Jan 15 13:38 .git
 4.0K -rw-------  1 emmadoyle emmadoyle   41 Jan 15 13:36 .gpg-id
 ```
+
+</details>
 
 ## Private SSH key
 
