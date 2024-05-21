@@ -7,7 +7,6 @@ global:
 
 ## @section Operator Deployment
 
-## @param deployment [object] Configure the deployment manifest for this Helm chart.
 deployment:
   ## @param deployment.pullSecrets [array] A list of pull secret names. These names are automatically mapped to key: secretname in the imagePullSecrets field.
   pullSecrets: []
@@ -51,7 +50,6 @@ deployment:
 
 ## @section Operator Configuration
 
-## @param operator [object] Configure operator-specific settings.
 operator:
   ## @param operator.interval [default: 60] The interval in seconds to check for changes in the secrets in the pass store.
   interval: 60
@@ -113,7 +111,6 @@ operator:
 
 ## @section Operator Service
 
-## @param service [object] Configure the service manifest for this Helm chart.
 service:
   ## @param service.create [default: false] If true, a service is created for the operator. This usually is not necessary as the operator is not listening on any ports except for a healthcheck.
   create: false
@@ -127,7 +124,6 @@ service:
 
 ## @section Operator Service Account
 
-## @param serviceAccount [object] Configure the service account manifest for this Helm chart.
 serviceAccount:
   ## @param serviceAccount.create [default: true] If true, a service account is created for the operator. This is necessary for RBAC.
   create: true

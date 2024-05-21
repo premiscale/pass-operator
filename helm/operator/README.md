@@ -151,7 +151,6 @@ helm upgrade --install helm/operator/
 
 | Name                                         | Description                                                                                                                            | Value           |
 | -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | --------------- |
-| `deployment`                                 | Configure the deployment manifest for this Helm chart.                                                                                 | `{}`            |
 | `deployment.pullSecrets`                     | A list of pull secret names. These names are automatically mapped to key: secretname in the imagePullSecrets field.                    | `[]`            |
 | `deployment.image`                           | Configure the image used for the deployment.                                                                                           | `{}`            |
 | `deployment.image.name`                      | The name of the image.                                                                                                                 | `pass-operator` |
@@ -167,7 +166,6 @@ helm upgrade --install helm/operator/
 
 | Name                         | Description                                                                                                                                                           | Value             |
 | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
-| `operator`                   | Configure operator-specific settings.                                                                                                                                 | `{}`              |
 | `operator.interval`          | The interval in seconds to check for changes in the secrets in the pass store.                                                                                        | `60`              |
 | `operator.initial_delay`     | The initial delay in seconds before the first check for changes in the secrets in the pass store.                                                                     | `3`               |
 | `operator.priority`          | The priority of the operator. The higher the number, the higher the priority. Only useful if multiple operators are running.                                          | `100`             |
@@ -194,14 +192,12 @@ helm upgrade --install helm/operator/
 
 | Name             | Description                                                                                                                                           | Value   |
 | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
-| `service`        | Configure the service manifest for this Helm chart.                                                                                                   | `{}`    |
 | `service.create` | If true, a service is created for the operator. This usually is not necessary as the operator is not listening on any ports except for a healthcheck. | `false` |
 
 ### Operator Service Account
 
 | Name                    | Description                                                                         | Value           |
 | ----------------------- | ----------------------------------------------------------------------------------- | --------------- |
-| `serviceAccount`        | Configure the service account manifest for this Helm chart.                         | `{}`            |
 | `serviceAccount.create` | If true, a service account is created for the operator. This is necessary for RBAC. | `true`          |
 | `serviceAccount.name`   | The name of the service account.                                                    | `pass-operator` |
 
