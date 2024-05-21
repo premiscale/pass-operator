@@ -59,7 +59,6 @@ operator:
   ## @param operator.priority [default: 100] The priority of the operator. The higher the number, the higher the priority. Only useful if multiple operators are running.
   priority: 100
 
-  ## @param operator.pass [object] Configure the pass store.
   pass:
     ## @param operator.pass.binary [string] The path to the pass binary.
     binary: /usr/bin/pass
@@ -67,12 +66,10 @@ operator:
     ## @param operator.pass.storeSubPath [string] A subpath within '~/.password-store'.
     storeSubPath: ''
 
-  ## @param operator.log [object] Configure the log level for the operator.
   log:
     ## @param operator.log.level [string, default: debug] The log level for the operator. Options are: debug, info, warn, error.
     level: debug
 
-  ## @param ssh [object] Configure the SSH secret.
   ssh:
     ## @param operator.ssh.createSecret [default: false] If true, the secret is created. Otherwise, the secret is only referenced. This allows for users to provide their own secret via SealedSecrets or some other operator.
     createSecret: false
@@ -83,7 +80,6 @@ operator:
     ## @param operator.ssh.value [string, default: ""] The raw string of the secret key b64enc'd.
     value: ""
 
-  ## @param operator.gpg [object] Configure the GPG (private key) secret.
   gpg:
     ## @param operator.gpg.createSecret [default: false] If true, the secret is created. Otherwise, the secret is only referenced. This allows for users to provide their own secret via SealedSecrets or some other operator.
     createSecret: false
@@ -100,7 +96,6 @@ operator:
     ## @param operator.gpg.passphrase [string, default: ""] The passphrase for the GPG key, if there is one.
     passphrase: ""
 
-  ## @param operator.git [object] Configure the Git repository for the pass store.
   git:
     ## @param operator.git.branch [string, default: main] The branch of the Git repository to clone and pull from.
     branch: main
