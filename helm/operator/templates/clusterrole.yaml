@@ -2,13 +2,13 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: {{ .Values.rbac.clusterrole.name | default .Chart.Name }}
+  name: {{ ((.Values.rbac.clusterrole).name) | default .Chart.Name }}
   namespace: {{ .Values.global.namespace | default .Release.Namespace }}
-  {{- with .Values.rbac.clusterrole.labels }}
+  {{- with ((.Values.rbac.clusterrole).labels) }}
   labels:
     {{- toYaml . | nindent 4 }}
   {{- end }}
-  {{- with .Values.rbac.clusterrole.annotations }}
+  {{- with ((.Values.rbac.clusterrole).annotations) }}
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}

@@ -199,5 +199,4 @@ helm upgrade --install helm/operator/
 
 | Name          | Description                                           | Value  |
 | ------------- | ----------------------------------------------------- | ------ |
-| `rbac`        | Configure the RBAC manifest for this Helm chart.      | `{}`   |
 | `rbac.create` | If true, RBAC resources are created for the operator. | `true` |

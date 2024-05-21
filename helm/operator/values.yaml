@@ -127,13 +127,6 @@ serviceAccount:
 
 ## @section Operator RBAC
 
-## @param rbac [object] Configure the RBAC manifest for this Helm chart.
 rbac:
   ## @param rbac.create [default: true] If true, RBAC resources are created for the operator.
   create: true
-
-  role: {}
-  rolebinding: {}
-
-  clusterrole: {}
-  clusterrolebinding: {}
