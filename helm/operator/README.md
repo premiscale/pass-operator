@@ -140,7 +140,8 @@ Now add a remote git repository and watch as `pass insert`-commands create local
 With all of the above in mind, a simple Helm installation command from public registries is as-follows.
 
 ```text
-helm upgrade --install helm/operator/
+helm upgrade --install password-store-operator helm/operator/ --namespace password-store-operator --create-namespace
+    --set deployment.image.tag=<tag>
     --set operator.ssh.createSecret="true"
     --set operator.ssh.value="<your private SSH key b64-encoded>"
     --set operator.gpg.createSecret="true"
