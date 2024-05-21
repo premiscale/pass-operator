@@ -152,7 +152,6 @@ helm upgrade --install helm/operator/
 | Name                                         | Description                                                                                                                            | Value           |
 | -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | --------------- |
 | `deployment.pullSecrets`                     | A list of pull secret names. These names are automatically mapped to key: secretname in the imagePullSecrets field.                    | `[]`            |
-| `deployment.image`                           | Configure the image used for the deployment.                                                                                           | `{}`            |
 | `deployment.image.name`                      | The name of the image.                                                                                                                 | `pass-operator` |
 | `deployment.image.tag`                       | The tag of the image. The default is "ignore" to ensure users provide a tag.                                                           | `ignore`        |
 | `deployment.image.pullPolicy`                | The pull policy of the image.                                                                                                          | `Always`        |

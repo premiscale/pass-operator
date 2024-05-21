@@ -11,7 +11,6 @@ deployment:
   ## @param deployment.pullSecrets [array] A list of pull secret names. These names are automatically mapped to key: secretname in the imagePullSecrets field.
   pullSecrets: []
 
-  ## @param deployment.image [object] Configure the image used for the deployment.
   image:
     ## @param deployment.image.name [string, default: pass-operator] The name of the image.
     name: pass-operator
