@@ -135,8 +135,20 @@ total 16K
 
 Now add a remote git repository and watch as `pass insert`-commands create local commits automatically. Sync your local password store with the remote repo via `pass git push`.
 
+## Install
+
+With all of the above in mind, a simple Helm installation command from public registries is as-follows.
+
 ```text
 helm upgrade --install helm/operator/
+    --set operator.ssh.createSecret="true"
+    --set operator.ssh.value="<your private SSH key b64-encoded>"
+    --set operator.gpg.createSecret="true"
+    --set operator.gpg.value="<your private GPG key b64-encoded>"
+    --set operator.gpg.key_id="<private GPG key ID string, such as 51924ADAFC92656FAFEB672D4B90DE5D5BF143B8>"
+    --set operator.gpg.passphrase="<private GPG key passphrase, if one was set>"
+    --set operator.git.url="<git repo URL>"
+    --set operator.git.branch="<git repo branch to clone>"
 ```
 
 ## Parameters
