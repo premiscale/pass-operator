@@ -1,8 +1,6 @@
 ## @section Global Configuration
 
-## @param global [object] Configure global settings for this Helm chart.
 global:
-  ## @param global.image [object] configure global docker settings used for all docker images referenced in this chart.
   image:
     ## @param global.image.registry [string, default: docker.io] The global docker registry for all of the image.
     registry: docker.io

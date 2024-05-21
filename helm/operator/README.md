@@ -143,11 +143,9 @@ helm upgrade --install helm/operator/
 
 ### Global Configuration
 
-| Name                    | Description                                                                           | Value       |
-| ----------------------- | ------------------------------------------------------------------------------------- | ----------- |
-| `global`                | Configure global settings for this Helm chart.                                        | `{}`        |
-| `global.image`          | configure global docker settings used for all docker images referenced in this chart. | `{}`        |
-| `global.image.registry` | The global docker registry for all of the image.                                      | `docker.io` |
+| Name                    | Description                                      | Value       |
+| ----------------------- | ------------------------------------------------ | ----------- |
+| `global.image.registry` | The global docker registry for all of the image. | `docker.io` |
 
 ### Operator Deployment
 
