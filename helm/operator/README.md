@@ -6,7 +6,7 @@ helm upgrade --install helm/operator/
 
 ## Parameters
 
-### Global Configuration"
+### Global Configuration
 
 | Name                    | Description                                                                           | Value       |
 | ----------------------- | ------------------------------------------------------------------------------------- | ----------- |
@@ -14,7 +14,7 @@ helm upgrade --install helm/operator/
 | `global.image`          | configure global docker settings used for all docker images referenced in this chart. | `{}`        |
 | `global.image.registry` | The global docker registry for all of the image.                                      | `docker.io` |
 
-### Operator Deployment"
+### Operator Deployment
 
 | Name                                         | Description                                                                                                                            | Value           |
 | -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | --------------- |
@@ -30,7 +30,7 @@ helm upgrade --install helm/operator/
 | `deployment.podSecurityContext.runAsNonRoot` | If true, the pod is required to run as a non-root user.                                                                                | `true`          |
 | `deployment.containerSecurityContext`        | Configure the security context for the container.                                                                                      | `{}`            |
 
-### Operator Configuration"
+### Operator Configuration
 
 | Name                         | Description                                                                                                                                                           | Value             |
 | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
@@ -57,14 +57,14 @@ helm upgrade --install helm/operator/
 | `operator.git.branch`        | The branch of the Git repository to clone and pull from.                                                                                                              | `main`            |
 | `operator.git.url`           | The (SSH) URL of the Git repository. HTTPS is not supported at this time.                                                                                             | `""`              |
 
-### Operator Service"
+### Operator Service
 
 | Name             | Description                                                                                                                                           | Value   |
 | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
 | `service`        | Configure the service manifest for this Helm chart.                                                                                                   | `{}`    |
 | `service.create` | If true, a service is created for the operator. This usually is not necessary as the operator is not listening on any ports except for a healthcheck. | `false` |
 
-### Operator Service Account"
+### Operator Service Account
 
 | Name                    | Description                                                                         | Value           |
 | ----------------------- | ----------------------------------------------------------------------------------- | --------------- |
@@ -72,7 +72,7 @@ helm upgrade --install helm/operator/
 | `serviceAccount.create` | If true, a service account is created for the operator. This is necessary for RBAC. | `true`          |
 | `serviceAccount.name`   | The name of the service account.                                                    | `pass-operator` |
 
-### Operator RBAC"
+### Operator RBAC
 
 | Name          | Description                                           | Value  |
 | ------------- | ----------------------------------------------------- | ------ |

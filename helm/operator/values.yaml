@@ -1,4 +1,4 @@
-## @section Global Configuration"
+## @section Global Configuration
 
 ## @param global [object] Configure global settings for this Helm chart.
 global:
@@ -7,7 +7,7 @@ global:
     ## @param global.image.registry [string, default: docker.io] The global docker registry for all of the image.
     registry: docker.io
 
-## @section Operator Deployment"
+## @section Operator Deployment
 
 ## @param deployment [object] Configure the deployment manifest for this Helm chart.
 deployment:
@@ -51,7 +51,7 @@ deployment:
     allowPrivilegeEscalation: false
 
 
-## @section Operator Configuration"
+## @section Operator Configuration
 
 ## @param operator [object] Configure operator-specific settings.
 operator:
@@ -113,7 +113,7 @@ operator:
     ## @param operator.git.url [string, default: ""] The (SSH) URL of the Git repository. HTTPS is not supported at this time.
     url: ""
 
-## @section Operator Service"
+## @section Operator Service
 
 ## @param service [object] Configure the service manifest for this Helm chart.
 service:
@@ -127,7 +127,7 @@ service:
   #     port: 443
   #     targetPort: 443
 
-## @section Operator Service Account"
+## @section Operator Service Account
 
 ## @param serviceAccount [object] Configure the service account manifest for this Helm chart.
 serviceAccount:
@@ -137,7 +137,7 @@ serviceAccount:
   ## @param serviceAccount.name [string, default: pass-operator] The name of the service account.
   name: pass-operator
 
-## @section Operator RBAC"
+## @section Operator RBAC
 
 ## @param rbac [object] Configure the RBAC manifest for this Helm chart.
 rbac:
