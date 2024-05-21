@@ -1,0 +1,209 @@
+{
+    "title": "Chart Values",
+    "type": "object",
+    "properties": {
+        "global": {
+            "type": "object",
+            "properties": {
+                "image": {
+                    "type": "object",
+                    "properties": {
+                        "registry": {
+                            "type": "string",
+                            "description": "The global docker registry for all of the image.",
+                            "default": "docker.io"
+                        }
+                    }
+                }
+            }
+        },
+        "deployment": {
+            "type": "object",
+            "properties": {
+                "pullSecrets": {
+                    "type": "array",
+                    "description": "A list of pull secret names. These names are automatically mapped to key: secretname in the imagePullSecrets field.",
+                    "default": "[]",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "image": {
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "description": "The name of the image.",
+                            "default": "pass-operator"
+                        },
+                        "tag": {
+                            "type": "string",
+                            "description": "The tag of the image. The default is \"ignore\" to ensure users provide a tag.",
+                            "default": "ignore"
+                        },
+                        "pullPolicy": {
+                            "type": "string",
+                            "description": "The pull policy of the image.",
+                            "default": "Always"
+                        }
+                    }
+                },
+                "podSecurityContext": {
+                    "type": "object",
+                    "properties": {
+                        "runAsNonRoot": {
+                            "type": "boolean",
+                            "description": "If true, the pod is required to run as a non-root user.",
+                            "default": "true"
+                        }
+                    }
+                }
+            }
+        },
+        "operator": {
+            "type": "object",
+            "properties": {
+                "interval": {
+                    "type": "number",
+                    "description": "The interval in seconds to check for changes in the secrets in the pass store.",
+                    "default": "60"
+                },
+                "initial_delay": {
+                    "type": "number",
+                    "description": "The initial delay in seconds before the first check for changes in the secrets in the pass store.",
+                    "default": "3"
+                },
+                "priority": {
+                    "type": "number",
+                    "description": "The priority of the operator. The higher the number, the higher the priority. Only useful if multiple operators are running.",
+                    "default": "100"
+                },
+                "pass": {
+                    "type": "object",
+                    "properties": {
+                        "binary": {
+                            "type": "string",
+                            "description": "The path to the pass binary.",
+                            "default": "\"\""
+                        },
+                        "storeSubPath": {
+                            "type": "string",
+                            "description": "A subpath within '~/.password-store'.",
+                            "default": "\"\""
+                        }
+                    }
+                },
+                "log": {
+                    "type": "object",
+                    "properties": {
+                        "level": {
+                            "type": "string",
+                            "description": "The log level for the operator. Options are: debug, info, warn, error.",
+                            "default": "debug"
+                        }
+                    }
+                },
+                "ssh": {
+                    "type": "object",
+                    "properties": {
+                        "createSecret": {
+                            "type": "boolean",
+                            "description": "If true, the secret is created. Otherwise, the secret is only referenced. This allows for users to provide their own secret via SealedSecrets or some other operator.",
+                            "default": "false"
+                        },
+                        "name": {
+                            "type": "string",
+                            "description": "Name of the secret. If createSecret is false, this is used to reference an existing, user-provided secret.",
+                            "default": "private-ssh-key"
+                        },
+                        "value": {
+                            "type": "string",
+                            "description": "The raw string of the secret key b64enc'd.",
+                            "default": "\"\""
+                        }
+                    }
+                },
+                "gpg": {
+                    "type": "object",
+                    "properties": {
+                        "createSecret": {
+                            "type": "boolean",
+                            "description": "If true, the secret is created. Otherwise, the secret is only referenced. This allows for users to provide their own secret via SealedSecrets or some other operator.",
+                            "default": "false"
+                        },
+                        "name": {
+                            "type": "string",
+                            "description": "Name of the secret. If createSecret is false, this is used to reference an existing, user-provided secret.",
+                            "default": "private-gpg-key"
+                        },
+                        "key_id": {
+                            "type": "string",
+                            "description": "The key ID of the (private) GPG key.",
+                            "default": "\"\""
+                        },
+                        "value": {
+                            "type": "string",
+                            "description": "The raw string of the secret key b64enc'd.",
+                            "default": "\"\""
+                        },
+                        "passphrase": {
+                            "type": "string",
+                            "description": "The passphrase for the GPG key, if there is one.",
+                            "default": "\"\""
+                        }
+                    }
+                },
+                "git": {
+                    "type": "object",
+                    "properties": {
+                        "branch": {
+                            "type": "string",
+                            "description": "The branch of the Git repository to clone and pull from.",
+                            "default": "main"
+                        },
+                        "url": {
+                            "type": "string",
+                            "description": "The (SSH) URL of the Git repository. HTTPS is not supported at this time.",
+                            "default": "\"\""
+                        }
+                    }
+                }
+            }
+        },
+        "service": {
+            "type": "object",
+            "properties": {
+                "create": {
+                    "type": "boolean",
+                    "description": "If true, a service is created for the operator. This usually is not necessary as the operator is not listening on any ports except for a healthcheck.",
+                    "default": "false"
+                }
+            }
+        },
+        "serviceAccount": {
+            "type": "object",
+            "properties": {
+                "create": {
+                    "type": "boolean",
+                    "description": "If true, a service account is created for the operator. This is necessary for RBAC.",
+                    "default": "true"
+                },
+                "name": {
+                    "type": "string",
+                    "description": "The name of the service account.",
+                    "default": "pass-operator"
+                }
+            }
+        },
+        "rbac": {
+            "type": "object",
+            "properties": {
+                "create": {
+                    "type": "boolean",
+                    "description": "If true, RBAC resources are created for the operator.",
+                    "default": "true"
+                }
+            }
+        }
+    }
+}

@@ -1,17 +1,29 @@
+## @section Global Configuration"
+
+## @param global [object] Configure global settings for this Helm chart.
 global:
+  ## @param global.image [object] configure global docker settings used for all docker images referenced in this chart.
   image:
+    ## @param global.image.registry [string, default: docker.io] The global docker registry for all of the image.
     registry: docker.io
 
+## @section Operator Deployment"
 
+## @param deployment [object] Configure the deployment manifest for this Helm chart.
 deployment:
-  # A list of pull secret names.
+  ## @param deployment.pullSecrets [array] A list of pull secret names. These names are automatically mapped to key: secretname in the imagePullSecrets field.
   pullSecrets: []
 
+  ## @param deployment.image [object] Configure the image used for the deployment.
   image:
+    ## @param deployment.image.name [string, default: pass-operator] The name of the image.
     name: pass-operator
+    ## @param deployment.image.tag [string, default: ignore] The tag of the image. The default is "ignore" to ensure users provide a tag.
     tag: ignore
+    ## @param deployment.image.pullPolicy [string, default: Always] The pull policy of the image.
     pullPolicy: Always
 
+  ## @param deployment.resources [object] Set resources for the pod.
   resources:
     requests:
       cpu: 0.25
@@ -20,60 +32,94 @@ deployment:
       cpu: 0.25
       memory: 500Mi
 
+  ## @param deployment.livenessProbe [object] Configure the liveness probe for the pod. The defaults are set to check the /healthz endpoint on port 8080, which is provided by Kopf.
   livenessProbe:
     enabled: true
     port: 8080
     path: /healthz
     config: {}
 
+  ## @param deployment.podSecurityContext [object] Configure the security context for the pod.
   podSecurityContext:
+    ## @param deployment.podSecurityContext.runAsNonRoot [default: true] If true, the pod is required to run as a non-root user.
     runAsNonRoot: true
 
+  ## @param deployment.containerSecurityContext [object] Configure the security context for the container.
   containerSecurityContext:
     # TODO for a future sprint.
     # readOnlyRootFilesystem: true
     allowPrivilegeEscalation: false
 
 
+## @section Operator Configuration"
+
+## @param operator [object] Configure operator-specific settings.
 operator:
+  ## @param operator.interval [default: 60] The interval in seconds to check for changes in the secrets in the pass store.
   interval: 60
+
+  ## @param operator.initial_delay [default: 3] The initial delay in seconds before the first check for changes in the secrets in the pass store.
   initial_delay: 3
+
+  ## @param operator.priority [default: 100] The priority of the operator. The higher the number, the higher the priority. Only useful if multiple operators are running.
   priority: 100
 
+  ## @param operator.pass [object] Configure the pass store.
   pass:
+    ## @param operator.pass.binary [string] The path to the pass binary.
     binary: /usr/bin/pass
+
+    ## @param operator.pass.storeSubPath [string] A subpath within '~/.password-store'.
     storeSubPath: ''
 
+  ## @param operator.log [object] Configure the log level for the operator.
   log:
+    ## @param operator.log.level [string, default: debug] The log level for the operator. Options are: debug, info, warn, error.
     level: debug
 
+  ## @param ssh [object] Configure the SSH secret.
   ssh:
-    # If create is false, value is not used; users may bring their own.
+    ## @param operator.ssh.createSecret [default: false] If true, the secret is created. Otherwise, the secret is only referenced. This allows for users to provide their own secret via SealedSecrets or some other operator.
     createSecret: false
 
-    # Name of the secret. If createSecret is false, this is used to reference an existing, user-provided secret.
+    ## @param operator.ssh.name [string, default: private-ssh-key] Name of the secret. If createSecret is false, this is used to reference an existing, user-provided secret.
     name: private-ssh-key
 
-    # raw string of the secret key b64enc'd.
+    ## @param operator.ssh.value [string, default: ""] The raw string of the secret key b64enc'd.
     value: ""
 
+  ## @param operator.gpg [object] Configure the GPG (private key) secret.
   gpg:
+    ## @param operator.gpg.createSecret [default: false] If true, the secret is created. Otherwise, the secret is only referenced. This allows for users to provide their own secret via SealedSecrets or some other operator.
     createSecret: false
 
-    # Name of the secret. If createSecret is false, this is used to reference an existing, user-provided secret.
+    ## @param operator.gpg.name [string, default: private-gpg-key] Name of the secret. If createSecret is false, this is used to reference an existing, user-provided secret.
     name: private-gpg-key
 
+    ## @param operator.gpg.key_id [string, default: ""] The key ID of the (private) GPG key.
     key_id: ""
+
+    ## @param operator.gpg.value [string, default: ""] The raw string of the secret key b64enc'd.
     value: ""
+
+    ## @param operator.gpg.passphrase [string, default: ""] The passphrase for the GPG key, if there is one.
     passphrase: ""
 
+  ## @param operator.git [object] Configure the Git repository for the pass store.
   git:
+    ## @param operator.git.branch [string, default: main] The branch of the Git repository to clone and pull from.
     branch: main
+
+    ## @param operator.git.url [string, default: ""] The (SSH) URL of the Git repository. HTTPS is not supported at this time.
     url: ""
 
+## @section Operator Service"
 
+## @param service [object] Configure the service manifest for this Helm chart.
 service:
+  ## @param service.create [default: false] If true, a service is created for the operator. This usually is not necessary as the operator is not listening on any ports except for a healthcheck.
   create: false
+
   # type: ClusterIP
   # ports:
   #   - appProtocol: http
@@ -81,14 +127,25 @@ service:
   #     port: 443
   #     targetPort: 443
 
+## @section Operator Service Account"
 
+## @param serviceAccount [object] Configure the service account manifest for this Helm chart.
 serviceAccount:
+  ## @param serviceAccount.create [default: true] If true, a service account is created for the operator. This is necessary for RBAC.
   create: true
 
-# Namespace-local PassSecrets require RBAC setup for operator access through the ServiceAccount.
-role: {}
-rolebinding: {}
+  ## @param serviceAccount.name [string, default: pass-operator] The name of the service account.
+  name: pass-operator
 
-# Cluster-wide Secrets require RBAC setup for operator access through the ServiceAccount.
-clusterrole: {}
-clusterrolebinding: {}
+## @section Operator RBAC"
+
+## @param rbac [object] Configure the RBAC manifest for this Helm chart.
+rbac:
+  ## @param rbac.create [default: true] If true, RBAC resources are created for the operator.
+  create: true
+
+  role: {}
+  rolebinding: {}
+
+  clusterrole: {}
+  clusterrolebinding: {}
