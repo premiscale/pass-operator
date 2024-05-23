@@ -1,6 +1,6 @@
 ## @section Global Configuration
 
 global:
-  ## @param global.versions [array, default: [v1alpha1]] list of supported versions that are to be installed.
+  ## @param global.versions [array] list of supported versions that are to be installed.
   versions:
     - v1alpha1
