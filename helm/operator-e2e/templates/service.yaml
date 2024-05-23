@@ -13,14 +13,17 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
-  type: {{ .Values.service.type }}
+  type: {{ .Values.service.type | default "ClusterIP" }}
   {{- with .Values.service.externalIPs }}
   externalIPs:
     {{- toYaml . }}
   {{- end }}
   ports:
-    {{- with .Values.service.ports }}
-    {{- toYaml . | nindent 4 }}
+    {{- range $key, $value := .Values.service.ports }}
+    - name: {{ $key }}
+      port: {{ $value.port }}
+      protocol: TCP
+      targetPort: {{ $value.port }}
     {{- end }}
   selector: {{ include "pass-operator-e2e.selectorLabels" . | nindent 4 }}
   {{- with .Values.service.healthCheckNodePort }}

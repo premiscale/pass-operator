@@ -1,17 +1,25 @@
+## @section Global Configuration
+
 global:
   image:
+    ## @param global.image.registry [string, default: docker.io] The global docker registry for all of the image.
     registry: docker.io
 
+## @section E2E Deployment
 
 deployment:
-  # A list of pull secret names.
+  ## @param deployment.pullSecrets [array] A list of pull secret names. These names are automatically mapped to key: secretname in the imagePullSecrets field.
   pullSecrets: []
 
   image:
+    ## @param deployment.image.name [string, default: pass-operator] The name of the image.## @param deployment.image.name [string, default: pass-operator] The name of the image.
     name: pass-operator-e2e
+    ## @param deployment.image.tag [string, default: ignore] The tag of the image. The default is "ignore" to ensure users provide a tag.
     tag: ignore
+    ## @param deployment.image.pullPolicy [string, default: Always] The pull policy of the image.
     pullPolicy: Always
 
+  ## @param deployment.resources [object] Set resources for the pod.
   resources:
     requests:
       cpu: 0.25
@@ -20,49 +28,69 @@ deployment:
       cpu: 0.25
       memory: 500Mi
 
+  ## @param deployment.livenessProbe [object] Configure the liveness probe for the pod. The defaults are set to check that SSHd is listening on TCP port 22.
   livenessProbe:
     enabled: false
     port: 22
     config: {}
 
+  ## @param deployment.podSecurityContext [object] Configure the security context for the pod.
   podSecurityContext: {}
 
+  ## @param deployment.containerSecurityContext [object] Configure the security context for the container.
   containerSecurityContext: {}
 
+## @section Operator Configuration
 
 operator:
   pass:
+    ## @param operator.pass.binary [string] The path to the pass binary.
     binary: /usr/bin/pass
+
+    ## @param operator.pass.storeSubPath [string] A subpath within '~/.password-store'.
     storeSubPath: ""
 
   ssh:
-    # If create is false, value is not used; users may bring their own.
+    ## @param operator.ssh.createSecret [default: false] If true, the secret is created. Otherwise, the secret is only referenced. This allows for users to provide their own secret via SealedSecrets or some other operator.
     createSecret: false
 
-    # Name of the secret. If createSecret is false, this is used to reference an existing, user-provided secret.
+    ## @param operator.ssh.name [string, default: public-ssh-key] Name of the secret. If createSecret is false, this is used to reference an existing, user-provided secret.
     name: public-ssh-key
 
-    # raw string of the secret key b64enc'd.
+    ## @param operator.ssh.value [string, default: ""] The raw string of the public SSH key b64enc'd.
     value: ""
 
   gpg:
+    ## @param operator.gpg.createSecret [default: false] If true, the secret is created. Otherwise, the secret is only referenced. This allows for users to provide their own secret via SealedSecrets or some other operator.
     createSecret: false
 
-    # Name of the secret. If createSecret is false, this is used to reference an existing, user-provided secret.
+    ## @param operator.gpg.name [string, default: public-gpg-key] Name of the secret. If createSecret is false, this is used to reference an existing, user-provided secret.
     name: public-gpg-key
 
+    ## @param operator.gpg.key_id [string, default: ""] The key ID of the (public) GPG key.
     key_id: ""
+
+    ## @param operator.gpg.value [string, default: ""] The armored string of the public GPG key b64enc'd.
     value: ""
+
+    ## @param operator.gpg.passphrase [string, default: ""] The passphrase for the GPG key, if there is one.
     passphrase: ""
 
   git:
+    ## @param operator.git.branch [string, default: main] The branch of the Git repository to clone and pull from.
     branch: main
 
+## @section E2E Service
 
 service:
+  ## @param service.create [default: true] If true, a service is created for the operator e2e pod. This makes cloning the repo easier.
   create: true
+
+  ## @param service.type [string, default: ClusterIP] The type of service to create. This is usually ClusterIP as there's no need for external access.
   type: ClusterIP
+
+  ## @param service.ports [object] The ports to expose on the service. Default is to expose port 22 as SSHd is listening on this port for connections by git.
   ports:
-    - name: ssh
+    ssh:
       port: 22
       targetPort: 22
