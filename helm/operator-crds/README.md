@@ -6,6 +6,6 @@ This Helm chart is very simple, it only contains the `PassSecret` CRDs that the 
 
 ### Global Configuration
 
-| Name              | Description                                          | Value |
-| ----------------- | ---------------------------------------------------- | ----- |
-| `global.versions` | list of supported versions that are to be installed. | `[]`  |
+| Name              | Description                                            | Value |
+| ----------------- | ------------------------------------------------------ | ----- |
+| `global.versions` | ] list of supported versions that are to be installed. | `""`  |

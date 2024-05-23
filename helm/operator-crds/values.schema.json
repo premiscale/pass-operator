@@ -7,11 +7,9 @@
             "properties": {
                 "versions": {
                     "type": "array",
-                    "description": "list of supported versions that are to be installed.",
-                    "default": "[]",
-                    "items": {
-                        "type": "string"
-                    }
+                    "description": "] list of supported versions that are to be installed.",
+                    "default": "",
+                    "items": {}
                 }
             }
         }
