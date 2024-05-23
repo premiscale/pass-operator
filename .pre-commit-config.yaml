@@ -82,8 +82,19 @@ repos:
     rev: 2.6.1
     hooks:
       - id: helm-readme-generator
+        name: helm-readme-generator-operator
         # in order to run helm-readme-generator only once
         pass_filenames: false
         always_run: true
         # default args are [--readme=chart/README.md, --values=chart/values.yaml]
         args: [--readme=helm/operator/README.md, --values=helm/operator/values.yaml, --schema=helm/operator/values.schema.json]
+      - id: helm-readme-generator
+        name: helm-readme-generator-operator-e2e
+        pass_filenames: false
+        always_run: true
+        args: [--readme=helm/operator-e2e/README.md, --values=helm/operator-e2e/values.yaml, --schema=helm/operator-e2e/values.schema.json]
+      - id: helm-readme-generator
+        name: helm-readme-generator-operator-crds
+        pass_filenames: false
+        always_run: true
+        args: [--readme=helm/operator-crds/README.md, --values=helm/operator-crds/values.yaml, --schema=helm/operator-crds/values.schema.json]

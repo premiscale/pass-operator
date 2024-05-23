@@ -77,7 +77,7 @@ operator:
     ## @param operator.ssh.name [string, default: private-ssh-key] Name of the secret. If createSecret is false, this is used to reference an existing, user-provided secret.
     name: private-ssh-key
 
-    ## @param operator.ssh.value [string, default: ""] The raw string of the secret key b64enc'd.
+    ## @param operator.ssh.value [string, default: ""] The raw string of the private SSH key b64enc'd.
     value: ""
 
   gpg:
@@ -90,7 +90,7 @@ operator:
     ## @param operator.gpg.key_id [string, default: ""] The key ID of the (private) GPG key.
     key_id: ""
 
-    ## @param operator.gpg.value [string, default: ""] The raw string of the secret key b64enc'd.
+    ## @param operator.gpg.value [string, default: ""] The armored string of the private GPG key b64enc'd.
     value: ""
 
     ## @param operator.gpg.passphrase [string, default: ""] The passphrase for the GPG key, if there is one.
