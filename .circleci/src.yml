@@ -2,7 +2,7 @@ version: 2.1
 
 
 orbs:
-  general: premiscale/general@1.2.5
+  general: premiscale/general@1.2.6
   slack: circleci/slack@4.13.3
 
 
