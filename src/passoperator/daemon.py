@@ -3,7 +3,7 @@ A kubernetes operator that syncs and decrypts secrets from Linux password store 
 """
 
 
-from typing import Any, List
+from typing import Any
 from pathlib import Path
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from importlib import metadata
@@ -11,7 +11,6 @@ from kubernetes import client, config
 from http import HTTPStatus
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
-from time import sleep
 
 from passoperator.git import pull, clone
 from passoperator.utils import LogLevel
@@ -72,6 +71,7 @@ def reconciliation(body: kopf.Body, **_: Any) -> None:
 
     v1 = client.CoreV1Api()
 
+
     try:
         secret = v1.read_namespaced_secret(
             name=passSecretObj.spec.managedSecret.metadata.name,
@@ -98,9 +98,20 @@ def reconciliation(body: kopf.Body, **_: Any) -> None:
             )
 
             log.info(f'Reconciliation successfully updated Secret "{_managedSecret.metadata.name}".')
+        else:
+            log.info(f'Secret "{_managedSecret.metadata.name}" is up-to-date.')
     except client.ApiException as e:
-        raise kopf.PermanentError(e)
+        if e.status == HTTPStatus.NOT_FOUND:
+            log.warning(f'Secret "{passSecretObj.spec.managedSecret.metadata.name}" not found. Recreating managed secret.')
 
+            v1.create_namespaced_secret(
+                namespace=passSecretObj.spec.managedSecret.metadata.namespace,
+                body=client.V1Secret(
+                    **passSecretObj.spec.managedSecret.to_client_dict(finalizers=False)
+                )
+            )
+        else:
+            raise kopf.PermanentError(e)
 
 # @kopf.on.cleanup()
 # def cleanup(**kwargs) -> None:
