@@ -34,7 +34,14 @@ if [ "$1" == "start" ]; then
         --disk-size 30g
 
     # Docker registry for localhost images.
-    docker run --name docker-registry-redirect --rm -itd --network=host ubuntu:22.04 /bin/bash -c "apt update && apt install -y socat && socat TCP-LISTEN:5000,reuseaddr,fork TCP:$(minikube ip -p pass-operator):5000"
+    docker run -e DEBIAN_FRONTEND=noninteractive --name docker-registry-redirect --rm -itd --network=host ubuntu:22.04 /bin/bash -c "apt-get update && apt-get install -y lsof socat && socat TCP-LISTEN:5000,reuseaddr,fork TCP:$(minikube ip -p pass-operator):5000"
+
+    # Wait for the package lock to be released, otherwise we can't push docker containers because the container isn't listening / redirecting on port 5000, yet.
+    i=1
+    until [ "$(docker exec -it docker-registry-redirect /bin/bash -c 'lsof /var/lib/dpkg/lock' || printf "no")" = "" ]; do
+        printf "INFO: Waiting for the package lock to be released, attempt %i\\n" "$(( i++ ))"
+        sleep 5
+    done
 
     kubectl config current-context
     kubectl get nodes -o wide

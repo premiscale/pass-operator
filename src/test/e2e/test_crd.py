@@ -54,6 +54,9 @@ class PassSecretE2E(TestCase):
     """
     Methods for testing the Kubernetes operator end-to-end.
     """
+
+    ## Test data attributes.
+
     passsecret_data_singular: dict
     decrypted_passsecret_data_singular: dict
 
@@ -74,6 +77,8 @@ class PassSecretE2E(TestCase):
 
     passsecret_singular_collision_2: dict
     decrypted_passsecret_singular_collision_2: dict
+
+    ##
 
     @classmethod
     def setUpClass(cls) -> None:
