@@ -289,8 +289,10 @@ def build_operator_image(
     Returns:
         int: The return code of the docker build or push command that failed, or 0 if both succeeded.
     """
-    return run(['docker', 'build', '-t', f'{registry}/pass-operator:{tag}', '-f', './Dockerfile.develop', '.']).returnCode \
-        or run(['docker', 'push', f'{registry}/pass-operator:{tag}']).returnCode
+    return run([
+        'docker', 'build', '-t', f'{registry}/pass-operator:{tag}', '-f', './Dockerfile', '.',
+        '--target', 'develop'
+    ]).returnCode or run(['docker', 'push', f'{registry}/pass-operator:{tag}']).returnCode
 
 
 def install_pass_operator(
