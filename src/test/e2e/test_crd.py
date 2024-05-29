@@ -5,6 +5,11 @@ End-to-end tests of the operator that validate the lifecycle of a PassSecret and
 
 from unittest import TestCase
 from kubernetes import client, config
+from time import sleep
+from deepdiff import DeepDiff
+from http import HTTPStatus
+
+from passoperator.utils import b64Enc
 
 from test.common import (
     load_data,
@@ -79,6 +84,37 @@ class PassSecretE2E(TestCase):
     decrypted_passsecret_singular_collision_2: dict
 
     ##
+
+    @staticmethod
+    def convertDecryptedPassSecrets(passsecret: dict, decrypted_passsecret: dict) -> dict:
+        """
+        This is just a helper method for DeepDiff'ing locally-unencrypted (random) PassSecret data with the managed
+        secret data that the operator decrypts and creates. This method is similar to what src.operator.secret looked like
+        before it was refactored with attrs and cattrs.
+
+        Args:
+            passsecret (dict): The PassSecret object.
+            decrypted_passsecret (dict): The decrypted PassSecret object.
+        """
+
+        converted_managed_secret = {
+            # These two fields are automatically provided by the dataclasses, anyway.
+            'apiVersion': 'v1',
+            'kind': 'Secret',
+            'metadata': passsecret['spec']['managedSecret']['metadata'],
+            'type': passsecret['spec']['managedSecret']['type'],
+            'data': {}
+        }
+
+        # Now populate the data with the proper keys.
+        for key in passsecret['spec']['managedSecret']['data']:
+            passstore_path = passsecret['spec']['managedSecret']['data'][key]
+
+            converted_managed_secret['data'][key] = b64Enc(
+                decrypted_passsecret['spec']['managedSecret']['data'][passstore_path]
+            )
+
+        return converted_managed_secret
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -155,7 +191,7 @@ class PassSecretE2E(TestCase):
         Common steps to run before every test.
         """
 
-        # Wait for all pods in the cluster to be ready.
+        # Wait for all pods in the cluster to be ready before running each test.
         check_cluster_pod_status()
 
     # def tearDown(self) -> None:
@@ -165,15 +201,49 @@ class PassSecretE2E(TestCase):
         """
         Test that the operator is running as intended in the cluster.
         """
-        v1 = client.CustomObjectsApi()
+        v1custom = client.CustomObjectsApi()
+        v1 = client.CoreV1Api()
 
         # Create a namespaced PassSecret object, then vet that the managed secret both exists and contains the proper data (i.e., the operator did its job).
-        v1.create_namespaced_custom_object(
+        v1custom.create_namespaced_custom_object(
             group='secrets.premiscale.com',
             version='v1alpha1',
             namespace='pass-operator',
             plural='passsecrets',
             body=self.passsecret_data_singular
+        )
+
+        # Check that the managed secret exists.
+        while True:
+            try:
+                _managedSecret = v1.read_namespaced_secret(
+                    name='singular-data',
+                    namespace='pass-operator'
+                )
+                break
+            except client.rest.ApiException as e:
+                if e.status == HTTPStatus.NOT_FOUND:
+                    sleep(3)
+                    continue
+                log.error(e)
+
+        # Check that the managed secret contains the proper data.
+        self.assertDictEqual(
+            DeepDiff(
+                dict(_managedSecret.data),
+                # Convert the unencrypted PassSecret data to the format that the operator would have created the managed secret in.
+                self.convertDecryptedPassSecrets(
+                    self.passsecret_data_singular,
+                    self.decrypted_passsecret_data_singular
+                ),
+                exclude_paths=[
+                    "root['metadata']['labels']",
+                    "root['metadata']['annotations']",
+                    "root['spec']['managedSecret']['apiVersion']",
+                    "root['spec']['managedSecret']['finalizers']"
+                ]
+            ),
+            {}
         )
 
     def test_operator_zero_data(self) -> None:
