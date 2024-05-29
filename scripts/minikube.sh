@@ -43,7 +43,7 @@ if [ "$1" == "start" ]; then
     #     printf "INFO: Waiting for the package lock to be released, attempt %i\\n" "$(( i++ ))"
     #     sleep 5
     # done
-
+    sleep 15
     kubectl config current-context
     kubectl get nodes -o wide
     kubectl get pods -A

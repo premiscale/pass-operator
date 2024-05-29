@@ -62,9 +62,13 @@ def check_cluster_pod_status(namespace: str | None = None) -> bool:
         bool: True if all pods are running or completed or completely ready, False otherwise.
     """
     v1 = client.CoreV1Api()
-    namespaces = v1.list_namespace().items
 
-    def _check_namespaced_pods(namespace: client.V1Namespace) -> bool:
+    if namespace is not None:
+        namespaces = [v1.read_namespace(namespace)]
+    else:
+        namespaces = v1.list_namespace().items
+
+    def _check_namespaced_pods(_namespace: client.V1Namespace) -> bool:
         """
         If any pods in the given namespace are not running or completed, return False.
 
@@ -74,9 +78,9 @@ def check_cluster_pod_status(namespace: str | None = None) -> bool:
         Returns:
             bool: True if all pods are running or completed, False otherwise.
         """
-        for pod in v1.list_namespaced_pod(namespace.metadata.name).items:
+        for pod in v1.list_namespaced_pod(_namespace.metadata.name).items:
             if pod.status.phase not in ('Running', 'Completed', 'Succeeded') or (pod.status.phase == 'Running' and any((not c.ready) for c in pod.status.container_statuses)):
-                log.warning(f'Pod {pod.metadata.name} in namespace {namespace.metadata.name} is not running or completed or completely ready.')
+                log.warning(f'Pod {pod.metadata.name} in namespace {_namespace.metadata.name} is not running or completed or completely ready.')
                 return False
         return True
 
@@ -101,17 +105,17 @@ def generate_ssh_keypair() -> tuple:
         tuple: The public and private keys.
     """
     try:
-        run(['ssh-keygen', '-t', 'ed25519', '-f', '/tmp/id_rsa', '-q', '-N', ''])
+        run(['ssh-keygen', '-t', 'ed25519', '-f', 'id_rsa', '-q', '-N', ''])
 
         return (
-            run(['cat', '/tmp/id_rsa.pub']).stdout,
-            run(['cat', '/tmp/id_rsa']).stdout
+            pathlib.Path('id_rsa.pub').read_text(encoding='utf-8'),
+            pathlib.Path('id_rsa').read_text(encoding='utf-8')
         )
     finally:
-        if os.path.exists('/tmp/id_rsa'):
-            os.remove('/tmp/id_rsa')
-        if os.path.exists('/tmp/id_rsa.pub'):
-            os.remove('/tmp/id_rsa.pub')
+        if os.path.exists('id_rsa'):
+            os.remove('id_rsa')
+        if os.path.exists('id_rsa.pub'):
+            os.remove('id_rsa.pub')
 
 
 def generate_gpg_keypair(passphrase: str, delete_from_keyring: bool = False) -> tuple:
@@ -185,7 +189,7 @@ def build_e2e_image(
         'docker', 'build', '-t', f'{registry}/pass-operator-e2e:{tag}', '-f', './src/test/Dockerfile.e2e', './src/test/',
         '--build-arg', f'PASS_VERSION={pass_version}',
         '--build-arg', f'TINI_VERSION={tini_version}',
-        '--build-arg', f'ARCHITECTURE={architecture}',
+        '--build-arg', f'ARCHITECTURE={architecture}'
     ]).returnCode or run(['docker', 'push', f'{registry}/pass-operator-e2e:{tag}']).returnCode
 
 

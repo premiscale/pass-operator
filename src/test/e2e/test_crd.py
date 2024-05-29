@@ -85,6 +85,8 @@ class PassSecretE2E(TestCase):
         """
         Common steps to run before all tests.
         """
+        cleanup_unencrypted_crds()
+
         gpg_passphrase = random_secret()
 
         ## Generate GPG and SSH keypairs for use in testing.
@@ -93,6 +95,30 @@ class PassSecretE2E(TestCase):
             delete_from_keyring=True
         )
         ssh_public_key, ssh_private_key = generate_ssh_keypair()
+
+        ## Generate unencrypted CRDs; these need to both be local for unit tests to reference and in the e2e image for the operator to reference.
+        generate_unencrypted_crds()
+
+        cls.passsecret_data_singular = load_data('test_singular_data')
+        cls.decrypted_passsecret_data_singular = load_data('test_singular_data.unencrypted')
+
+        cls.passsecret_data_zero = load_data('test_zero_data')
+        cls.decrypted_passsecret_data_zero = load_data('test_zero_data.unencrypted')
+
+        cls.passsecret_data_multiple = load_data('test_multiple_data')
+        cls.decrypted_passsecret_data_multiple = load_data('test_multiple_data.unencrypted')
+
+        cls.passsecret_data_singular_immutable = load_data('test_singular_data_immutable')
+        cls.decrypted_passsecret_data_singular_immutable = load_data('test_singular_data_immutable.unencrypted')
+
+        cls.passsecret_data_singular_different_managed_secret_name = load_data('test_singular_data_different_managed_secret_name')
+        cls.decrypted_passsecret_data_singular_different_managed_secret_name = load_data('test_singular_data_different_managed_secret_name.unencrypted')
+
+        cls.passsecret_singular_collision_1 = load_data('test_singular_data_collision_1')
+        cls.decrypted_passsecret_singular_collision_1 = load_data('test_singular_data_collision_1.unencrypted')
+
+        cls.passsecret_singular_collision_2 = load_data('test_singular_data_collision_2')
+        cls.decrypted_passsecret_singular_collision_2 = load_data('test_singular_data_collision_2.unencrypted')
 
         ## Build the e2e image and install the pass-operator-e2e Helm chart.
         build_e2e_image()
@@ -123,29 +149,6 @@ class PassSecretE2E(TestCase):
             git_url='root@pass-operator-e2e:/opt/operator/repo.git',
             git_branch='main'
         )
-
-        generate_unencrypted_crds()
-
-        cls.passsecret_data_singular = load_data('test_singular_data')
-        cls.decrypted_passsecret_data_singular = load_data('test_singular_data.unencrypted')
-
-        cls.passsecret_data_zero = load_data('test_zero_data')
-        cls.decrypted_passsecret_data_zero = load_data('test_zero_data.unencrypted')
-
-        cls.passsecret_data_multiple = load_data('test_multiple_data')
-        cls.decrypted_passsecret_data_multiple = load_data('test_multiple_data.unencrypted')
-
-        cls.passsecret_data_singular_immutable = load_data('test_singular_data_immutable')
-        cls.decrypted_passsecret_data_singular_immutable = load_data('test_singular_data_immutable.unencrypted')
-
-        cls.passsecret_data_singular_different_managed_secret_name = load_data('test_singular_data_different_managed_secret_name')
-        cls.decrypted_passsecret_data_singular_different_managed_secret_name = load_data('test_singular_data_different_managed_secret_name.unencrypted')
-
-        cls.passsecret_singular_collision_1 = load_data('test_singular_data_collision_1')
-        cls.decrypted_passsecret_singular_collision_1 = load_data('test_singular_data_collision_1.unencrypted')
-
-        cls.passsecret_singular_collision_2 = load_data('test_singular_data_collision_2')
-        cls.decrypted_passsecret_singular_collision_2 = load_data('test_singular_data_collision_2.unencrypted')
 
     def setUp(self) -> None:
         """
