@@ -101,7 +101,6 @@ workflows:
             - pypi
             - dockerhub
           tag: $CIRCLE_TAG
-          # This installs the artifact from my private registry instead of the public one.
           args: >-
             --build-arg=PYTHON_PACKAGE_VERSION=$CIRCLE_TAG
             --build-arg=PYTHON_USERNAME=$TWINE_USERNAME
