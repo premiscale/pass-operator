@@ -63,7 +63,7 @@ operator:
     ## @param operator.pass.binary [string] The path to the pass binary.
     binary: /usr/bin/pass
 
-    ## @param operator.pass.storeSubPath [string] A subpath within '~/.password-store'.
+    ## @param operator.pass.storeSubPath [string] A subpath within `~/.password-store`.
     storeSubPath: ''
 
   log:
