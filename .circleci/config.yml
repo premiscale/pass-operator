@@ -63,7 +63,8 @@ workflows:
 
       - general/python-release-poetry:
           name: python package [pypi]
-          context: pypi
+          context:
+            - pypi
           repository: pypi
           requires:
             - 'hold: tagged pipeline'
@@ -84,7 +85,6 @@ workflows:
       #       --build-arg=PYTHON_USERNAME=$NEXUS_USERNAME
       #       --build-arg=PYTHON_PASSWORD=$NEXUS_PASSWORD
       #       --build-arg=PYTHON_REPOSITORY=python
-      #       --build-arg=REPO_DOMAIN=$REPO_DOMAIN
       #     requires:
       #       - python package [nexus]
       #       - python package [pypi]
@@ -98,16 +98,15 @@ workflows:
           name: docker build [dockerhub]
           image-name: pass-operator
           context:
-            - nexus
+            - pypi
             - dockerhub
           tag: $CIRCLE_TAG
-          # This installs the artifact from my private registry instead of the public one.
           args: >-
             --build-arg=PYTHON_PACKAGE_VERSION=$CIRCLE_TAG
-            --build-arg=PYTHON_USERNAME=$NEXUS_USERNAME
-            --build-arg=PYTHON_PASSWORD=$NEXUS_PASSWORD
-            --build-arg=PYTHON_REPOSITORY=python
-            --build-arg=REPO_DOMAIN=$REPO_DOMAIN
+            --build-arg=PYTHON_USERNAME=$TWINE_USERNAME
+            --build-arg=PYTHON_PASSWORD=$TWINE_PASSWORD
+            --build-arg=PYTHON_REPOSITORY=pypi
+            --target=production
           requires:
             # - python package [nexus]
             - python package [pypi]

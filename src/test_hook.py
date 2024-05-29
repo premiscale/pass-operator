@@ -62,6 +62,7 @@ ssh_public_key, ssh_private_key = generate_ssh_keypair()
 
 log.info('Building e2e image')
 # e2e artifacts that the operator depends on to run.
+cleanup_unencrypted_crds()
 generate_unencrypted_crds()
 build_e2e_image()
 

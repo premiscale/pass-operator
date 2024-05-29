@@ -33,13 +33,14 @@ def run(command: List[str], shell=False, timeout: float = 300) -> CommandOutput:
 
     Args:
         command (str): shell command to run as a string.
-        split (str, optional): character to split the command by. Defaults to None.
         shell (bool, optional): whether to run the command in a shell. Defaults to False.
+        timeout (float, optional): timeout in seconds. Defaults to 300.
 
     Returns:
         CommandOutput: output, error, and return code.
     """
-    # print(' '.join(command))
+    # print(' '.join(c if c != '' else '""' for c in command))
+
     with Popen(command, stdin=PIPE, stdout=PIPE, stderr=PIPE, text=True, shell=shell, encoding='utf-8') as p:
         stdout, stderr = p.communicate(timeout=timeout) # blocking
         ret = CommandOutput(stdout.rstrip(), stderr.rstrip(), p.returncode)
