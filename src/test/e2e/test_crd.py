@@ -8,8 +8,7 @@ from kubernetes import client, config
 from time import sleep
 from deepdiff import DeepDiff
 from http import HTTPStatus
-
-from passoperator.utils import b64Enc
+from humps import decamelize
 
 from test.common import (
     load_data,
@@ -101,7 +100,7 @@ class PassSecretE2E(TestCase):
             'kind': 'Secret',
             'metadata': passsecret['spec']['managedSecret']['metadata'],
             'type': passsecret['spec']['managedSecret']['type'],
-            'data': {}
+            'string_data': {}
         }
 
         # Handle optional fields.
@@ -110,15 +109,15 @@ class PassSecretE2E(TestCase):
         else:
             converted_managed_secret['immutable'] = None
 
+        decamelized_converted_managed_secret = decamelize(converted_managed_secret)
+
         # Now populate the data with the proper keys.
         for key in passsecret['spec']['encryptedData']:
             passstore_path = passsecret['spec']['encryptedData'][key]
 
-            converted_managed_secret['data'][key] = b64Enc(
-                decrypted_passsecret['spec']['encryptedData'][passstore_path]
-            )
+            decamelized_converted_managed_secret['string_data'][key] = decrypted_passsecret['spec']['encryptedData'][passstore_path]
 
-        return converted_managed_secret
+        return decamelized_converted_managed_secret
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -253,10 +252,14 @@ class PassSecretE2E(TestCase):
                 exclude_paths=[
                     "root['metadata']['labels']",
                     "root['metadata']['annotations']",
-                    "root['metadata']['creationTimestamp']",
-                    "root['metadata']['resourceVersion']",
-                    "root['metadata']['uid']"
-                    "root['finalizers']"
+                    "root['metadata']['creation_timestamp']",
+                    "root['metadata']['resource_version']",
+                    "root['metadata']['uid']",
+                    "root['metadata']['finalizers']",
+                    "root['metadata']['generation']",
+                    "root['metadata']['managed_fields']",
+                    "root['metadata']['self_link']",
+                    "root['metadata']['owner_references']",
                 ],
                 max_diffs=None,
                 ignore_order=True
