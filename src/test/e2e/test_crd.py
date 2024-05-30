@@ -87,6 +87,10 @@ class PassSecretE2E(TestCase):
         Args:
             passsecret (dict): The PassSecret object.
             decrypted_passsecret (dict): The decrypted PassSecret object.
+
+        Returns:
+            dict: The expected managed secret object from tying together a PassSecret manifest and a decrypted PassSecret
+                manifest, which is generated on-the-fly every e2e run.
         """
 
         converted_managed_secret = {
@@ -95,9 +99,14 @@ class PassSecretE2E(TestCase):
             'kind': 'Secret',
             'metadata': passsecret['spec']['managedSecret']['metadata'],
             'type': passsecret['spec']['managedSecret']['type'],
-            'immutable': passsecret['spec']['managedSecret']['immutable'],
             'data': {}
         }
+
+        # Handle optional fields.
+        if 'immutable' in passsecret['spec']['managedSecret']:
+            converted_managed_secret['immutable'] = passsecret['spec']['managedSecret']['immutable']
+        else:
+            converted_managed_secret['immutable'] = None
 
         # Now populate the data with the proper keys.
         for key in passsecret['spec']['encryptedData']:
@@ -206,6 +215,8 @@ class PassSecretE2E(TestCase):
             body=self.passsecret_data_singular
         )
 
+        _managedSecret: client.V1Secret
+
         # Check that the managed secret exists.
         for _ in range(5):
             try:
@@ -222,10 +233,12 @@ class PassSecretE2E(TestCase):
                     f'Failed to create managed secret for singular-data PassSecret: {e}'
                 )
 
-        # Check that the managed secret contains the proper data.
+        # Check that the managed secret contains the expected data. This is done by asserting that the difference between the
+        # expected managed secret data and the actual managed secret data is an empty dictionary, with the exception of a few
+        # fields that are not relevant to the test.
         self.assertDictEqual(
             DeepDiff(
-                dict(_managedSecret.data),
+                _managedSecret.to_dict(),
                 # Convert the unencrypted PassSecret data to the format that the operator would have created the managed secret in.
                 self.convertDecryptedPassSecrets(
                     self.passsecret_data_singular,
@@ -234,9 +247,13 @@ class PassSecretE2E(TestCase):
                 exclude_paths=[
                     "root['metadata']['labels']",
                     "root['metadata']['annotations']",
-                    "root['spec']['managedSecret']['apiVersion']",
-                    "root['spec']['managedSecret']['finalizers']"
-                ]
+                    "root['metadata']['creationTimestamp']",
+                    "root['metadata']['resourceVersion']",
+                    "root['metadata']['uid']"
+                    "root['finalizers']"
+                ],
+                max_diffs=None,
+                ignore_order=True
             ),
             {}
         )

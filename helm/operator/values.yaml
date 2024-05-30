@@ -12,8 +12,8 @@ deployment:
   pullSecrets: []
 
   image:
-    ## @param deployment.image.name [string, default: pass-operator] The name of the image.
-    name: pass-operator
+    ## @param deployment.image.name [string, default: premiscale/pass-operator] The name of the image.
+    name: premiscale/pass-operator
     ## @param deployment.image.tag [string, default: ignore] The tag of the image. The default is "ignore" to ensure users provide a tag.
     tag: ignore
     ## @param deployment.image.pullPolicy [string, default: Always] The pull policy of the image.

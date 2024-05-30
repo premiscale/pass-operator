@@ -190,7 +190,9 @@ def build_e2e_image(
         '--build-arg', f'PASS_VERSION={pass_version}',
         '--build-arg', f'TINI_VERSION={tini_version}',
         '--build-arg', f'ARCHITECTURE={architecture}'
-    ]).returnCode or run(['docker', 'push', f'{registry}/pass-operator-e2e:{tag}']).returnCode
+    ]).returnCode \
+        or run(['docker', 'push', f'{registry}/pass-operator-e2e:{tag}']).returnCode \
+        or run(['docker', 'push', f'{registry}/pass-operator-e2e:{tag}']).returnCode
 
 
 def install_pass_operator_e2e(
@@ -296,7 +298,9 @@ def build_operator_image(
     return run([
         'docker', 'build', '-t', f'{registry}/pass-operator:{tag}', '-f', './Dockerfile', '.',
         '--target', 'develop'
-    ]).returnCode or run(['docker', 'push', f'{registry}/pass-operator:{tag}']).returnCode
+    ]).returnCode \
+        or run(['docker', 'push', f'{registry}/pass-operator:{tag}']).returnCode \
+        or run(['docker', 'push', f'{registry}/pass-operator:{tag}']).returnCode
 
 
 def install_pass_operator(
