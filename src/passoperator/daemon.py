@@ -88,6 +88,7 @@ def _lift_passsecret_block(body: kopf.Body) -> None:
     Args:
         body [kopf.Body]: raw body of the PassSecret.
     """
+    log.debug(f'Lifting block on PassSecret "{body["metadata"]["name"]}" in namespace "{body["metadata"]["namespace"]}"')
     __in_progress_queue.remove(
         (
             body['metadata']['name'],
@@ -253,9 +254,6 @@ def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.
     # until it's safe to modify the managed secret.
     _block_passsecret_block(body)
 
-    # Add a block to the reconciliation loop to prevent any other handlers from modifying the managed secret.
-    _passsecret_block(body)
-
     # Parse the old PassSecret manifest.
     try:
         oldPassSecret = PassSecret.from_kopf(
@@ -324,12 +322,10 @@ def create(body: kopf.Body, **_: Any) -> None:
     Args:
         body [kopf.Body]: raw body of the created PassSecret.
     """
+
     # If a reconciliation is already in progress for the triggered PassSecret, block this event handler
     # until it's safe to modify the managed secret.
     _block_passsecret_block(body)
-
-    # Indicate to the reconciliation loop that this PassSecret is in progress.
-    _passsecret_block(body)
 
     try:
         passSecretObj = PassSecret.from_kopf(body)
@@ -369,12 +365,10 @@ def delete(body: kopf.Body, **_: Any) -> None:
     Args:
         body [kopf.Body]: raw body of the deleted PassSecret.
     """
+
     # If a reconciliation is already in progress for the triggered PassSecret, block this event handler
     # until it's safe to modify the managed secret.
     _block_passsecret_block(body)
-
-    # Indicate to the reconciliation loop that this PassSecret is in progress.
-    _passsecret_block(body)
 
     try:
         passSecretObj = PassSecret.from_kopf(body)
