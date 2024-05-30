@@ -44,6 +44,9 @@ config.load_kube_config(
 )
 
 
+ATTEMPTS_TO_READ_SECRETS = 10
+
+
 class PassSecretE2E(TestCase):
     """
     Methods for testing the Kubernetes operator end-to-end.
@@ -225,7 +228,7 @@ class PassSecretE2E(TestCase):
         _managedSecret: client.V1Secret
 
         # Check that the managed secret exists.
-        for _ in range(5):
+        for _ in range(ATTEMPTS_TO_READ_SECRETS):
             try:
                 _managedSecret = v1.read_namespaced_secret(
                     name='singular-data',
@@ -286,7 +289,7 @@ class PassSecretE2E(TestCase):
         _managedSecret: client.V1Secret
 
         # Check that the managed secret exists.
-        for _ in range(10):
+        for _ in range(ATTEMPTS_TO_READ_SECRETS):
             try:
                 _managedSecret = v1.read_namespaced_secret(
                     name='zero-data',
@@ -343,7 +346,7 @@ class PassSecretE2E(TestCase):
         _managedSecret: client.V1Secret
 
         # Check that the managed secret exists.
-        for _ in range(5):
+        for _ in range(ATTEMPTS_TO_READ_SECRETS):
             try:
                 _managedSecret = v1.read_namespaced_secret(
                     name='multiple-data',

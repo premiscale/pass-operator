@@ -122,11 +122,18 @@ class ManagedSecret:
             finalizers (bool): if True, include the finalizers field in the output.
         """
         d = dict(self.to_dict(export=True))
-        d.pop('data')
+
+        # Refine the data a bit so it corresponds to the k8s.client.V1Secret object.
+        if 'data' in d and not d['data']:
+            d.pop('data')
+
         d.pop('apiVersion')
+
         if not finalizers:
             d.pop('finalizers')
+
         d['string_data'] = self.stringData
+
         return d
 
     def __eq__(self, __value: object) -> bool:
