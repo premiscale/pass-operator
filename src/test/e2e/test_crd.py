@@ -38,10 +38,6 @@ from test.e2e.lib import (
     uninstall_pass_operator_e2e
 )
 
-import sys
-
-
-# Generate GPG and SSH keypairs for use in testing.
 
 config.load_kube_config(
     context='pass-operator'
@@ -245,7 +241,7 @@ class PassSecretE2E(TestCase):
                 )
         else:
             self.fail(
-                'Failed to read managed secret.'
+                'Failed to read managed secret within the alotted time period.'
             )
 
         # Check that the managed secret contains the expected data. This is done by asserting that the difference between the
