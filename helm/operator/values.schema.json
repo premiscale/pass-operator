@@ -150,6 +150,11 @@
                             "type": "string",
                             "description": "The passphrase for the GPG key, if there is one.",
                             "default": "\"\""
+                        },
+                        "threads": {
+                            "type": "number",
+                            "description": "Number of threads to spawn for decryption. This can help significantly speed up decryption on secrets with many fields.",
+                            "default": "4"
                         }
                     }
                 },

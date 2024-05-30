@@ -116,6 +116,8 @@ spec:
               value: {{ .key_id }}
                 {{- end }}
               {{- end }}
+            - name: PASS_DECRYPT_THREADS
+              value: {{ .Values.operator.gpg.threads | quote }}
             - name: PASS_GIT_URL
               value: {{ .Values.operator.git.url | quote }}
             - name: PASS_GIT_BRANCH

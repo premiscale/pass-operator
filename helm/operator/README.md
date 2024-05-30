@@ -192,6 +192,7 @@ helm upgrade --install password-store-operator helm/operator/ --namespace passwo
 | `operator.gpg.key_id`        | The key ID of the (private) GPG key.                                                                                                                                  | `""`              |
 | `operator.gpg.value`         | The armored string of the private GPG key b64enc'd.                                                                                                                   | `""`              |
 | `operator.gpg.passphrase`    | The passphrase for the GPG key, if there is one.                                                                                                                      | `""`              |
+| `operator.gpg.threads`       | Number of threads to spawn for decryption. This can help significantly speed up decryption on secrets with many fields.                                               | `4`               |
 | `operator.git.branch`        | The branch of the Git repository to clone and pull from.                                                                                                              | `main`            |
 | `operator.git.url`           | The (SSH) URL of the Git repository. HTTPS is not supported at this time.                                                                                             | `""`              |
 

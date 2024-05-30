@@ -18,6 +18,7 @@
     "minikube:delete": "./scripts/minikube.sh delete",
     "test:e2e": "yarn minikube:up && poetry run pytest --full-trace -vrP src/test/e2e; yarn minikube:delete",
     "test:unit": "poetry run pytest --full-trace -vrP src/test/unit",
-    "test:e2e:test": "./src/test_hook.py"
+    "test:e2e:test": "./src/test_hook.py",
+    "helm:update:crds:json": "helm template helm/operator-crds/ | yq -o json -M '.' > helm/operator-crds/_json/PassSecret.json"
   }
 }
