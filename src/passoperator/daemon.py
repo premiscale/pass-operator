@@ -119,6 +119,7 @@ def reconciliation(body: kopf.Body, **_: Any) -> None:
     v1 = client.CoreV1Api()
 
     # Create a new PassSecret object with an up-to-date managedSecret decrypted value from the pass store.
+    _passsecret_block(body)
     passSecretObj = PassSecret.from_kopf(body)
 
     log.info(
@@ -138,6 +139,7 @@ def reconciliation(body: kopf.Body, **_: Any) -> None:
         # submit a patch request to update it.
         if not _managedSecret.data_equals(passSecretObj.spec.managedSecret):
             if _managedSecret.immutable:
+                _lift_passsecret_block(body)
                 raise kopf.TemporaryError(
                     f'PassSecret "{passSecretObj.metadata.name}" managed secret "{passSecretObj.spec.managedSecret.metadata.name}" is immutable. Ignoring data patch.'
                 )
@@ -164,7 +166,10 @@ def reconciliation(body: kopf.Body, **_: Any) -> None:
                 )
             )
         else:
+            _lift_passsecret_block(body)
             raise kopf.PermanentError(e)
+    finally:
+        _lift_passsecret_block(body)
 
 
 # @kopf.on.cleanup()
