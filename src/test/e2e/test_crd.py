@@ -52,6 +52,8 @@ class PassSecretE2E(TestCase):
     Methods for testing the Kubernetes operator end-to-end.
     """
 
+    maxDiff = None
+
     ## Test data attributes.
 
     passsecret_data_singular: dict
@@ -232,6 +234,10 @@ class PassSecretE2E(TestCase):
                 self.fail(
                     f'Failed to create managed secret for singular-data PassSecret: {e}'
                 )
+        else:
+            self.fail(
+                'Failed to read managed secret.'
+            )
 
         # Check that the managed secret contains the expected data. This is done by asserting that the difference between the
         # expected managed secret data and the actual managed secret data is an empty dictionary, with the exception of a few
