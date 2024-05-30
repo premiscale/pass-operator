@@ -32,7 +32,7 @@ def decrypt(path: Path, home: Path = Path('~/.gnupg').expanduser(), passphrase: 
     try:
         # https://gnupg.readthedocs.io/en/latest/#decryption
         decrypted_file = gpg.decrypt_file(
-            f'{str(path)}.gpg',
+            f'{path}.gpg',
             always_trust=True,
             passphrase=passphrase
         )

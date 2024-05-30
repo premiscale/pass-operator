@@ -10,6 +10,7 @@ from attrs import define, asdict as to_dict
 from cattrs import structure as from_dict
 from humps import camelize
 from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor
 
 from passoperator.gpg import decrypt
 from passoperator.utils import b64Dec, b64Enc
@@ -121,11 +122,18 @@ class ManagedSecret:
             finalizers (bool): if True, include the finalizers field in the output.
         """
         d = dict(self.to_dict(export=True))
-        d.pop('data')
+
+        # Refine the data a bit so it corresponds to the k8s.client.V1Secret object.
+        if 'data' in d and not d['data']:
+            d.pop('data')
+
         d.pop('apiVersion')
+
         if not finalizers:
             d.pop('finalizers')
+
         d['string_data'] = self.stringData
+
         return d
 
     def __eq__(self, __value: object) -> bool:
@@ -193,19 +201,29 @@ class PassSecretSpec:
         """
         stringData = {}
 
-        for secretKey in encryptedData:
-            secretPath = encryptedData[secretKey]
+        with ThreadPoolExecutor(max_workers=int(env['PASS_DECRYPT_THREADS'])) as executor:
+            threads: Dict = {}
 
-            decryptedSecret = decrypt(
-                Path(f'{env["PASS_DIRECTORY"]}/{secretPath}'),
-                passphrase=env['PASS_GPG_PASSPHRASE']
-            )
+            # Decrypt each secret in a separate thread and store the result in a dictionary.
+            for secretKey in encryptedData:
+                secretPath = encryptedData[secretKey]
 
-            if decryptedSecret:
-                stringData[secretKey] = decryptedSecret
-            else:
-                log.error(f'Failed to decrypt secret at path: {secretPath}')
-                stringData[secretKey] = ''
+                # Because we're only decrypting, this operation should be threadsafe.
+                threads[secretKey] = executor.submit(
+                    decrypt,
+                    Path(f'{env["PASS_DIRECTORY"]}/{secretPath}'),
+                    passphrase=env['PASS_GPG_PASSPHRASE']
+                )
+
+            for secretKey in threads:
+                thread = threads[secretKey]
+                decryptedSecret = thread.result()
+
+                if decryptedSecret is not None:
+                    stringData[secretKey] = decryptedSecret
+                else:
+                    log.error(f'Failed to decrypt secret at path: {secretPath}')
+                    stringData[secretKey] = ''
 
         return ManagedSecret(
             metadata=ms.metadata,

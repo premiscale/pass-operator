@@ -19,16 +19,16 @@ interface to installing this chart and others in a local e2e testing environment
 
 ### E2E Deployment
 
-| Name                                  | Description                                                                                                         | Value           |
-| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | --------------- |
-| `deployment.pullSecrets`              | A list of pull secret names. These names are automatically mapped to key: secretname in the imagePullSecrets field. | `[]`            |
-| `deployment.image.name`               | The name of the image.## @param deployment.image.name [string, default: pass-operator] The name of the image.       | `pass-operator` |
-| `deployment.image.tag`                | The tag of the image. The default is "ignore" to ensure users provide a tag.                                        | `ignore`        |
-| `deployment.image.pullPolicy`         | The pull policy of the image.                                                                                       | `Always`        |
-| `deployment.resources`                | Set resources for the pod.                                                                                          | `{}`            |
-| `deployment.livenessProbe`            | Configure the liveness probe for the pod. The defaults are set to check that SSHd is listening on TCP port 22.      | `{}`            |
-| `deployment.podSecurityContext`       | Configure the security context for the pod.                                                                         | `{}`            |
-| `deployment.containerSecurityContext` | Configure the security context for the container.                                                                   | `{}`            |
+| Name                                  | Description                                                                                                         | Value               |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ------------------- |
+| `deployment.pullSecrets`              | A list of pull secret names. These names are automatically mapped to key: secretname in the imagePullSecrets field. | `[]`                |
+| `deployment.image.name`               | The name of the image.## @param deployment.image.name [string, default: pass-operator] The name of the image.       | `pass-operator-e2e` |
+| `deployment.image.tag`                | The tag of the image. The default is "ignore" to ensure users provide a tag.                                        | `ignore`            |
+| `deployment.image.pullPolicy`         | The pull policy of the image.                                                                                       | `Always`            |
+| `deployment.resources`                | Set resources for the pod.                                                                                          | `{}`                |
+| `deployment.livenessProbe`            | Configure the liveness probe for the pod. The defaults are set to check that SSHd is listening on TCP port 22.      | `{}`                |
+| `deployment.podSecurityContext`       | Configure the security context for the pod.                                                                         | `{}`                |
+| `deployment.containerSecurityContext` | Configure the security context for the container.                                                                   | `{}`                |
 
 ### Operator Configuration
 

@@ -162,24 +162,24 @@ helm upgrade --install password-store-operator helm/operator/ --namespace passwo
 
 ### Operator Deployment
 
-| Name                                         | Description                                                                                                                            | Value           |
-| -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | --------------- |
-| `deployment.pullSecrets`                     | A list of pull secret names. These names are automatically mapped to key: secretname in the imagePullSecrets field.                    | `[]`            |
-| `deployment.image.name`                      | The name of the image.                                                                                                                 | `pass-operator` |
-| `deployment.image.tag`                       | The tag of the image. The default is "ignore" to ensure users provide a tag.                                                           | `ignore`        |
-| `deployment.image.pullPolicy`                | The pull policy of the image.                                                                                                          | `Always`        |
-| `deployment.resources`                       | Set resources for the pod.                                                                                                             | `{}`            |
-| `deployment.livenessProbe`                   | Configure the liveness probe for the pod. The defaults are set to check the /healthz endpoint on port 8080, which is provided by Kopf. | `{}`            |
-| `deployment.podSecurityContext`              | Configure the security context for the pod.                                                                                            | `{}`            |
-| `deployment.podSecurityContext.runAsNonRoot` | If true, the pod is required to run as a non-root user.                                                                                | `true`          |
-| `deployment.containerSecurityContext`        | Configure the security context for the container.                                                                                      | `{}`            |
+| Name                                         | Description                                                                                                                            | Value                      |
+| -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- |
+| `deployment.pullSecrets`                     | A list of pull secret names. These names are automatically mapped to key: secretname in the imagePullSecrets field.                    | `[]`                       |
+| `deployment.image.name`                      | The name of the image.                                                                                                                 | `premiscale/pass-operator` |
+| `deployment.image.tag`                       | The tag of the image. The default is "ignore" to ensure users provide a tag.                                                           | `ignore`                   |
+| `deployment.image.pullPolicy`                | The pull policy of the image.                                                                                                          | `Always`                   |
+| `deployment.resources`                       | Set resources for the pod.                                                                                                             | `{}`                       |
+| `deployment.livenessProbe`                   | Configure the liveness probe for the pod. The defaults are set to check the /healthz endpoint on port 8080, which is provided by Kopf. | `{}`                       |
+| `deployment.podSecurityContext`              | Configure the security context for the pod.                                                                                            | `{}`                       |
+| `deployment.podSecurityContext.runAsNonRoot` | If true, the pod is required to run as a non-root user.                                                                                | `true`                     |
+| `deployment.containerSecurityContext`        | Configure the security context for the container.                                                                                      | `{}`                       |
 
 ### Operator Configuration
 
 | Name                         | Description                                                                                                                                                           | Value             |
 | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
 | `operator.interval`          | The interval in seconds to check for changes in the secrets in the pass store.                                                                                        | `60`              |
-| `operator.initial_delay`     | The initial delay in seconds before the first check for changes in the secrets in the pass store.                                                                     | `3`               |
+| `operator.initial_delay`     | The initial delay in seconds before the first check for changes in the secrets in the pass store.                                                                     | `60`              |
 | `operator.priority`          | The priority of the operator. The higher the number, the higher the priority. Only useful if multiple operators are running.                                          | `100`             |
 | `operator.pass.binary`       | The path to the pass binary.                                                                                                                                          | `""`              |
 | `operator.pass.storeSubPath` | A subpath within `~/.password-store`.                                                                                                                                 | `""`              |
@@ -192,6 +192,7 @@ helm upgrade --install password-store-operator helm/operator/ --namespace passwo
 | `operator.gpg.key_id`        | The key ID of the (private) GPG key.                                                                                                                                  | `""`              |
 | `operator.gpg.value`         | The armored string of the private GPG key b64enc'd.                                                                                                                   | `""`              |
 | `operator.gpg.passphrase`    | The passphrase for the GPG key, if there is one.                                                                                                                      | `""`              |
+| `operator.gpg.threads`       | Number of threads to spawn for decryption. This can help significantly speed up decryption on secrets with many fields.                                               | `4`               |
 | `operator.git.branch`        | The branch of the Git repository to clone and pull from.                                                                                                              | `main`            |
 | `operator.git.url`           | The (SSH) URL of the Git repository. HTTPS is not supported at this time.                                                                                             | `""`              |
 

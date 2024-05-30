@@ -2,7 +2,7 @@ _extends: .github
 
 repository:
   name: pass-operator
-  description: A kubernetes operator that syncs and decrypts secrets from pass git repositories
+  description: A Kubernetes operator that syncs and decrypts secrets from pass store git repositories
   homepage: https://github.com/premiscale/pass-operator
 
   # A comma-separated list of topics to set on the repository

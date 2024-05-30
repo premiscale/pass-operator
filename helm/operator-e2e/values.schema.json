@@ -34,7 +34,7 @@
                         "name": {
                             "type": "string",
                             "description": "The name of the image.## @param deployment.image.name [string, default: pass-operator] The name of the image.",
-                            "default": "pass-operator"
+                            "default": "pass-operator-e2e"
                         },
                         "tag": {
                             "type": "string",

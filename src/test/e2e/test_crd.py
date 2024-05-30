@@ -8,6 +8,7 @@ from kubernetes import client, config
 from time import sleep
 from deepdiff import DeepDiff
 from http import HTTPStatus
+from humps import decamelize
 
 from passoperator.utils import b64Enc
 
@@ -37,28 +38,21 @@ from test.e2e.lib import (
     uninstall_pass_operator_e2e
 )
 
-import logging
-import sys
-
-
-log = logging.getLogger(__name__)
-logging.basicConfig(
-    stream=sys.stdout,
-    format='%(asctime)s | %(levelname)s | %(name)s | %(message)s',
-    level=logging.INFO
-)
-
-# Generate GPG and SSH keypairs for use in testing.
 
 config.load_kube_config(
     context='pass-operator'
 )
 
 
+ATTEMPTS_TO_READ_SECRETS = 10
+
+
 class PassSecretE2E(TestCase):
     """
     Methods for testing the Kubernetes operator end-to-end.
     """
+
+    maxDiff = None
 
     ## Test data attributes.
 
@@ -88,13 +82,21 @@ class PassSecretE2E(TestCase):
     @staticmethod
     def convertDecryptedPassSecrets(passsecret: dict, decrypted_passsecret: dict) -> dict:
         """
-        This is just a helper method for DeepDiff'ing locally-unencrypted (random) PassSecret data with the managed
+        This is just a helper method for when we're DeepDiff'ing locally-unencrypted (random) PassSecret data with the managed
         secret data that the operator decrypts and creates. This method is similar to what src.operator.secret looked like
-        before it was refactored with attrs and cattrs.
+        before it was refactored with attrs and cattrs, but it's different in that it ties together the randomly generated
+        secret data with the original PassSecret objects, which is only useful for e2e testing.
+
+        This method also ties together the snake_case and camelCase fields of the PassSecret and managed secret objects returned
+        by the k8s client.
 
         Args:
-            passsecret (dict): The PassSecret object.
-            decrypted_passsecret (dict): The decrypted PassSecret object.
+            passsecret (dict): The PassSecret object that's submitted to the cluster to generate a managed secret.
+            decrypted_passsecret (dict): The decrypted PassSecret object, so we can tie the managed secret and generated test data together.
+
+        Returns:
+            dict: The expected managed secret object from tying together a PassSecret manifest and a decrypted PassSecret
+                manifest, which is generated on-the-fly every e2e run.
         """
 
         converted_managed_secret = {
@@ -106,15 +108,25 @@ class PassSecretE2E(TestCase):
             'data': {}
         }
 
+        # Handle optional fields.
+        if 'immutable' in passsecret['spec']['managedSecret']:
+            converted_managed_secret['immutable'] = passsecret['spec']['managedSecret']['immutable']
+        else:
+            converted_managed_secret['immutable'] = None
+
+        if 'stringData' in passsecret['spec']['managedSecret']:
+            converted_managed_secret['string_data'] = passsecret['spec']['managedSecret']['stringData']
+        else:
+            converted_managed_secret['string_data'] = None
+
+        decamelized_converted_managed_secret = decamelize(converted_managed_secret)
+
         # Now populate the data with the proper keys.
-        for key in passsecret['spec']['managedSecret']['data']:
-            passstore_path = passsecret['spec']['managedSecret']['data'][key]
+        for key in passsecret['spec']['encryptedData']:
+            passstore_path = passsecret['spec']['encryptedData'][key]
+            decamelized_converted_managed_secret['data'][key] = b64Enc(decrypted_passsecret['spec']['encryptedData'][passstore_path])
 
-            converted_managed_secret['data'][key] = b64Enc(
-                decrypted_passsecret['spec']['managedSecret']['data'][passstore_path]
-            )
-
-        return converted_managed_secret
+        return decamelized_converted_managed_secret
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -182,7 +194,7 @@ class PassSecretE2E(TestCase):
             pass_storeSubPath='repo',
             gpg_createSecret=True,
             gpg_passphrase=gpg_passphrase,
-            git_url='root@pass-operator-e2e:/opt/operator/repo.git',
+            git_url='root@pass-operator-e2e:/root/repo.git',
             git_branch='main'
         )
 
@@ -192,14 +204,15 @@ class PassSecretE2E(TestCase):
         """
 
         # Wait for all pods in the cluster to be ready before running each test.
-        check_cluster_pod_status()
+        if not check_cluster_pod_status():
+            self.fail('Not all pods are determined ready in the cluster.')
 
     # def tearDown(self) -> None:
     #     return super().tearDown()
 
     def test_operator_singular_data(self) -> None:
         """
-        Test that the operator is running as intended in the cluster.
+        Test that a PassSecret object with a single encrypted data field is created and managed by the operator correctly.
         """
         v1custom = client.CustomObjectsApi()
         v1 = client.CoreV1Api()
@@ -213,8 +226,10 @@ class PassSecretE2E(TestCase):
             body=self.passsecret_data_singular
         )
 
+        _managedSecret: client.V1Secret
+
         # Check that the managed secret exists.
-        while True:
+        for _ in range(ATTEMPTS_TO_READ_SECRETS):
             try:
                 _managedSecret = v1.read_namespaced_secret(
                     name='singular-data',
@@ -225,36 +240,154 @@ class PassSecretE2E(TestCase):
                 if e.status == HTTPStatus.NOT_FOUND:
                     sleep(3)
                     continue
-                log.error(e)
+                self.fail(
+                    f'Failed to create managed secret for singular-data PassSecret: {e}'
+                )
+        else:
+            self.fail(
+                'Failed to read managed secret within the alotted time period.'
+            )
 
-        # Check that the managed secret contains the proper data.
+        # Check that the managed secret contains the expected data. This is done by asserting that the difference between the
+        # expected managed secret data and the actual managed secret data is an empty dictionary, with the exception of a few
+        # fields that are not relevant to the test.
         self.assertDictEqual(
             DeepDiff(
-                dict(_managedSecret.data),
+                _managedSecret.to_dict(),
                 # Convert the unencrypted PassSecret data to the format that the operator would have created the managed secret in.
                 self.convertDecryptedPassSecrets(
                     self.passsecret_data_singular,
                     self.decrypted_passsecret_data_singular
                 ),
+                include_paths=[
+                    "root['metadata']['name']",
+                    "root['metadata']['namespace']",
+                ],
                 exclude_paths=[
-                    "root['metadata']['labels']",
-                    "root['metadata']['annotations']",
-                    "root['spec']['managedSecret']['apiVersion']",
-                    "root['spec']['managedSecret']['finalizers']"
-                ]
+                    "root['metadata']"
+                ],
+                ignore_order=True
             ),
             {}
         )
 
     def test_operator_zero_data(self) -> None:
         """
-        Test that the operator is running as intended in the cluster.
+        Test that the application of a PassSecret with no data is handled correctly by the operator.
         """
+        v1custom = client.CustomObjectsApi()
+        v1 = client.CoreV1Api()
+
+        # Create a namespaced PassSecret object, then vet that the managed secret both exists and contains the proper data (i.e., the operator did its job).
+        v1custom.create_namespaced_custom_object(
+            group='secrets.premiscale.com',
+            version='v1alpha1',
+            namespace='pass-operator',
+            plural='passsecrets',
+            body=self.passsecret_data_zero
+        )
+
+        _managedSecret: client.V1Secret
+
+        # Check that the managed secret exists.
+        for _ in range(ATTEMPTS_TO_READ_SECRETS):
+            try:
+                _managedSecret = v1.read_namespaced_secret(
+                    name='zero-data',
+                    namespace='pass-operator'
+                )
+                break
+            except client.rest.ApiException as e:
+                if e.status == HTTPStatus.NOT_FOUND:
+                    sleep(3)
+                    continue
+                self.fail(
+                    f'Failed to create managed secret for zero-data PassSecret: {e}'
+                )
+        else:
+            self.fail(
+                'Failed to read managed secret within the alotted time period.'
+            )
+
+        self.assertDictEqual(
+            DeepDiff(
+                _managedSecret.to_dict(),
+                self.convertDecryptedPassSecrets(
+                    self.passsecret_data_zero,
+                    self.decrypted_passsecret_data_zero
+                ),
+                include_paths=[
+                    "root['metadata']['name']",
+                    "root['metadata']['namespace']",
+                ],
+                exclude_paths=[
+                    "root['metadata']"
+                ],
+                ignore_order=True
+            ),
+            {}
+        )
 
     def test_operator_multiple_data(self) -> None:
         """
         Test that the operator is running as intended in the cluster.
         """
+        v1custom = client.CustomObjectsApi()
+        v1 = client.CoreV1Api()
+
+        # Create a namespaced PassSecret object, then vet that the managed secret both exists and contains the proper data (i.e., the operator did its job).
+        v1custom.create_namespaced_custom_object(
+            group='secrets.premiscale.com',
+            version='v1alpha1',
+            namespace='pass-operator',
+            plural='passsecrets',
+            body=self.passsecret_data_multiple
+        )
+
+        _managedSecret: client.V1Secret
+
+        # Check that the managed secret exists.
+        for _ in range(ATTEMPTS_TO_READ_SECRETS):
+            try:
+                _managedSecret = v1.read_namespaced_secret(
+                    name='multiple-data',
+                    namespace='pass-operator'
+                )
+                break
+            except client.rest.ApiException as e:
+                if e.status == HTTPStatus.NOT_FOUND:
+                    sleep(3)
+                    continue
+                self.fail(
+                    f'Failed to create managed secret for multiple-data PassSecret: {e}'
+                )
+        else:
+            self.fail(
+                'Failed to read managed secret within the alotted time period.'
+            )
+
+        # Check that the managed secret contains the expected data. This is done by asserting that the difference between the
+        # expected managed secret data and the actual managed secret data is an empty dictionary, with the exception of a few
+        # fields that are not relevant to the test.
+        self.assertDictEqual(
+            DeepDiff(
+                _managedSecret.to_dict(),
+                # Convert the unencrypted PassSecret data to the format that the operator would have created the managed secret in.
+                self.convertDecryptedPassSecrets(
+                    self.passsecret_data_multiple,
+                    self.decrypted_passsecret_data_multiple
+                ),
+                include_paths=[
+                    "root['metadata']['name']",
+                    "root['metadata']['namespace']",
+                ],
+                exclude_paths=[
+                    "root['metadata']"
+                ],
+                ignore_order=True
+            ),
+            {}
+        )
 
     def test_operator_singular_data_immutable(self) -> None:
         """

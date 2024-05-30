@@ -86,11 +86,15 @@ def check_cluster_pod_status(namespace: str | None = None) -> bool:
 
     # Ensure that all pods on the cluster are in a healthy state.
     for ns in namespaces:
-        while True:
+        # Try for up to 3 minutes to ensure all pods are running or completed or completely ready.
+        # Otherwise, return False and exit early.
+        for _ in range(60):
             if _check_namespaced_pods(ns):
                 break
             log.warning(f'Namespace {ns.metadata.name} has pods that are not running or completed or completely ready.') # type: ignore
             syncsleep(3)
+        else:
+            return False
 
     log.info('All pods in the cluster are running or completed or completely ready.')
 
@@ -185,12 +189,22 @@ def build_e2e_image(
     Returns:
         int: The return code of the docker build or push command that failed, or 0 if both succeeded.
     """
-    return run([
-        'docker', 'build', '-t', f'{registry}/pass-operator-e2e:{tag}', '-f', './src/test/Dockerfile.e2e', './src/test/',
-        '--build-arg', f'PASS_VERSION={pass_version}',
-        '--build-arg', f'TINI_VERSION={tini_version}',
-        '--build-arg', f'ARCHITECTURE={architecture}'
-    ]).returnCode or run(['docker', 'push', f'{registry}/pass-operator-e2e:{tag}']).returnCode
+    if (ret := run([
+            'docker', 'build', '-t', f'{registry}/pass-operator-e2e:{tag}', '-f', './src/test/Dockerfile.e2e', './src/test/',
+            '--build-arg', f'PASS_VERSION={pass_version}',
+            '--build-arg', f'TINI_VERSION={tini_version}',
+            '--build-arg', f'ARCHITECTURE={architecture}'
+        ]).returnCode) == 0:
+        # Retry pushing the image up to 3 times before failing.
+        for i in range(3):
+            if (ret := run(['docker', 'push', f'{registry}/pass-operator-e2e:{tag}']).returnCode) == 0:
+                return ret
+            elif i != 2:
+                log.warning(f'Failed to push e2e image to {registry}/pass-operator-e2e:{tag}. Retrying...')
+                syncsleep(3)
+        else:
+            log.error(f'Failed to push e2e image to {registry}/pass-operator-e2e:{tag}.')
+    return ret
 
 
 def install_pass_operator_e2e(
@@ -215,6 +229,7 @@ def install_pass_operator_e2e(
     return run([
         'helm', 'upgrade', '--install', '--namespace', namespace, '--create-namespace', 'pass-operator-e2e', './helm/operator-e2e',
             '--set', f'global.image.registry={registry}',
+            '--set', 'deployment.image.name=pass-operator-e2e',
             '--set', f'deployment.image.tag={image_tag}',
             '--set', f'operator.ssh.createSecret={str(ssh_createSecret).lower()}',
             '--set', f'operator.pass.storeSubPath={pass_storeSubPath}',
@@ -293,10 +308,20 @@ def build_operator_image(
     Returns:
         int: The return code of the docker build or push command that failed, or 0 if both succeeded.
     """
-    return run([
-        'docker', 'build', '-t', f'{registry}/pass-operator:{tag}', '-f', './Dockerfile', '.',
-        '--target', 'develop'
-    ]).returnCode or run(['docker', 'push', f'{registry}/pass-operator:{tag}']).returnCode
+    if (ret := run([
+            'docker', 'build', '-t', f'{registry}/pass-operator:{tag}', '-f', './Dockerfile', '.',
+            '--target', 'develop'
+        ]).returnCode) == 0:
+        # Retry pushing the image up to 3 times before failing.
+        for i in range(3):
+            if (ret := run(['docker', 'push', f'{registry}/pass-operator:{tag}']).returnCode) == 0:
+                return ret
+            elif i != 2:
+                log.warning(f'Failed to push e2e image to {registry}/pass-operator:{tag}. Retrying...')
+                syncsleep(3)
+        else:
+            log.error(f'Failed to push e2e image to {registry}/pass-operator:{tag}.')
+    return ret
 
 
 def install_pass_operator(
@@ -324,6 +349,7 @@ def install_pass_operator(
     return run([
         'helm', 'upgrade', '--install', 'pass-operator', './helm/operator', '--namespace', namespace, '--create-namespace',
             '--set', f'global.image.registry={registry}',
+            '--set', 'deployment.image.name=pass-operator',
             '--set', f'deployment.image.tag={image_tag}',
             '--set', f'operator.interval={operator_interval}',
             '--set', 'operator.initial_delay=1',

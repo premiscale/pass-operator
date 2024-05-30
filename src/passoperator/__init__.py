@@ -36,7 +36,8 @@ env: Dict[str, str] = {
     'PASS_GPG_KEY':           os.getenv('PASS_GPG_KEY', ''),
     'PASS_GPG_KEY_ID':        os.getenv('PASS_GPG_KEY_ID', ''),
     'PASS_GIT_URL':           os.getenv('PASS_GIT_URL', ''),
-    'PASS_GIT_BRANCH':        os.getenv('PASS_GIT_BRANCH', 'main')
+    'PASS_GIT_BRANCH':        os.getenv('PASS_GIT_BRANCH', 'main'),
+    'PASS_DECRYPT_THREADS':   os.getenv('PASS_DECRYPT_THREADS', '4'),
 }
 
 
@@ -46,6 +47,7 @@ try:
     float(env['OPERATOR_INITIAL_DELAY'])
     int(env['OPERATOR_PRIORITY'])
     IPv4Address(env['OPERATOR_POD_IP'])
+    int(env['PASS_DECRYPT_THREADS'])
 except (ValueError, AddressValueError) as e:
     log.error(e)
     sys.exit(1)

@@ -12,8 +12,8 @@ deployment:
   pullSecrets: []
 
   image:
-    ## @param deployment.image.name [string, default: pass-operator] The name of the image.
-    name: pass-operator
+    ## @param deployment.image.name [string, default: premiscale/pass-operator] The name of the image.
+    name: premiscale/pass-operator
     ## @param deployment.image.tag [string, default: ignore] The tag of the image. The default is "ignore" to ensure users provide a tag.
     tag: ignore
     ## @param deployment.image.pullPolicy [string, default: Always] The pull policy of the image.
@@ -53,8 +53,8 @@ operator:
   ## @param operator.interval [default: 60] The interval in seconds to check for changes in the secrets in the pass store.
   interval: 60
 
-  ## @param operator.initial_delay [default: 3] The initial delay in seconds before the first check for changes in the secrets in the pass store.
-  initial_delay: 3
+  ## @param operator.initial_delay [default: 60] The initial delay in seconds before the first check for changes in the secrets in the pass store.
+  initial_delay: 60
 
   ## @param operator.priority [default: 100] The priority of the operator. The higher the number, the higher the priority. Only useful if multiple operators are running.
   priority: 100
@@ -95,6 +95,9 @@ operator:
 
     ## @param operator.gpg.passphrase [string, default: ""] The passphrase for the GPG key, if there is one.
     passphrase: ""
+
+    ## @param operator.gpg.threads [default: 4] Number of threads to spawn for decryption. This can help significantly speed up decryption on secrets with many fields.
+    threads: 4
 
   git:
     ## @param operator.git.branch [string, default: main] The branch of the Git repository to clone and pull from.
