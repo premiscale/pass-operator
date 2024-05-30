@@ -86,11 +86,15 @@ def check_cluster_pod_status(namespace: str | None = None) -> bool:
 
     # Ensure that all pods on the cluster are in a healthy state.
     for ns in namespaces:
-        while True:
+        # Try for up to 3 minutes to ensure all pods are running or completed or completely ready.
+        # Otherwise, return False and exit early.
+        for _ in range(60):
             if _check_namespaced_pods(ns):
                 break
             log.warning(f'Namespace {ns.metadata.name} has pods that are not running or completed or completely ready.') # type: ignore
             syncsleep(3)
+        else:
+            return False
 
     log.info('All pods in the cluster are running or completed or completely ready.')
 

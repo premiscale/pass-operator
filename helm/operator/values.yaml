@@ -53,8 +53,8 @@ operator:
   ## @param operator.interval [default: 60] The interval in seconds to check for changes in the secrets in the pass store.
   interval: 60
 
-  ## @param operator.initial_delay [default: 3] The initial delay in seconds before the first check for changes in the secrets in the pass store.
-  initial_delay: 3
+  ## @param operator.initial_delay [default: 60] The initial delay in seconds before the first check for changes in the secrets in the pass store.
+  initial_delay: 60
 
   ## @param operator.priority [default: 100] The priority of the operator. The higher the number, the higher the priority. Only useful if multiple operators are running.
   priority: 100

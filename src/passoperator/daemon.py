@@ -3,7 +3,7 @@ A kubernetes operator that syncs and decrypts secrets from Linux password store 
 """
 
 
-from typing import Any
+from typing import Any, List, Tuple
 from pathlib import Path
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 from importlib import metadata
@@ -27,6 +27,55 @@ __version__ = metadata.version('pass-operator')
 
 log = logging.getLogger(__name__)
 
+__in_progress_queue: List[Tuple[Any, Any]] = []
+
+
+def _passsecret_block(body: kopf.Body) -> None:
+    """
+    Block handlers' progress on a PassSecret until it's safe to modify the managed secret.
+    Decryption takes time, so we want to be sure to queue up any changes.
+
+    Args:
+        body [kopf.Body]: raw body of the PassSecret.
+    """
+    __in_progress_queue.append(
+        (
+            body['metadata']['name'],
+            body['metadata']['namespace']
+        )
+    )
+
+
+def _is_passsecret_blocked(body: kopf.Body) -> bool:
+    """
+    Check if a PassSecret is blocked from modification.
+
+    Args:
+        body [kopf.Body]: raw body of the PassSecret.
+
+    Returns:
+        bool: True if the PassSecret is blocked, else False.
+    """
+    return (
+        body['metadata']['name'],
+        body['metadata']['namespace']
+    ) in __in_progress_queue
+
+
+def _lift_passsecret_block(body: kopf.Body) -> None:
+    """
+    Unblock handlers' progress to modify the managed secret.
+
+    Args:
+        body [kopf.Body]: raw body of the PassSecret.
+    """
+    __in_progress_queue.remove(
+        (
+            body['metadata']['name'],
+            body['metadata']['namespace']
+        )
+    )
+
 
 @kopf.on.startup()
 def start(settings: kopf.OperatorSettings, **_: Any) -> None:
@@ -43,7 +92,7 @@ def start(settings: kopf.OperatorSettings, **_: Any) -> None:
     'secrets.premiscale.com', 'v1alpha1', 'passsecret',
     # Interval to check every instance of a PassSecret.
     interval=float(env['OPERATOR_INTERVAL']),
-    # Initial delay in seconds before reviewing all managed PassSecrets.
+    # Initial delay in seconds before reviewing managed PassSecrets.
     initial_delay=float(env['OPERATOR_INITIAL_DELAY']),
     # Don't delay if the prior reconciliation hasn't completed.
     sharp=True)
@@ -57,10 +106,17 @@ def reconciliation(body: kopf.Body, **_: Any) -> None:
         body [kopf.Body]: raw body of the PassSecret.
     """
 
+    # Before we parse and decrypt anything, which is more expensive, check if this PassSecret is already in progress.
+    if _is_passsecret_blocked(body):
+        log.info(f'PassSecret "{body["metadata"]["name"]}" is still in progress. Skipping.')
+        return None
+
     # Ensure the GPG key ID in ~/.password-store/${PASS_DIRECTORY}/.gpg-id did not change with the git update.
     check_gpg_id(
         path=f'{env["PASS_DIRECTORY"]}/.gpg-id'
     )
+
+    v1 = client.CoreV1Api()
 
     # Create a new PassSecret object with an up-to-date managedSecret decrypted value from the pass store.
     passSecretObj = PassSecret.from_kopf(body)
@@ -68,9 +124,6 @@ def reconciliation(body: kopf.Body, **_: Any) -> None:
     log.info(
         f'Reconciling PassSecret "{passSecretObj.metadata.name}" managed Secret "{passSecretObj.spec.managedSecret.metadata.name}" in Namespace "{passSecretObj.spec.managedSecret.metadata.namespace}" against password store.'
     )
-
-    v1 = client.CoreV1Api()
-
 
     try:
         secret = v1.read_namespaced_secret(
@@ -113,6 +166,7 @@ def reconciliation(body: kopf.Body, **_: Any) -> None:
         else:
             raise kopf.PermanentError(e)
 
+
 # @kopf.on.cleanup()
 # def cleanup(**kwargs) -> None:
 #     pass
@@ -152,7 +206,7 @@ def lookup_managing_passsecret(managedSecretName: str) -> PassSecret | None:
 
 
 @kopf.on.update('secrets.premiscale.com', 'v1alpha1', 'passsecret')
-def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.Meta, **_: Any) -> None:
+def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.Meta, body: kopf.Body, **_: Any) -> None:
     """
     An update was received on the PassSecret object, so attempt to update the corresponding Secret.
 
@@ -160,6 +214,7 @@ def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.
 
     Args:
         body [kopf.Body]: raw body of the PassSecret.
+        meta [kopf.Meta]: metadata of the PassSecret.
         old [kopf.BodyEssence]: old body of the PassSecret.
         new [kopf.BodyEssence]: new body of the PassSecret.
     """
@@ -170,6 +225,8 @@ def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.
         }
     }
 
+    _passsecret_block(body)
+
     # Parse the old PassSecret manifest.
     try:
         oldPassSecret = PassSecret.from_kopf(
@@ -179,6 +236,7 @@ def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.
             }
         )
     except (ValueError, KeyError) as e:
+        _lift_passsecret_block(body)
         raise kopf.PermanentError(e)
 
     # Parse the new PassSecret manifest.
@@ -190,6 +248,7 @@ def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.
             }
         )
     except (ValueError, KeyError) as e:
+        _lift_passsecret_block(body)
         raise kopf.PermanentError(e)
 
     v1 = client.CoreV1Api()
@@ -224,6 +283,8 @@ def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.
         )
     except client.ApiException as e:
         raise kopf.PermanentError(e)
+    finally:
+        _lift_passsecret_block(body)
 
 
 @kopf.on.create('secrets.premiscale.com', 'v1alpha1', 'passsecret')
@@ -235,8 +296,12 @@ def create(body: kopf.Body, **_: Any) -> None:
         body [kopf.Body]: raw body of the created PassSecret.
     """
     try:
+        # Indicate to the reconciliation loop that this PassSecret is in progress.
+        _passsecret_block(body)
+
         passSecretObj = PassSecret.from_kopf(body)
     except (ValueError, KeyError) as e:
+        _lift_passsecret_block(body)
         raise kopf.PermanentError(e)
 
     log.info(f'PassSecret "{passSecretObj.metadata.name}" created')
@@ -250,13 +315,17 @@ def create(body: kopf.Body, **_: Any) -> None:
                 **passSecretObj.spec.managedSecret.to_client_dict(finalizers=False)
             )
         )
+
         log.info(
             f'Created PassSecret "{passSecretObj.metadata.name}" managed Secret "{passSecretObj.spec.managedSecret.metadata.name}" in Namespace "{passSecretObj.spec.managedSecret.metadata.namespace}"'
         )
     except client.ApiException as e:
         if e.status == HTTPStatus.CONFLICT:
             raise kopf.TemporaryError(f'Duplicate PassSecret "{passSecretObj.metadata.name}" managed Secret "{passSecretObj.spec.managedSecret.metadata.name}" in Namespace "{passSecretObj.spec.managedSecret.metadata.namespace}". Skipping.')
+
         raise kopf.PermanentError(e)
+    finally:
+        _lift_passsecret_block(body)
 
 
 @kopf.on.delete('secrets.premiscale.com', 'v1alpha1', 'passsecret')
@@ -268,8 +337,12 @@ def delete(body: kopf.Body, **_: Any) -> None:
         body [kopf.Body]: raw body of the deleted PassSecret.
     """
     try:
+        # Indicate to the reconciliation loop that this PassSecret is in progress.
+        _passsecret_block(body)
+
         passSecretObj = PassSecret.from_kopf(body)
     except (ValueError, KeyError) as e:
+        _lift_passsecret_block(body)
         raise kopf.PermanentError(e)
 
     log.info(f'PassSecret "{passSecretObj.metadata.name}" deleted')
@@ -286,6 +359,8 @@ def delete(body: kopf.Body, **_: Any) -> None:
         if e.status == HTTPStatus.NOT_FOUND:
             log.warning(f'PassSecret "{passSecretObj.metadata.name}" managed Secret "{passSecretObj.spec.managedSecret.metadata.name}" was not found. Skipping.')
         raise kopf.PermanentError(e)
+    finally:
+        _lift_passsecret_block(body)
 
 
 def check_gpg_id(path: Path | str, remove: bool =False) -> None:

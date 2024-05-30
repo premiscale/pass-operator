@@ -204,7 +204,8 @@ class PassSecretE2E(TestCase):
         """
 
         # Wait for all pods in the cluster to be ready before running each test.
-        check_cluster_pod_status()
+        if not check_cluster_pod_status():
+            self.fail('Not all pods are determined ready in the cluster.')
 
     # def tearDown(self) -> None:
     #     return super().tearDown()

@@ -71,7 +71,7 @@
                 "initial_delay": {
                     "type": "number",
                     "description": "The initial delay in seconds before the first check for changes in the secrets in the pass store.",
-                    "default": "3"
+                    "default": "60"
                 },
                 "priority": {
                     "type": "number",
