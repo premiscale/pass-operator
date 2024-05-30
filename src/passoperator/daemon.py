@@ -11,6 +11,7 @@ from kubernetes import client, config
 from http import HTTPStatus
 from concurrent.futures import ThreadPoolExecutor
 from functools import partial
+from time import sleep
 
 from passoperator.git import pull, clone
 from passoperator.utils import LogLevel
@@ -60,6 +61,22 @@ def _is_passsecret_blocked(body: kopf.Body) -> bool:
         body['metadata']['name'],
         body['metadata']['namespace']
     ) in __in_progress_queue
+
+
+def _block_passsecret_block(body: kopf.Body) -> None:
+    """
+    Block handlers' progress on a PassSecret until it's safe to modify the managed secret.
+    This should only ever be called by event handlers, not by the reconciliation loop.
+
+    Args:
+        body (kopf.Body): raw body of the PassSecret.
+    """
+    while True:
+        if not _is_passsecret_blocked(body):
+            _passsecret_block(body)
+            break
+        else:
+            sleep(0.5)
 
 
 def _lift_passsecret_block(body: kopf.Body) -> None:
@@ -230,6 +247,11 @@ def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.
         }
     }
 
+    # If a reconciliation is already in progress for the triggered PassSecret, block this event handler
+    # until it's safe to modify the managed secret.
+    _block_passsecret_block(body)
+
+    # Add a block to the reconciliation loop to prevent any other handlers from modifying the managed secret.
     _passsecret_block(body)
 
     # Parse the old PassSecret manifest.
@@ -300,10 +322,14 @@ def create(body: kopf.Body, **_: Any) -> None:
     Args:
         body [kopf.Body]: raw body of the created PassSecret.
     """
-    try:
-        # Indicate to the reconciliation loop that this PassSecret is in progress.
-        _passsecret_block(body)
+    # If a reconciliation is already in progress for the triggered PassSecret, block this event handler
+    # until it's safe to modify the managed secret.
+    _block_passsecret_block(body)
 
+    # Indicate to the reconciliation loop that this PassSecret is in progress.
+    _passsecret_block(body)
+
+    try:
         passSecretObj = PassSecret.from_kopf(body)
     except (ValueError, KeyError) as e:
         _lift_passsecret_block(body)
@@ -341,10 +367,14 @@ def delete(body: kopf.Body, **_: Any) -> None:
     Args:
         body [kopf.Body]: raw body of the deleted PassSecret.
     """
-    try:
-        # Indicate to the reconciliation loop that this PassSecret is in progress.
-        _passsecret_block(body)
+    # If a reconciliation is already in progress for the triggered PassSecret, block this event handler
+    # until it's safe to modify the managed secret.
+    _block_passsecret_block(body)
 
+    # Indicate to the reconciliation loop that this PassSecret is in progress.
+    _passsecret_block(body)
+
+    try:
         passSecretObj = PassSecret.from_kopf(body)
     except (ValueError, KeyError) as e:
         _lift_passsecret_block(body)
