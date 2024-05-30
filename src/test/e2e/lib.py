@@ -217,6 +217,7 @@ def install_pass_operator_e2e(
     return run([
         'helm', 'upgrade', '--install', '--namespace', namespace, '--create-namespace', 'pass-operator-e2e', './helm/operator-e2e',
             '--set', f'global.image.registry={registry}',
+            '--set', 'deployment.image.name=pass-operator-e2e',
             '--set', f'deployment.image.tag={image_tag}',
             '--set', f'operator.ssh.createSecret={str(ssh_createSecret).lower()}',
             '--set', f'operator.pass.storeSubPath={pass_storeSubPath}',
@@ -328,6 +329,7 @@ def install_pass_operator(
     return run([
         'helm', 'upgrade', '--install', 'pass-operator', './helm/operator', '--namespace', namespace, '--create-namespace',
             '--set', f'global.image.registry={registry}',
+            '--set', 'deployment.image.name=pass-operator',
             '--set', f'deployment.image.tag={image_tag}',
             '--set', f'operator.interval={operator_interval}',
             '--set', 'operator.initial_delay=1',
