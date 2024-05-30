@@ -39,6 +39,7 @@ def _passsecret_block(body: kopf.Body) -> None:
     Args:
         body [kopf.Body]: raw body of the PassSecret.
     """
+    log.debug(f'Blocking PassSecret "{body["metadata"]["name"]}" in namespace "{body["metadata"]["namespace"]}')
     __in_progress_queue.append(
         (
             body['metadata']['name'],
@@ -76,6 +77,7 @@ def _block_passsecret_block(body: kopf.Body) -> None:
             _passsecret_block(body)
             break
         else:
+            log.debug(f'PassSecret "{body["metadata"]["name"]}" in namespace "{body["metadata"]["namespace"]}" is already blocked.')
             sleep(0.5)
 
 
