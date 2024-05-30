@@ -121,7 +121,6 @@ class PassSecretE2E(TestCase):
         # Now populate the data with the proper keys.
         for key in passsecret['spec']['encryptedData']:
             passstore_path = passsecret['spec']['encryptedData'][key]
-
             decamelized_converted_managed_secret['data'][key] = b64Enc(decrypted_passsecret['spec']['encryptedData'][passstore_path])
 
         return decamelized_converted_managed_secret
@@ -271,7 +270,6 @@ class PassSecretE2E(TestCase):
                     "root['metadata']['deletion_timestamp']",
                     "root['metadata']['generate_name']",
                 ],
-                max_diffs=None,
                 ignore_order=True
             ),
             {}
@@ -316,7 +314,7 @@ class PassSecretE2E(TestCase):
         ## Reset the cluster and clean up resources.
         cleanup_e2e_image()
         cleanup_operator_image()
-        cleanup_unencrypted_crds()
+        # cleanup_unencrypted_crds()
 
         uninstall_pass_operator(namespace='pass-operator')
         uninstall_pass_operator_e2e(namespace='pass-operator')
