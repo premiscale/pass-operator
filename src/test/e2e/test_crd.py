@@ -10,6 +10,8 @@ from deepdiff import DeepDiff
 from http import HTTPStatus
 from humps import decamelize
 
+from passoperator.utils import b64Enc
+
 from test.common import (
     load_data,
     random_secret
@@ -100,7 +102,7 @@ class PassSecretE2E(TestCase):
             'kind': 'Secret',
             'metadata': passsecret['spec']['managedSecret']['metadata'],
             'type': passsecret['spec']['managedSecret']['type'],
-            'string_data': {}
+            'data': {}
         }
 
         # Handle optional fields.
@@ -109,13 +111,18 @@ class PassSecretE2E(TestCase):
         else:
             converted_managed_secret['immutable'] = None
 
+        if 'stringData' in passsecret['spec']['managedSecret']:
+            converted_managed_secret['string_data'] = passsecret['spec']['managedSecret']['stringData']
+        else:
+            converted_managed_secret['string_data'] = None
+
         decamelized_converted_managed_secret = decamelize(converted_managed_secret)
 
         # Now populate the data with the proper keys.
         for key in passsecret['spec']['encryptedData']:
             passstore_path = passsecret['spec']['encryptedData'][key]
 
-            decamelized_converted_managed_secret['string_data'][key] = decrypted_passsecret['spec']['encryptedData'][passstore_path]
+            decamelized_converted_managed_secret['data'][key] = b64Enc(decrypted_passsecret['spec']['encryptedData'][passstore_path])
 
         return decamelized_converted_managed_secret
 
@@ -260,6 +267,9 @@ class PassSecretE2E(TestCase):
                     "root['metadata']['managed_fields']",
                     "root['metadata']['self_link']",
                     "root['metadata']['owner_references']",
+                    "root['metadata']['deletion_grace_period_seconds']",
+                    "root['metadata']['deletion_timestamp']",
+                    "root['metadata']['generate_name']",
                 ],
                 max_diffs=None,
                 ignore_order=True
