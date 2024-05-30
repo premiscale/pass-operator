@@ -83,13 +83,17 @@ class PassSecretE2E(TestCase):
     @staticmethod
     def convertDecryptedPassSecrets(passsecret: dict, decrypted_passsecret: dict) -> dict:
         """
-        This is just a helper method for DeepDiff'ing locally-unencrypted (random) PassSecret data with the managed
+        This is just a helper method for when we're DeepDiff'ing locally-unencrypted (random) PassSecret data with the managed
         secret data that the operator decrypts and creates. This method is similar to what src.operator.secret looked like
-        before it was refactored with attrs and cattrs.
+        before it was refactored with attrs and cattrs, but it's different in that it ties together the randomly generated
+        secret data with the original PassSecret objects, which is only useful for e2e testing.
+
+        This method also ties together the snake_case and camelCase fields of the PassSecret and managed secret objects returned
+        by the k8s client.
 
         Args:
-            passsecret (dict): The PassSecret object.
-            decrypted_passsecret (dict): The decrypted PassSecret object.
+            passsecret (dict): The PassSecret object that's submitted to the cluster to generate a managed secret.
+            decrypted_passsecret (dict): The decrypted PassSecret object, so we can tie the managed secret and generated test data together.
 
         Returns:
             dict: The expected managed secret object from tying together a PassSecret manifest and a decrypted PassSecret
@@ -255,20 +259,12 @@ class PassSecretE2E(TestCase):
                     self.passsecret_data_singular,
                     self.decrypted_passsecret_data_singular
                 ),
+                include_paths=[
+                    "root['metadata']['name']",
+                    "root['metadata']['namespace']",
+                ],
                 exclude_paths=[
-                    "root['metadata']['labels']",
-                    "root['metadata']['annotations']",
-                    "root['metadata']['creation_timestamp']",
-                    "root['metadata']['resource_version']",
-                    "root['metadata']['uid']",
-                    "root['metadata']['finalizers']",
-                    "root['metadata']['generation']",
-                    "root['metadata']['managed_fields']",
-                    "root['metadata']['self_link']",
-                    "root['metadata']['owner_references']",
-                    "root['metadata']['deletion_grace_period_seconds']",
-                    "root['metadata']['deletion_timestamp']",
-                    "root['metadata']['generate_name']",
+                    "root['metadata']"
                 ],
                 ignore_order=True
             ),
