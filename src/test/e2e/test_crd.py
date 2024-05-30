@@ -37,16 +37,8 @@ from test.e2e.lib import (
     uninstall_pass_operator_e2e
 )
 
-import logging
 import sys
 
-
-log = logging.getLogger(__name__)
-logging.basicConfig(
-    stream=sys.stdout,
-    format='%(asctime)s | %(levelname)s | %(name)s | %(message)s',
-    level=logging.INFO
-)
 
 # Generate GPG and SSH keypairs for use in testing.
 
@@ -103,15 +95,16 @@ class PassSecretE2E(TestCase):
             'kind': 'Secret',
             'metadata': passsecret['spec']['managedSecret']['metadata'],
             'type': passsecret['spec']['managedSecret']['type'],
+            'immutable': passsecret['spec']['managedSecret']['immutable'],
             'data': {}
         }
 
         # Now populate the data with the proper keys.
-        for key in passsecret['spec']['managedSecret']['data']:
-            passstore_path = passsecret['spec']['managedSecret']['data'][key]
+        for key in passsecret['spec']['encryptedData']:
+            passstore_path = passsecret['spec']['encryptedData'][key]
 
             converted_managed_secret['data'][key] = b64Enc(
-                decrypted_passsecret['spec']['managedSecret']['data'][passstore_path]
+                decrypted_passsecret['spec']['encryptedData'][passstore_path]
             )
 
         return converted_managed_secret
@@ -182,7 +175,7 @@ class PassSecretE2E(TestCase):
             pass_storeSubPath='repo',
             gpg_createSecret=True,
             gpg_passphrase=gpg_passphrase,
-            git_url='root@pass-operator-e2e:/opt/operator/repo.git',
+            git_url='root@pass-operator-e2e:/root/repo.git',
             git_branch='main'
         )
 
@@ -214,7 +207,7 @@ class PassSecretE2E(TestCase):
         )
 
         # Check that the managed secret exists.
-        while True:
+        for _ in range(5):
             try:
                 _managedSecret = v1.read_namespaced_secret(
                     name='singular-data',
@@ -225,7 +218,9 @@ class PassSecretE2E(TestCase):
                 if e.status == HTTPStatus.NOT_FOUND:
                     sleep(3)
                     continue
-                log.error(e)
+                self.fail(
+                    f'Failed to create managed secret for singular-data PassSecret: {e}'
+                )
 
         # Check that the managed secret contains the proper data.
         self.assertDictEqual(

@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "pass-operator"
 version = "0.0.1"
-description = "A kubernetes operator that syncs and decrypts secrets from pass git repositories"
+description = "A Kubernetes operator that syncs and decrypts secrets from pass store git repositories"
 authors = ["Emma Doyle <emma@premiscale.com>"]
 maintainers = ["Emma Doyle <emma@premiscale.com>"]
 license = "GPL-3.0-or-later"
