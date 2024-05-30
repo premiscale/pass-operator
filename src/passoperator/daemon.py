@@ -38,8 +38,15 @@ def _passsecret_block(body: kopf.Body) -> None:
 
     Args:
         body [kopf.Body]: raw body of the PassSecret.
+
+    Raises:
+        kopf.TemporaryError: if the PassSecret is already blocked.
     """
     log.debug(f'Blocking PassSecret "{body["metadata"]["name"]}" in namespace "{body["metadata"]["namespace"]}')
+
+    if _is_passsecret_blocked(body):
+        raise kopf.TemporaryError(f'PassSecret "{body["metadata"]["name"]}" in namespace "{body["metadata"]["namespace"]}" is already blocked.')
+
     __in_progress_queue.append(
         (
             body['metadata']['name'],
