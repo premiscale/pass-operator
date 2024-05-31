@@ -228,8 +228,7 @@ def _lock_event(key: Key, event_id: str) -> None:
     """
     log.debug(f'Blocking event ID "{event_id}" for {key[0]} "{key[1]}" in namespace "{key[2]}"')
 
-    if _is_event_locked(key, event_id):
-        raise kopf.TemporaryError(f'Event {event_id} for {key[0]} "{key[1]}" in namespace "{key[2]}" is already blocked.')
+    assert not _is_event_locked(key, event_id)
 
     # Queue up the handler's internal ID to be processed when the current actions on the queue are done.
     eventqueue.put(key, event_id)
