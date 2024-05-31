@@ -2,10 +2,6 @@
 
 ![GitHub Release](https://img.shields.io/github/v/release/premiscale/pass-operator)
 ![PyPI - License](https://img.shields.io/pypi/l/pass-operator)
-![PyPI - Python Version](https://img.shields.io/pypi/pyversions/pass-operator)
-![Docker Pulls](https://img.shields.io/docker/pulls/premiscale/pass-operator)
-![CircleCI](https://img.shields.io/circleci/build/github/premiscale/pass-operator)
-
 
 A Kubernetes operator to sync and decrypt secrets from a password store ([pass](https://www.passwordstore.org/)) Git repository. This operator is proposed as a proof-of-concept and shouldn't be used in any production capacity.
 
