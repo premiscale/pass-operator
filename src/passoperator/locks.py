@@ -5,7 +5,7 @@ that is already in-progress.
 
 
 from __future__ import annotations
-from typing import Dict, Tuple, List, Any, Callable, Iterator
+from typing import Dict, Tuple, List, Any, Callable, Iterator, TypeAlias
 from time import sleep
 from functools import wraps
 from dataclasses import dataclass
@@ -22,6 +22,9 @@ __all__ = [
     'lock',
     'drain_event_queues'
 ]
+
+
+Key: TypeAlias = Tuple[Any, Any, Any]
 
 
 def _generate_lock_id() -> str:
@@ -54,25 +57,25 @@ class EventQueues:
     Returns:
         _type_: _description_
     """
-    __unblock_order_queue: Dict[Tuple[Any, Any, Any], _Queue] = {}
+    __unblock_order_queue: Dict[Key, _Queue] = {}
 
     def __init__(self, maxsize: int = 0):
         self.maxsize = maxsize
 
-    def __iter__(self) -> Iterator[Tuple[Any, Any, Any]]:
+    def __iter__(self) -> Iterator[Key]:
         return iter(self.__unblock_order_queue)
 
-    def __getitem__(self, key: Tuple[Any, Any, Any]) -> List[str]:
+    def __getitem__(self, key: Key) -> List[str]:
         return self.__unblock_order_queue[key].event_ids
 
     # Instead of providing a setitem method, we'll provide an interface around the individual queues.
 
-    def put(self, key: Tuple[Any, Any, Any], event_id: str) -> bool:
+    def put(self, key: Key, event_id: str) -> bool:
         """
         Place an event ID on the queue. If the queue is full, return False.
 
         Args:
-            key (Tuple[Any, Any, Any]): A unique identifier for the queue of IDs (name, namespace).
+            key (Key): A unique identifier for the queue of IDs (name, namespace).
             event_id (str): A unique identifier for the event.
 
         Returns:
@@ -87,55 +90,55 @@ class EventQueues:
         self.__unblock_order_queue[key].event_ids.append(event_id)
         return True
 
-    def get(self, key: Tuple[Any, Any, Any]) -> str:
+    def get(self, key: Key) -> str:
         """
         Retrieve the first event ID from the queue.
 
         Args:
-            key (Tuple[Any, Any, Any]): A unique identifier for the queue of IDs (name, namespace).
+            key (Key): A unique identifier for the queue of IDs (name, namespace).
 
         Returns:
             str: the first event ID in the queue.
         """
         return self.__unblock_order_queue[key].event_ids.pop(0)
 
-    def qsize(self, key: Tuple[Any, Any, Any]) -> int:
+    def qsize(self, key: Key) -> int:
         """
         Get the size of the queue.
 
         Args:
-            key (Tuple[Any, Any, Any]): A unique identifier for the queue of IDs (name, namespace).
+            key (Key): A unique identifier for the queue of IDs (name, namespace).
 
         Returns:
             int: the size of the queue.
         """
         return len(self.__unblock_order_queue[key].event_ids)
 
-    def lock(self, key: Tuple[Any, Any, Any]) -> None:
+    def lock(self, key: Key) -> None:
         """
         Lock the queue to prevent further modifications.
 
         Args:
-            key (Tuple[Any, Any, Any]): A unique identifier for the queue of IDs (name, namespace).
+            key (Key): A unique identifier for the queue of IDs (name, namespace).
         """
         log.debug(f'Locking queue for {key[0]} "{key[1]}" in namespace "{key[2]}"')
         self.__unblock_order_queue[key].locked = True
 
-    def unlock(self, key: Tuple[Any, Any, Any]) -> None:
+    def unlock(self, key: Key) -> None:
         """
         Unlock the queue to allow modifications.
 
         Args:
-            key (Tuple[Any, Any, Any]): A unique identifier for the queue of IDs (name, namespace).
+            key (Key): A unique identifier for the queue of IDs (name, namespace).
         """
         self.__unblock_order_queue[key].locked = False
 
-    def drain(self, key: Tuple[Any, Any, Any]) -> None:
+    def drain(self, key: Key) -> None:
         """
         Drain the queue of all event IDs.
 
         Args:
-            key (Tuple[Any, Any, Any]): A unique identifier for the queue of IDs (name, namespace).
+            key (Key): A unique identifier for the queue of IDs (name, namespace).
         """
         assert self.__unblock_order_queue[key].locked
 
@@ -146,12 +149,12 @@ class EventQueues:
             else:
                 sleep(0.25) # Wait for the queue to be empty.
 
-    def fst(self, key: Tuple[Any, Any, Any]) -> str:
+    def fst(self, key: Key) -> str:
         """
         Get the first event ID in the queue.
 
         Args:
-            key (Tuple[Any, Any, Any]): A unique identifier for the queue of IDs (name, namespace).
+            key (Key): A unique identifier for the queue of IDs (name, namespace).
 
         Returns:
             str: the first event ID in the queue.
@@ -211,13 +214,13 @@ def lock(wait: bool = True) -> Callable:
     return decorator
 
 
-def _lock_event(key: Tuple[Any, Any, Any], event_id: str) -> None:
+def _lock_event(key: Key, event_id: str) -> None:
     """
     Block handlers' progress on an object until it's safe to modify the managed secret.
     Decryption takes time, so we want to be sure to queue up any changes.
 
     Args:
-        key (Tuple[Any, Any, Any]): key of the object.
+        key (Key): key of the object.
         event_id (str): unique identifier for the event.
 
     Raises:
@@ -232,12 +235,12 @@ def _lock_event(key: Tuple[Any, Any, Any], event_id: str) -> None:
     eventqueue.put(key, event_id)
 
 
-def _is_event_locked(key: Tuple[Any, Any, Any], event_id: str) -> bool:
+def _is_event_locked(key: Key, event_id: str) -> bool:
     """
     Check if a particular object event is at the start of the queue. If it's not, block the handler. Otherwise, proceed.
 
     Args:
-        key (Tuple[Any, Any, Any]): key of the object.
+        key (Key): key of the object.
         event_id (str): unique identifier for the event.
 
     Returns:
@@ -247,13 +250,13 @@ def _is_event_locked(key: Tuple[Any, Any, Any], event_id: str) -> bool:
     eventqueue.fst(key) != event_id
 
 
-def _block_event(key: Tuple[Any, Any, Any], event_id: str) -> None:
+def _block_event(key: Key, event_id: str) -> None:
     """
     Block handlers' progress on a PassSecret until it's safe to modify the managed secret.
     This should only ever be called by event handlers, not by the reconciliation loop.
 
     Args:
-        key (Tuple[Any, Any, Any]): key of the object.
+        key (Key): key of the object.
         event_id (str): unique identifier for the event.
     """
     while _is_event_locked(key, event_id):
@@ -261,12 +264,12 @@ def _block_event(key: Tuple[Any, Any, Any], event_id: str) -> None:
         sleep(0.25)
 
 
-def _unlock_event(key: Tuple[Any, Any, Any], event_id: str) -> None:
+def _unlock_event(key: Key, event_id: str) -> None:
     """
     Unblock handlers' progress to modify the managed secret.
 
     Args:
-        key (Tuple[Any, Any, Any]): key of the object.
+        key (Key): key of the object.
         event_id (str): unique identifier for the event.
     """
     log.debug(f'Lifting block on {key[0]} "{key[1]}" in namespace "{key[2]}"')
