@@ -7,7 +7,7 @@ maintainers = ["Emma Doyle <emma@premiscale.com>"]
 license = "GPL-3.0-or-later"
 readme = "README.md"
 packages = [
-  { include = "passoperator", from = "src" }
+  { include = "passoperator", from = "src" },
 ]
 include = [
   "LICENSE"

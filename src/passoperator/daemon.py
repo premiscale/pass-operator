@@ -15,7 +15,7 @@ from functools import partial
 from passoperator.git import pull, clone
 from passoperator.utils import LogLevel
 from passoperator.secret import PassSecret, ManagedSecret
-from passoperator.locks import lock_passsecret
+from passoperator.locks import lock, drain_event_queues
 from passoperator import env
 
 import asyncio
@@ -48,7 +48,7 @@ def start(settings: kopf.OperatorSettings, **_: Any) -> None:
     initial_delay=float(env['OPERATOR_INITIAL_DELAY']),
     # Don't delay if the prior reconciliation hasn't completed.
     sharp=True)
-@lock_passsecret(exit_early=True)
+@lock(wait=False)
 def reconciliation(body: kopf.Body, **_: Any) -> None:
     """
     Reconcile state of a managed secret against the pass store. Update secrets' data if a mismatch
@@ -115,13 +115,9 @@ def reconciliation(body: kopf.Body, **_: Any) -> None:
             raise kopf.PermanentError(e)
 
 
-# @kopf.on.cleanup()
-# def cleanup(**kwargs) -> None:
-#     pass
-
-# @kopf.on.resume()
-# def resume(**kwargs) -> None:
-#     pass
+@kopf.on.cleanup()
+def cleanup(**_) -> None:
+    drain_event_queues()
 
 
 def lookup_managing_passsecret(managedSecretName: str) -> PassSecret | None:
@@ -154,7 +150,7 @@ def lookup_managing_passsecret(managedSecretName: str) -> PassSecret | None:
 
 
 @kopf.on.update('secrets.premiscale.com', 'v1alpha1', 'passsecret')
-@lock_passsecret()
+@lock()
 def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.Meta, body: kopf.Body, **_: Any) -> None:
     """
     An update was received on the PassSecret object, so attempt to update the corresponding Secret.
@@ -231,7 +227,7 @@ def update(old: kopf.BodyEssence | Any, new: kopf.BodyEssence | Any, meta: kopf.
 
 
 @kopf.on.create('secrets.premiscale.com', 'v1alpha1', 'passsecret')
-@lock_passsecret()
+@lock()
 def create(body: kopf.Body, **_: Any) -> None:
     """
     Create a new Secret with the spec of the newly-created PassSecret.
@@ -268,7 +264,7 @@ def create(body: kopf.Body, **_: Any) -> None:
 
 
 @kopf.on.delete('secrets.premiscale.com', 'v1alpha1', 'passsecret')
-@lock_passsecret()
+@lock()
 def delete(body: kopf.Body, **_: Any) -> None:
     """
     Remove a managed secret, as the managing PassSecret has been deleted.
