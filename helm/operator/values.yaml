@@ -68,7 +68,7 @@ operator:
 
   log:
     ## @param operator.log.level [string, default: debug] The log level for the operator. Options are: debug, info, warn, error.
-    level: debug
+    level: info
 
   ssh:
     ## @param operator.ssh.createSecret [default: false] If true, the secret is created. Otherwise, the secret is only referenced. This allows for users to provide their own secret via SealedSecrets or some other operator.

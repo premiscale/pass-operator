@@ -9,7 +9,7 @@ from typing import Dict, Tuple, List, Any, Callable, Iterator, TypeAlias
 from time import sleep
 from functools import wraps
 from dataclasses import dataclass
-from time import sleep
+from time import sleep, time
 
 import kopf
 import logging
@@ -70,6 +70,16 @@ class EventQueues:
 
     # Instead of providing a setitem method, we'll provide an interface around the individual queues.
 
+    def init(self, key: Key) -> None:
+        """
+        Initialize a queue for a particular object.
+
+        Args:
+            key (Key): A unique identifier for the queue of IDs (name, namespace).
+        """
+        if key not in self.__unblock_order_queue:
+            self.__unblock_order_queue[key] = _Queue(event_ids=[])
+
     def put(self, key: Key, event_id: str) -> bool:
         """
         Place an event ID on the queue. If the queue is full, return False.
@@ -82,7 +92,7 @@ class EventQueues:
             bool: False if the queue is full, else True.
         """
         if key not in self.__unblock_order_queue:
-            self.__unblock_order_queue[key].event_ids = []
+            self.init(key)
 
         if self.__unblock_order_queue[key].locked or len(self.__unblock_order_queue[key].event_ids) >= self.maxsize > 0:
             return False
@@ -112,6 +122,9 @@ class EventQueues:
         Returns:
             int: the size of the queue.
         """
+        if key not in self.__unblock_order_queue:
+            self.init(key)
+
         return len(self.__unblock_order_queue[key].event_ids)
 
     def lock(self, key: Key) -> None:
@@ -121,6 +134,9 @@ class EventQueues:
         Args:
             key (Key): A unique identifier for the queue of IDs (name, namespace).
         """
+        if key not in self.__unblock_order_queue:
+            self.init(key)
+
         log.debug(f'Locking queue for {key[0]} "{key[1]}" in namespace "{key[2]}"')
         self.__unblock_order_queue[key].locked = True
 
@@ -131,6 +147,10 @@ class EventQueues:
         Args:
             key (Key): A unique identifier for the queue of IDs (name, namespace).
         """
+        if key not in self.__unblock_order_queue:
+            self.init(key)
+
+        log.debug(f'Unlocking queue for {key[0]} "{key[1]}" in namespace "{key[2]}"')
         self.__unblock_order_queue[key].locked = False
 
     def drain(self, key: Key) -> None:
@@ -140,6 +160,9 @@ class EventQueues:
         Args:
             key (Key): A unique identifier for the queue of IDs (name, namespace).
         """
+        if key not in self.__unblock_order_queue:
+            self.init(key)
+
         assert self.__unblock_order_queue[key].locked
 
         while True:
@@ -162,21 +185,22 @@ class EventQueues:
         return self.__unblock_order_queue[key].event_ids[0]
 
 
-eventqueue = EventQueues()
+eventqueues = EventQueues()
 
 
 def drain_event_queues() -> None:
     """
     Drain the event queues for all objects that currently have a backlog of events.
     """
-    for queue in eventqueue:
-        eventqueue.lock(queue)
-        eventqueue.drain(queue)  # blocks
+    for queue in eventqueues:
+        eventqueues.lock(queue)
+        eventqueues.drain(queue)  # blocks
 
 
 def lock(wait: bool = True) -> Callable:
     """
-    Decorator to halt handlers' progress on an object until it's safe to modify.
+    Decorator to halt handlers' progress or drop the handler altogether on an object's event until
+    it's safe to modify. A common clash with an object is a timer and an event handler.
 
     Args:
         wait (bool): if False, the handler will exit early without executing the handler's body.
@@ -195,15 +219,13 @@ def lock(wait: bool = True) -> Callable:
                 body['metadata']['name'],
                 body['metadata']['namespace'],
             )
-
             _id = _generate_lock_id()
-            _lock_event(key, event_id=_id)
 
-            # Exit doing nothing if the queue for this particular object is not empty.
-            if not wait and eventqueue.qsize(key) > 1:
-                _unlock_event(key, event_id=_id)
+            if (not wait and eventqueues.qsize(key) > 1) or (eventqueues.maxsize > 0 and eventqueues.qsize(key) == eventqueues.maxsize):
+                log.info(f'Exiting early for {key[0]} "{key[1]}" in namespace "{key[2]}" due to object queue backlog exceeding specified limit.')
                 return None
 
+            _lock_event(key, event_id=_id)
             _block_event(key, event_id=_id)
 
             try:
@@ -214,7 +236,7 @@ def lock(wait: bool = True) -> Callable:
     return decorator
 
 
-def _lock_event(key: Key, event_id: str) -> None:
+def _lock_event(key: Key, event_id: str) -> bool:
     """
     Block handlers' progress on an object until it's safe to modify the managed secret.
     Decryption takes time, so we want to be sure to queue up any changes.
@@ -223,15 +245,26 @@ def _lock_event(key: Key, event_id: str) -> None:
         key (Key): key of the object.
         event_id (str): unique identifier for the event.
 
-    Raises:
-        kopf.TemporaryError: if the object is already blocked.
+    Returns:
+        bool: True if the PassSecret is blocked, else False.
     """
-    log.debug(f'Blocking event ID "{event_id}" for {key[0]} "{key[1]}" in namespace "{key[2]}"')
-
-    assert not _is_event_locked(key, event_id)
+    log.debug(f'Blocking event {event_id} for {key[0]} "{key[1]}" in namespace "{key[2]}"')
 
     # Queue up the handler's internal ID to be processed when the current actions on the queue are done.
-    eventqueue.put(key, event_id)
+    return eventqueues.put(key, event_id)
+
+
+def _unlock_event(key: Key, event_id: str) -> None:
+    """
+    Unblock handlers' progress to modify the managed secret.
+
+    Args:
+        key (Key): key of the object.
+        event_id (str): unique identifier for the event.
+    """
+    log.debug(f'Unlocking event {event_id} for {key[0]} "{key[1]}" in namespace "{key[2]}"')
+
+    assert eventqueues.get(key) == event_id
 
 
 def _is_event_locked(key: Key, event_id: str) -> bool:
@@ -245,8 +278,7 @@ def _is_event_locked(key: Key, event_id: str) -> bool:
     Returns:
         bool: True if the PassSecret is blocked, else False.
     """
-    return eventqueue.qsize(key) > 0 and \
-    eventqueue.fst(key) != event_id
+    return eventqueues.qsize(key) > 0 and eventqueues.fst(key) != event_id
 
 
 def _block_event(key: Key, event_id: str) -> None:
@@ -258,19 +290,8 @@ def _block_event(key: Key, event_id: str) -> None:
         key (Key): key of the object.
         event_id (str): unique identifier for the event.
     """
+    start_time = time()
     while _is_event_locked(key, event_id):
-        log.debug(f'{key[0]} "{key[1]}" in namespace "{key[2]}" is already blocked.')
         sleep(0.25)
-
-
-def _unlock_event(key: Key, event_id: str) -> None:
-    """
-    Unblock handlers' progress to modify the managed secret.
-
-    Args:
-        key (Key): key of the object.
-        event_id (str): unique identifier for the event.
-    """
-    log.debug(f'Lifting block on {key[0]} "{key[1]}" in namespace "{key[2]}"')
-
-    assert eventqueue.get(key) == event_id
+    else:
+        log.debug(f'Unblocked event {event_id} for {key[0]} "{key[1]}" in namespace "{key[2]}" after {time() - start_time:.2f} seconds.')
