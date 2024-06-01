@@ -339,6 +339,7 @@ def install_pass_operator(
         image_tag: str = '0.0.1',
         registry: str = 'localhost:5000',
         operator_interval: int = 60,
+        log_level: str = 'debug'
     ) -> int:
     """
     Install the operator in the cluster.
@@ -352,7 +353,7 @@ def install_pass_operator(
             '--set', 'deployment.image.name=pass-operator',
             '--set', f'deployment.image.tag={image_tag}',
             '--set', f'operator.interval={operator_interval}',
-            '--set', 'operator.initial_delay=1',
+            '--set', 'operator.initial_delay=1',  # Purposely create a conflict between reconciliation and the creation of a secret.
             '--set', f'operator.priority={priority}',
             '--set', f'operator.ssh.createSecret={str(ssh_createSecret).lower()}',
             '--set', f'operator.pass.storeSubPath={pass_storeSubPath}',
@@ -362,7 +363,8 @@ def install_pass_operator(
             '--set', f'operator.gpg.passphrase={gpg_passphrase}',
             '--set', f'operator.git.url={git_url}',
             '--set', f'operator.git.branch={git_branch}',
-            '--set', f'operator.ssh.value={b64Enc(ssh_value)}'
+            '--set', f'operator.ssh.value={b64Enc(ssh_value)}',
+            '--set', f'operator.log.level={log_level}',
     ]).returnCode
 
 
