@@ -3,31 +3,22 @@
 ![GitHub Release](https://img.shields.io/github/v/release/premiscale/pass-operator)
 ![PyPI - License](https://img.shields.io/pypi/l/pass-operator)
 
-A Kubernetes operator to sync and decrypt secrets from a password store ([pass](https://www.passwordstore.org/)) Git repository. This operator is proposed as a proof-of-concept and shouldn't be used in any production capacity.
+A Kubernetes operator to sync and decrypt secrets from a password store ([pass](https://www.passwordstore.org/)) Git repository.
 
-While this approach to secrets management on Kubernetes is more technically challenging, the advantage is that we don't have to rely on a 3rd party SaaS platform, such as Vault or Doppler, to hold our secrets (the obvious benefits these platforms do provide, however, are better user and access management). We may also use this operator in an airgapped environment with a self-hosted git repository.
+While this approach to secrets management on Kubernetes is more technically challenging, the primary advantage is that we don't have to rely on a 3rd party SaaS platform, such as Vault, Infisical or Doppler, to hold and secure our secrets. This approach upholds a GitOps-style of secrets management by storing encrypted secret state in Git.
 
-<!--
-I also acknowledge that this approach swims against the DevSecOps tide in that it requires you to store your secrets (albeit encrypted)
-in Git, a practice that is often discouraged and typically forbidden at most organizations.
--->
+Moreover, this operator may be used in an airgapped environment or private subnets (with no outbound Internet access) when paired with any self-hosted git repository that supports SSH access, so your secrets never leave your network.
 
 ## How it works
 
-The following flowchart outlines how this operator reacts to `PassSecret`-related events and pass store updates.
-
-<p align="center" width="100%">
-  <img width="100%" src="img/pass-operator-flow.png" alt="pass operator flow diagram">
-</p>
-
 From a high level, this operator runs `git pull` on an interval to grab updates from a git repository populated with encrypted
-secrets by `pass`. It maps secrets' paths to data values through the application of a [`PassSecret`](helm/operator-crds/templates/PassSecret.yaml), a [custom resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/), such as the following.
+secrets by `pass` on a local developer's machine. It maps secrets' paths to data values through the application of a [`PassSecret`](helm/operator-crds/templates/PassSecret.yaml), a [custom resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/), such as the following.
 
 ```yaml
 apiVersion: secrets.premiscale.com/v1alpha1
 kind: PassSecret
 metadata:
-  name: mysecret
+  name: mypasssecret
   namespace: pass-operator-test
 spec:
   encryptedData:
@@ -35,7 +26,7 @@ spec:
   managedSecret:
     metadata:
       name: mysecret
-      namespace: pass-operator-test
+      namespace: mynamespace
     type: Opaque
     immutable: false
 ```
@@ -47,12 +38,18 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: mysecret
-  namespace: pass-operator-test
+  namespace: mynamespace
 stringData:
   mykey: <decrypted contents of premiscale/mydata>
 immutable: false
 type: Opaque
 ```
+
+The following flowchart outlines how this operator reacts to `PassSecret`-related events and pass store updates.
+
+<p align="center" width="100%">
+  <img width="100%" src="img/pass-operator-flow.png" alt="pass operator flow diagram">
+</p>
 
 ## Installation
 
