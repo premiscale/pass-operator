@@ -292,9 +292,9 @@ iso8601==2.1.0 ; python_version >= "3.10" and python_version < "4.0" \
 kopf==1.37.2 ; python_version >= "3.10" and python_version < "4.0" \
     --hash=sha256:aa7a5470dd7655adae1aebe8426fc050ce7f21e13d49a3b88ef209176527e28f \
     --hash=sha256:f551db1772b0583e82d33bd1f95eec631000f686965500bb066ef3f5b47960a0
-kubernetes==29.0.0 ; python_version >= "3.10" and python_version < "4.0" \
-    --hash=sha256:ab8cb0e0576ccdfb71886366efb102c6a20f268d817be065ce7f9909c631e43e \
-    --hash=sha256:c4812e227ae74d07d53c88293e564e54b850452715a59a927e7e1bc6b9a60459
+kubernetes==30.1.0; python_version >= "3.10" and python_version < "4.0" \
+    --hash=sha256:41e4c77af9f28e7a6c314e3bd06a8c6229ddd787cad684e0ab9f69b498e98ebc \
+    --hash=sha256:e212e8b7579031dd2e512168b617373bc1e03888d41ac4e04039240a292d478d
 multidict==6.0.5 ; python_version >= "3.10" and python_version < "4.0" \
     --hash=sha256:01265f5e40f5a17f8241d52656ed27192be03bfa8764d88e8220141d1e4b3556 \
     --hash=sha256:0275e35209c27a3f7951e1ce7aaf93ce0d163b28948444bec61dd7badc6d3f8c \
