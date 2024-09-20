@@ -764,6 +764,16 @@ paramiko = ["paramiko"]
 pgp = ["gpg"]
 
 [[package]]
+name = "durationpy"
+version = "0.7"
+description = "Module for converting between datetime.timedelta and Go's Duration strings."
+optional = false
+python-versions = "*"
+files = [
+    {file = "durationpy-0.7.tar.gz", hash = "sha256:8447c43df4f1a0b434e70c15a38d77f5c9bd17284bfc1ff1d430f233d5083732"},
+]
+
+[[package]]
 name = "exceptiongroup"
 version = "1.2.2"
 description = "Backport of PEP 654 (exception groups)"
@@ -1108,8 +1118,8 @@ files = [
 
 [package.dependencies]
 aiohttp = [
-    {version = ">=3.9.0", markers = "python_version >= \"3.12\""},
     {version = "*", markers = "python_version < \"3.12\""},
+    {version = ">=3.9.0", markers = "python_version >= \"3.12\""},
 ]
 click = "*"
 iso8601 = "*"
@@ -1124,17 +1134,18 @@ uvloop = ["uvloop", "uvloop (>=0.18.0)"]
 
 [[package]]
 name = "kubernetes"
-version = "29.0.0"
+version = "31.0.0"
 description = "Kubernetes python client"
 optional = false
 python-versions = ">=3.6"
 files = [
-    {file = "kubernetes-29.0.0-py2.py3-none-any.whl", hash = "sha256:ab8cb0e0576ccdfb71886366efb102c6a20f268d817be065ce7f9909c631e43e"},
-    {file = "kubernetes-29.0.0.tar.gz", hash = "sha256:c4812e227ae74d07d53c88293e564e54b850452715a59a927e7e1bc6b9a60459"},
+    {file = "kubernetes-31.0.0-py2.py3-none-any.whl", hash = "sha256:bf141e2d380c8520eada8b351f4e319ffee9636328c137aa432bc486ca1200e1"},
+    {file = "kubernetes-31.0.0.tar.gz", hash = "sha256:28945de906c8c259c1ebe62703b56a03b714049372196f854105afe4e6d014c0"},
 ]
 
 [package.dependencies]
 certifi = ">=14.05.14"
+durationpy = ">=0.7"
 google-auth = ">=1.0.1"
 oauthlib = ">=3.2.2"
 python-dateutil = ">=2.5.3"
@@ -1656,8 +1667,8 @@ files = [
 astroid = ">=3.2.4,<=3.3.0-dev0"
 colorama = {version = ">=0.4.5", markers = "sys_platform == \"win32\""}
 dill = [
-    {version = ">=0.3.7", markers = "python_version >= \"3.12\""},
     {version = ">=0.2", markers = "python_version < \"3.11\""},
+    {version = ">=0.3.7", markers = "python_version >= \"3.12\""},
     {version = ">=0.3.6", markers = "python_version >= \"3.11\" and python_version < \"3.12\""},
 ]
 isort = ">=4.2.5,<5.13.0 || >5.13.0,<6"
@@ -2338,4 +2349,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "5d0efe31358758c86cf5858b3ce8b2cbe66dd9cd1a1a664b2e47fd1211b8745e"
+content-hash = "1e90d7e770a0a3b505afb5370265028ee206486c39ad80bc99e2e042728fef6b"
