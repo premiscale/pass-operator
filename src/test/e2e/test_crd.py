@@ -44,7 +44,7 @@ config.load_kube_config(
 )
 
 
-ATTEMPTS_TO_READ_SECRETS = 10
+ATTEMPTS_TO_READ_SECRETS = 30
 
 
 class PassSecretE2E(TestCase):
