@@ -33,7 +33,10 @@ deployment:
     enabled: true
     port: 8080
     path: /healthz
-    config: {}
+    config:
+      timeoutSeconds: 5
+      periodSeconds: 10
+      failureThreshold: 3
 
   ## @param deployment.podSecurityContext [object] Configure the security context for the pod.
   podSecurityContext:

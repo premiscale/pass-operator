@@ -1,5 +1,5 @@
 ARG IMAGE=python
-ARG TAG=3.10.13
+ARG TAG=3.10.15
 
 FROM ${IMAGE}:${TAG} AS base
 
@@ -22,7 +22,7 @@ ENV PYTHONUNBUFFERED=1 \
 
 ARG TINI_VERSION=v0.19.0
 ARG PASS_VERSION=1.7.4-6
-ARG ARCHITECTURE=arm64
+ARG ARCHITECTURE=amd64
 
 # https://github.com/opencontainers/image-spec/blob/main/annotations.md#pre-defined-annotation-keys
 LABEL org.opencontainers.image.description "© PremiScale, Inc. 2024"
