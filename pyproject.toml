@@ -28,7 +28,7 @@ python-gnupg = "^0.5.2"
 gitpython = "^3.1.43"
 pyhumps = "^3.8.0"
 attrs = "^23.2.0"
-cattrs = "^23.2.3"
+cattrs = "^24.0.0"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.3.2"
