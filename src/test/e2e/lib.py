@@ -181,7 +181,7 @@ def build_e2e_image(
         tag: str = '0.0.1',
         pass_version: str = '1.7.4-5',
         tini_version: str = 'v0.19.0',
-        architecture: str = 'arm64'
+        architecture: str = 'amd64'
     ) -> int:
     """
     Build the e2e testing image for a local git server.
@@ -312,11 +312,11 @@ def build_operator_image(
             'docker', 'build', '-t', f'{registry}/pass-operator:{tag}', '-f', './Dockerfile', '.',
             '--target', 'develop'
         ]).returnCode) == 0:
-        # Retry pushing the image up to 3 times before failing.
-        for i in range(3):
-            if (ret := run(['docker', 'push', f'{registry}/pass-operator:{tag}']).returnCode) == 0:
+        # Retry pushing the image up to 10 times before failing.
+        for i in range(10):
+            if (ret := run(['docker', 'push', f'{registry}/pass-operator:{tag}'], timeout=600).returnCode) == 0:
                 return ret
-            elif i != 2:
+            else:
                 log.warning(f'Failed to push e2e image to {registry}/pass-operator:{tag}. Retrying...')
                 syncsleep(3)
         else:

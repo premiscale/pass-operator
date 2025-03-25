@@ -1,3 +1,4 @@
 yarn       1.22.19
 nodejs     20.14.0
 shellcheck 0.10.0
+hadolint   2.12.0
