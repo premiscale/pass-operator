@@ -21,7 +21,7 @@ fi
 if [ "$1" == "start" ]; then
     minikube start \
         -p pass-operator \
-        --kubernetes-version v1.28.3 \
+        --kubernetes-version v1.32.0 \
         --extra-config=kubelet.runtime-request-timeout=40m \
         --addons=ingress \
         --addons=metallb \

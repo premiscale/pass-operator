@@ -185,6 +185,7 @@ class PassSecretE2E(TestCase):
         ## Install the pass-operator Helm chart and CRDs.
         install_pass_operator_crds(namespace='pass-operator')
         build_operator_image()
+
         install_pass_operator(
             ssh_value=ssh_private_key,
             gpg_value=gpg_private_key,
