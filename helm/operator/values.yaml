@@ -37,7 +37,6 @@ deployment:
       timeoutSeconds: 5
       periodSeconds: 10
       failureThreshold: 3
-      successThreshold: 3
 
   ## @param deployment.podSecurityContext [object] Configure the security context for the pod.
   podSecurityContext:
