@@ -1,5 +1,5 @@
 ARG IMAGE=python
-ARG TAG=3.10.15
+ARG TAG=3.14.7
 
 FROM ${IMAGE}:${TAG} AS base
 
