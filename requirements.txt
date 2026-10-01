@@ -410,9 +410,9 @@ multidict==6.2.0 ; python_version >= "3.10" and python_version < "4.0" \
     --hash=sha256:ef7d48207926edbf8b16b336f779c557dd8f5a33035a85db9c4b0febb0706817 \
     --hash=sha256:f7716f7e7138252d88607228ce40be22660d6608d20fd365d596e7ca0738e019 \
     --hash=sha256:facaf11f21f3a4c51b62931feb13310e6fe3475f85e20d9c9fdce0d2ea561b87
-oauthlib==3.2.2 ; python_version >= "3.10" and python_version < "4.0" \
-    --hash=sha256:8139f29aac13e25d502680e9e19963e83f16838d48a0d71c287fe40e7067fbca \
-    --hash=sha256:9859c40929662bec5d64f34d01c99e093149682a3f38915dc0655d5a633dd918
+oauthlib==4.0.0; python_version >= "3.10" and python_version < "4.0" \
+    --hash=sha256:624c28c13a0a59cabf9747dfa52af63be3e512a7f2714df16e91b5b3a145e6cd \
+    --hash=sha256:efb274799819440f95b4ab3b818869f1ce9ae26c5beacba0201d1a1b76b54f86
 propcache==0.3.0 ; python_version >= "3.10" and python_version < "4.0" \
     --hash=sha256:02df07041e0820cacc8f739510078f2aadcfd3fc57eaeeb16d5ded85c872c89e \
     --hash=sha256:03acd9ff19021bd0567582ac88f821b66883e158274183b9e5586f678984f8fe \
